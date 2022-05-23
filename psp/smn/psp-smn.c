@@ -29,6 +29,8 @@
 #include "hw/loader.h"
 #include "psp/psp.h"
 #include "qemu/log.h"
+#include "qemu/log-for-trace.h"
+
 #include "psp/smn/psp-smn.h"
 
 /* DEFINE_PROP_STRING("rom_path", AmdPspState,flash_rom_path), */
@@ -38,6 +40,16 @@
 const char* ident = "SMN Control";
 
 static PSPMiscReg psp_regs[] = {
+    {
+        /* Read by the on chip bootloader and acted upon. */
+        .addr = 0x5b304,
+        .val = 0xffffffff,
+    },
+    {
+        /* Read by the on chip bootloader and acted upon. TODO verify */
+        .addr = 0x5bb04,
+        .val = 0xffffffff,
+    },
     {
         /* The on chip bootloader waits for bit 0 to go 1 */
         .addr = 0x5e000,
@@ -176,8 +188,7 @@ static void psp_smn_update_slot(PSPSmnState *smn, uint32_t idx) {
     /* TODO documentation */
     memory_region_set_alias_offset(&smn->psp_smn_containers[idx], addr);
 
-    /* TODO fix log entries */
-    qemu_log_mask(LOG_UNIMP, "%s: SMN mapped 0x%x to SMN slot %d\n",ident, addr,
+    qemu_log_mask(LOG_TRACE, "%s: SMN mapped 0x%x to SMN slot %d\n",ident, addr,
                   idx);
 
 }
@@ -188,7 +199,7 @@ static void psp_smn_write(void *opaque, hwaddr offset, uint64_t value,
     uint32_t idx;
     hwaddr phys_base = smn->psp_smn_control.addr;
 
-    qemu_log_mask(LOG_UNIMP, "%s: SMN write at 0x%" HWADDR_PRIx
+    qemu_log_mask(LOG_TRACE, "%s: SMN write at 0x%" HWADDR_PRIx
         " (size %d, raw val 0x%lx)\n",
         ident, phys_base + offset, size, value);
     switch (size) {
@@ -236,7 +247,7 @@ static uint64_t psp_smn_read(void *opaque, hwaddr offset, unsigned int size) {
             break;
 
     }
-    qemu_log_mask(LOG_UNIMP, "%s: SMN read at 0x%" HWADDR_PRIx
+    qemu_log_mask(LOG_TRACE, "%s: SMN read at 0x%" HWADDR_PRIx
         " (size %d, raw val 0x%x)\n",
         ident, phys_base + offset, size, val);
     return val;
@@ -267,11 +278,11 @@ static void psp_smn_init(Object *obj)
                             TYPE_PSP_SMN_FLASH);
 
     // TODO here or in realize?
-    //object_property_set_uint(OBJECT(&s->psp_smn_misc),"psp_misc_msize",
-    //                         0xFFFFFFFF, &error_abort);
+    object_property_set_uint(OBJECT(&s->psp_smn_misc),"psp_misc_msize",
+                             0xFFFFFFFF, &error_abort);
 
-    //object_property_set_str(OBJECT(&s->psp_smn_misc),"psp_misc_ident",
-    //                        "SMN MEM", &error_abort);
+    object_property_set_str(OBJECT(&s->psp_smn_misc),"psp_misc_ident",
+                            "SMN MEM", &error_abort);
 
 }
 
