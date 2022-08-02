@@ -20,8 +20,11 @@
 #define AMD_PSP_H
 
 #include "hw/arm/boot.h"
+#include "psp/mmio/psp-fuse.h"
 #include "hw/sysbus.h"
+#include "hw/misc/unimp.h"
 #include "target/arm/cpu.h"
+
 #include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
 #include "psp/x86/psp-x86.h"
@@ -53,6 +56,9 @@
 #define PSP_X86_BASE 0x04000000
 #define PSP_X86_NAME "PSP X86"
 
+#define PSP_FUSE_BASE 0x03010104
+#define PSP_FUSE_NAME "PSP Fuse"
+
 #define PSP_UNKNOWN_BASE  0xfc000000
 #define PSP_UNKNOWN_NAME "PSP UNKNOWN"
 
@@ -81,7 +87,9 @@ typedef struct AmdPspState {
   MemoryRegion sram;
   MemoryRegion rom;
 
+  char * gen_ident;
   PspGeneration gen;
+  bool dbg_mode;
   ARMCPU cpu;
 
   /* This device covers every MMIO address we have not covered somewhere else */
@@ -104,6 +112,12 @@ typedef struct AmdPspState {
 
   /* CCP */
   CcpV5State ccp;
+
+  /* Fuse */
+  PSPFuseState fuse;
+
+  /* General unimplemented devices */
+  UnimplementedDeviceState unimp;
 
 } AmdPspState;
 
