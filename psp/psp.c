@@ -55,19 +55,9 @@ static uint32_t PspGetSramSize(PspGeneration gen) {
 
 }
 
-static PSPMiscReg psp_regs[] = {
-    {
-        /* MMIO mapped Fuse. */
-        /* TODO: Read this value from other systems, i.e. Ryzen/TR */
-        .addr = 0x03010104,
-        .val = 0x1a060900, /* Value read from a real EPYC system */
-    },
-    {
-        /* TODO: Document from PSPEmu */
-        .addr = 0x0320004c,
-        .val = 0xbc090072,
-    },
-};
+//* TODO: This is currently not mapped */
+//  .addr = 0x0320004c,
+//  .val = 0xbc090072,
 
 /* static const char* GenNames[3] = { "Zen", "Zen+", "Zen2"}; */
 /* TODO: Maybe use TYPE_CPU_CLUSTER to create an SoC with multiple PSP's.
@@ -76,17 +66,17 @@ static PSPMiscReg psp_regs[] = {
 
 /* TODO: Check CPU Object properties */
 
+/* Initialize psp and its device. This should never fail */
 static void amd_psp_init(Object *obj)
 {
 
     AmdPspState *s = AMD_PSP(obj);
 
-    /* TODO: Check which generation we actually are */
-    PspGeneration gen = PspNameToGen("Zen");
-    s->gen = gen;
-
     object_initialize_child(obj, "cpu", &s->cpu,
                             ARM_CPU_TYPE_NAME("cortex-a9"));
+
+    // TODO verify
+    s->cpu.reset_sctlr = 0;
 
     object_initialize_child(obj, "smn", &s->smn, TYPE_PSP_SMN);
 
@@ -101,11 +91,30 @@ static void amd_psp_init(Object *obj)
     object_initialize_child(obj, "psp-sts", &s->sts, TYPE_PSP_STS);
 
     object_initialize_child(obj, "psp-ccp", &s->ccp, TYPE_CCP_V5);
+
+    object_initialize_child(obj, "psp-fuse", &s->fuse, TYPE_PSP_FUSE);
+
+    object_initialize_child(obj, "unimp", &s->unimp, TYPE_UNIMPLEMENTED_DEVICE);
 }
 
+/* Realize the psp and configure devices */
 static void amd_psp_realize(DeviceState *dev, Error **errp)
 {
     AmdPspState *s = AMD_PSP(dev);
+
+    // TODO check and set generation
+    PspGeneration gen;
+    if(s->gen_ident) {
+        qemu_log("TODO set generations");
+        exit(1);
+    } else {
+        // default
+        s->gen_ident = g_strdup("Zen");
+        gen = PspNameToGen("Zen");
+    }
+    s->gen = gen;
+    qemu_log("Generation: %s", s->gen_ident);
+
     /* TODO: Maybe use "&error_abort" instead? */
     Error *err = NULL;
     uint32_t sram_size;
@@ -120,6 +129,7 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
         error_propagate(errp, err);
         return;
     }
+
 
     object_property_set_uint(OBJECT(&s->smn), "smn-container-base",
                              PSP_SMN_BASE, &error_abort);
@@ -187,18 +197,32 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
     sysbus_realize(SYS_BUS_DEVICE(&s->ccp), &error_abort);
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->ccp), 0, PSP_CCP_BASE);
 
-    /* TODO: Is this the way to go? ... */
-    s->base_mem.regs = psp_regs;
-    s->base_mem.regs_count = ARRAY_SIZE(psp_regs);
+    /* Map Fuse */
+    if(s->dbg_mode) {
+        /* set dbg_mode if global dbg mode is active */
+        qdev_prop_set_bit(DEVICE(&s->fuse), "dbg_mode", true);
+    }
+    sysbus_realize(SYS_BUS_DEVICE(&s->fuse), &error_abort);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->fuse), 0, PSP_FUSE_BASE);
 
     /* Map the misc device as an overlap with low priority */
     /* This device covers all "unknown" psp registers */
+    /* TODO reduce this to only cover known misc regs regions */
     sysbus_mmio_map_overlap(SYS_BUS_DEVICE(&s->base_mem), 0, 0, -1000);
+
+    /* General unimplemented device that maps the whole memory with low priority */
+    qdev_prop_set_string(DEVICE(&s->unimp), "name", "unimp");
+    qdev_prop_set_uint64(DEVICE(&s->unimp), "size", sram_size);
+    sysbus_realize(SYS_BUS_DEVICE(&s->unimp), &error_abort);
+    sysbus_mmio_map_overlap(SYS_BUS_DEVICE(&s->unimp), 0, 0, -1000);
+
 }
 
-/* User-configurable options via "-device 'name','property'=" */
+/* User-configurable options with "-global amd-psp.<property>=<value> */
 static Property amd_psp_properties[] = {
     DEFINE_PROP_UINT32("generation", AmdPspState, gen, 0),
+    DEFINE_PROP_STRING("generation", AmdPspState, gen_ident),
+    DEFINE_PROP_BOOL("dbg_mode", AmdPspState, dbg_mode, false),
 };
 
 static void amd_psp_class_init(ObjectClass *oc, void* data)
