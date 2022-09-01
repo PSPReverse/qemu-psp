@@ -65,7 +65,6 @@ static void psp_smn_flash_realize(DeviceState *dev, Error **errp)
 
 static Property psp_smn_flash_properties[] = {
     DEFINE_PROP_STRING("flash_img", PSPSmnFlashState, flash_img),
-    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void psp_smn_flash_class_init(ObjectClass *klass, void * data)
