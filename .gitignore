@@ -25,3 +25,6 @@ GTAGS
 /.idea
 /compile_commands.json
 # --- End LibAFL code ---
+
+.cache
+.venv
