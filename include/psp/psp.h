@@ -25,6 +25,7 @@
 #include "hw/misc/unimp.h"
 #include "target/arm/cpu.h"
 
+#include "psp/generations.h"
 #include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
 #include "psp/x86/psp-x86.h"
@@ -34,6 +35,10 @@
 
 #define TYPE_AMD_PSP "amd-psp"
 #define AMD_PSP(obj) OBJECT_CHECK(AmdPspState, (obj), TYPE_AMD_PSP)
+
+#define TYPE_AMD_PSP_ZEN "amd-psp-zen_one"
+#define TYPE_AMD_PSP_ZEN_PLUS "amd-psp-zen_plus"
+#define TYPE_AMD_PSP_ZEN_TWO "amd-psp-zen_two"
 
 #define PSP_SMN_CTRL_BASE 0x03220000
 #define PSP_X86_CTRL1_BASE 0x03230000
@@ -72,13 +77,6 @@
 #define PSP_SRAM_SIZE_ZEN_PLUS  0x40000
 #define PSP_SRAM_SIZE_ZEN_2  0x50000
 
-
-typedef enum PspGeneration {
-  ZEN = 0,
-  ZEN_PLUS,
-  ZEN2,
-} PspGeneration;
-
 typedef struct AmdPspState {
   /*< private >*/
   DeviceState parent_obj;
@@ -87,8 +85,9 @@ typedef struct AmdPspState {
   MemoryRegion sram;
   MemoryRegion rom;
 
-  char * gen_ident;
+  char const * gen_ident;
   PspGeneration gen;
+
   bool dbg_mode;
   ARMCPU cpu;
 
@@ -120,8 +119,5 @@ typedef struct AmdPspState {
   UnimplementedDeviceState unimp;
 
 } AmdPspState;
-
-const char* PspGenToName(PspGeneration gen);
-PspGeneration PspNameToGen(const char* name);
 
 #endif
