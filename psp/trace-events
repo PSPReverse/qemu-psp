@@ -1,1 +1,5 @@
-#include "trace/trace-psp.h"
+# psp-misc.c
+psp_misc_read(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
+psp_misc_write(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
+psp_misc_read_unimplemented(uint64_t off, unsigned int size) "offset=0x%"PRIx64" value=0x0 (default) size=0x%x"
+psp_misc_write_unimplemented(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
