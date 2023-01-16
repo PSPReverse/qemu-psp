@@ -22,6 +22,11 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
             val = 0x1;
             break;
 
+        // Zen Tesla
+        case 0x5a098:
+            val = 0x1;
+            break;
+
         case 0x5a304:
             val = 0x1;
             break;
@@ -34,13 +39,28 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
             val = 0xffffffff;
             break;
 
+        // Zen Tesla
+        case 0x5b310:
+            val = 0xffffffff;
+            break;
+
         case 0x5bb04:
+            val = 0xffffffff;
+            break;
+
+        // Zen Tesla
+        case 0x5bb10:
             val = 0xffffffff;
             break;
 
         // Zen 2
         case 0x5c14c:
             val = 0x100;
+            break;
+
+        // Zen Tesla
+        case 0x5c310:
+            val = 0xffffffff;
             break;
 
         // Zen 2
@@ -58,7 +78,12 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
         //    break;
 
         case 0x5e000:
-            val =0x1;
+            val = 0x1;
+            break;
+
+        // Zen Tesla
+        case 0x5fb10:
+            val = 0x1e113;
             break;
 
         // Zen 2
@@ -72,6 +97,16 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
 
         case 0x1004034:
             val =0x1e112;
+            break;
+
+        // Zen Tesla
+        case 0x1010034:
+            val =0x1e112;
+            break;
+
+        // Zen Tesla
+        case 0x1002034:
+            val =0x1e113;
             break;
 
         case 0x1018034:
