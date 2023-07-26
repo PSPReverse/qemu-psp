@@ -55,6 +55,7 @@ typedef struct PspSmnClass {
     SysBusDeviceClass parent_class;
     /*< public >*/
     hwaddr flash;
+    hwaddr smu;
 } PspSmnClass;
 
 #define PSP_SMN_CLASS(klass) \
@@ -65,28 +66,34 @@ typedef struct PspSmnClass {
 typedef struct PspSmnConfiguration {
     const char * desc;
     hwaddr flash;
+    hwaddr smu;
 } PspSmnConfiguration;
 
 static PspSmnConfiguration psp_smn_configuration[] = {
     [ZEN] = {
         .desc = "psp smn zen",
         .flash = 0x0a000000,
+        .smu = 0x03c00000,
     },
     [ZEN_PLUS] = {
         .desc = "psp smn zen+",
         .flash = 0x0a000000,
+        .smu = 0x03c00000,
     },
     [ZEN2] = {
         .desc = "psp smn zen2",
         .flash = 0x44000000,
+        .smu = 0x03c00000,
     },
     [ZEN3] = {
         .desc = "psp smn zen3",
         .flash = 0x44000000,
+        .smu = 0x03c00000,
     },
     [ZENTESLA] = {
         .desc = "psp smn zentesla",
         .flash = 0x0a000000,
+        .smu = 0x03c00000,
     },
 };
 
@@ -154,7 +161,6 @@ static uint64_t psp_smn_read(void *opaque, hwaddr offset, unsigned int size) {
                           "%s: SMN ERROR. Unsupported read access size: %d\n",
                           ident, size);
             break;
-
     }
     trace_psp_smn_read(offset, phys_base, val, size);
     return val;
@@ -183,6 +189,9 @@ static void psp_smn_init(Object *obj)
 
     object_initialize_child(obj, "smn_flash", &s->psp_smn_flash,
                             TYPE_PSP_SMN_FLASH);
+
+    object_initialize_child(obj, "smn_smu", &s->psp_smn_smu,
+                            TYPE_PSP_SMN_SMU);
 }
 
 static void psp_smn_init_slots(DeviceState *dev) {
@@ -196,7 +205,7 @@ static void psp_smn_init_slots(DeviceState *dev) {
         snprintf(name, PSP_SMN_SLOT_NAME_LEN, "%s%d", PSP_SMN_SLOT_NAME, i);
 
         /* TODO: How to check for errors? */
-        /* Each container is an alias to the SMN addres space. Here we
+        /* Each container is an alias to the SMN address space. Here we
          * initialize each container beginning with the address 0 in the SMN
          * address space.
          */
@@ -220,10 +229,12 @@ static void psp_smn_realize(DeviceState *dev, Error **errp) {
     SysBusDevice *sbd = SYS_BUS_DEVICE(dev);
     MemoryRegion *mr_smn_misc;
     PSPSmnFlashState* flash;
+    PSPSmnSmuState* smu;
     Error *err = NULL;
 
     sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_misc), &err);
     sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_flash), &err);
+    sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_smu), &err);
     if (err != NULL) {
         error_propagate(errp, err);
         return;
@@ -248,6 +259,9 @@ static void psp_smn_realize(DeviceState *dev, Error **errp) {
     memory_region_add_subregion_overlap(&s->psp_smn_space, c->flash,
                                         &flash->psp_smn_flash, 0);
 
+    smu = &s->psp_smn_smu;
+    memory_region_add_subregion_overlap(&s->psp_smn_space, c->smu, &smu->psp_smn_smu, 0);
+
     /* Setup the initial SMN to PSP MemoryRegion alias. */
     psp_smn_init_slots(dev);
 }
@@ -263,6 +277,7 @@ static void psp_smn_common_class_init(ObjectClass *oc, enum PspGeneration gen) {
 
     dc->desc = psp_smn_configuration[gen].desc;
     sc->flash = psp_smn_configuration[gen].flash;
+    sc->smu = psp_smn_configuration[gen].smu;
 }
 
 static void psp_smn_zen_class_init(ObjectClass *oc, void *data) {
