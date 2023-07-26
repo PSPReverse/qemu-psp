@@ -31,14 +31,14 @@
 
 /* Global sizes */
 #define CCP_Q_SIZE           4096   /* Size of a single queue */
-#define CCP_CTRL_SIZE        4096   /* Size of the general control region */ 
+#define CCP_CTRL_SIZE        4096   /* Size of the general control region */
 #define CCP_CONFIG_SIZE      4096   /* Size of the general config region */
 #define CCP_Q_COUNT          5      /* Number of queues */
 
 /* Local storage block sizes */
 #define CCP_LSB_COUNT      128    /* Per queue local storage block count */
 #define CCP_LSB_SIZE       32     /* Single LSB size */
-#define CCP_LSB_TOTAL_SIZE   CCP_LSB_Q_SIZE * CCP_LSB_Q_COUNT  
+#define CCP_LSB_TOTAL_SIZE   CCP_LSB_Q_SIZE * CCP_LSB_Q_COUNT
 
 /* Global offsets */
 #define CCP_CTRL_OFFSET      0x0    /* Offset of the general control region */
@@ -48,7 +48,7 @@
 /* Per queue offsets */
 #define CCP_Q_CTRL_OFFSET    0x0    /* Control register offset */
 #define CCP_Q_HEAD_LO_OFFSET 0x4    /* Queue head register offset */
-#define CCP_Q_TAIL_LO_OFFSET 0x8    /* Queue tail register offset */ 
+#define CCP_Q_TAIL_LO_OFFSET 0x8    /* Queue tail register offset */
 #define CCP_Q_STATUS_OFFSET  0x100  /* Queue status register offset */
 
 /* Global registers */
@@ -109,11 +109,13 @@ typedef struct CcpV5State {
     /* Timer to process QUEUE events "asynchronously" */
     QEMUTimer dma_timer;
 
-    /* ID of the queue for the current active timer. Currently only one queue 
+    /* ID of the queue for the current active timer. Currently only one queue
      * can be active at the same time.
      */
     int32_t dma_timer_qid;
 
+    /* Exposed after zlib extraction finishes */
+    uint32_t zlib_bytes_written;
 } CcpV5State;
 
 #endif

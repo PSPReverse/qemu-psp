@@ -134,7 +134,7 @@ static uint32_t ccp_queue_read(CcpV5State *s, hwaddr offset, uint32_t id) {
             ret = 0;
     }
     return ret;
-} 
+}
 
 static void ccp_in_guest_pt(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
                             uint32_t len, ccp_memtype dst_type,
@@ -252,36 +252,35 @@ static void ccp_perform_sha_256(CcpV5State *s, hwaddr src, uint32_t len, bool eo
     /* Use "init" to determine whether we need to initialize a new sha context */
     void* hsrc;
     hwaddr plen;
-    plen = len;
+    uint32_t bytes_read = 0;
 
     if (s->sha_ctx.raw == NULL) {
         /* Init new SHA256 context */
         ccp_init_sha256_ctx(&s->sha_ctx);
     }
     if(s->sha_ctx.raw != NULL) {
-        hsrc = cpu_physical_memory_map(src, &plen, false);
-        if (plen != len) {
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Couldn't map guest memory\n");
-            return;
+        while (bytes_read < len) {
+            plen = len - bytes_read;
+            hsrc = cpu_physical_memory_map(src + bytes_read, &plen, false);
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped %#lx bytes\n", plen);
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped from %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
+            ccp_update_sha256(&s->sha_ctx, plen, hsrc);
+            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            bytes_read += plen;
         }
-        if (hsrc != NULL) {
-            ccp_update_sha256(&s->sha_ctx, len, hsrc);
-        } else {
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Couldn't map guest memory\n");
-            return;
-        }
+
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Digested %#x bytes\n", bytes_read);
+
         if (eom) {
             ccp_digest_sha256(&s->sha_ctx, lsb_ctx);
             /* The CCP seems to store the digest in reversed order -> Do as the
-             * CCP would do, even if it means we reverse it again when the 
+             * CCP would do, even if it means we reverse it again when the
              * digest is copied from the lsb to the PSP.
              */
-            ccp_reverse_buf(lsb_ctx, 32); // 32 -> SHA256 digest size 
-            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            ccp_reverse_buf(lsb_ctx, 32); // 32 -> SHA256 digest size
         }
-
     } else {
-        qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: SHA context not initialized\n");
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256 Error: SHA context not initialized\n");
         return;
     }
 }
@@ -291,36 +290,36 @@ static void ccp_perform_sha_384(CcpV5State *s, hwaddr src, uint32_t len, bool eo
     /* Use "init" to determine whether we need to initialize a new sha context */
     void* hsrc;
     hwaddr plen;
-    plen = len;
+    uint32_t bytes_read = 0;
 
     if (s->sha_ctx.raw == NULL) {
         /* Init new SHA384 context */
         ccp_init_sha384_ctx(&s->sha_ctx);
     }
     if(s->sha_ctx.raw != NULL) {
-        hsrc = cpu_physical_memory_map(src, &plen, false);
-        if (plen != len) {
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Couldn't map guest memory\n");
-            return;
+        while (bytes_read < len) {
+            plen = len - bytes_read;
+            hsrc = cpu_physical_memory_map(src + bytes_read, &plen, false);
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped %#lx bytes\n", plen);
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped from %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
+            ccp_update_sha384(&s->sha_ctx, plen, hsrc);
+            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            bytes_read += plen;
         }
-        if (hsrc != NULL) {
-            ccp_update_sha384(&s->sha_ctx, len, hsrc);
-        } else {
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Couldn't map guest memory\n");
-            return;
-        }
+
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Digested %#x bytes\n", bytes_read);
+
         if (eom) {
             ccp_digest_sha384(&s->sha_ctx, lsb_ctx);
             /* The CCP seems to store the digest in reversed order -> Do as the
-             * CCP would do, even if it means we reverse it again when the 
+             * CCP would do, even if it means we reverse it again when the
              * digest is copied from the lsb to the PSP.
              */
-            ccp_reverse_buf(lsb_ctx, 48); // 48 -> SHA384 digest size 
-            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            ccp_reverse_buf(lsb_ctx, 48); // 48 -> SHA384 digest size
         }
 
     } else {
-        qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: SHA context not initialized\n");
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384 Error: SHA context not initialized\n");
         return;
     }
 }
@@ -339,6 +338,8 @@ static bool ccp_zlib(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     hwaddr plen_out;
     bool err;
 
+    err = false;
+
     src_type = CCP5_CMD_SRC_MEM(desc);
     dst_type = CCP5_CMD_DST_MEM(desc);
     len = CCP5_CMD_LEN(desc);
@@ -353,22 +354,23 @@ static bool ccp_zlib(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     trace_ccp_zlib(src, dst, len, src_type, dst_type, init, eom);
 
     if (!init || !eom) {
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Only EOM=1 and INIT=1 Zlib ops are currently supported\n");
+        qemu_log_mask(LOG_UNIMP, "CCP ZLIB Error: Only EOM=1 and INIT=1 Zlib ops are currently supported\n");
         return true;
 
     }
 
     if (init) {
-      if (ccp_zlib_init(&s->zlib_state)) {
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Couldn't initialize zlib state\n");
-        return true;
-      }
+        s->zlib_bytes_written = 0;
+        if (ccp_zlib_init(&s->zlib_state)) {
+            qemu_log_mask(LOG_UNIMP, "CCP ZLIB Error: Couldn't initialize zlib state\n");
+            return true;
+        }
     }
 
     /* Mapping input buffer */
     hsrc = cpu_physical_memory_map(src, &plen_in, false);
     if (plen_in != len) {
-        qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Zlib couldn't map guest input memory\n");
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB Error: Zlib couldn't map guest input memory\n");
         cpu_physical_memory_unmap(hsrc, plen_in, true, plen_in);
         return true;
     }
@@ -376,20 +378,40 @@ static bool ccp_zlib(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     /* TODO: Try to decompress page wise until we can't map the hosts memory anymore */
     plen_out = CCP_ZLIB_CHUNK_SIZE;
     hdst = cpu_physical_memory_map(dst, &plen_out, false);
-    if (plen_out != CCP_ZLIB_CHUNK_SIZE) {
-      /* qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Zlib couldn't map guest output memory\n"); */
-      err = true;
-        /* return; */
+
+    qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
+    qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n", (void*)dst, (void*)dst+plen_out);
+
+    ccp_zlib_status status = ccp_zlib_inflate(&s->zlib_state, plen_in, plen_out, hdst, hsrc);
+    if (plen_out)
+        cpu_physical_memory_unmap(hdst, plen_out, true, plen_out);
+
+    while (status != CCP_ZLIB_SUCCESS) {
+        if (status == CCP_ZLIB_ERROR) {
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB ERROR: Inflation failed after %#lx bytes.\n", s->zlib_state.total_out);
+            break;
+        }
+        if (status == CCP_ZLIB_MORE_DATA_PENDING) {
+            plen_out = CCP_ZLIB_CHUNK_SIZE;
+            hdst = cpu_physical_memory_map(dst+s->zlib_state.total_out, &plen_out, false);
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
+            qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n", (void*)dst+s->zlib_state.total_out, (void*)dst+s->zlib_state.total_out+plen_out);
+            status = ccp_zlib_continue_inflate(&s->zlib_state, plen_out, hdst);
+            if (plen_out)
+                cpu_physical_memory_unmap(hdst, plen_out, true, plen_out);
+            continue;
+        }
     }
 
-    ccp_zlib_inflate(&s->zlib_state, plen_in, plen_out, hdst, hsrc);
+    s->zlib_bytes_written += s->zlib_state.total_out;
 
-    if(eom) {
+    qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: Inflation ended after %#lx bytes. (%#x total)\n", s->zlib_state.total_out, s->zlib_bytes_written);
+
+    if (eom) {
       ccp_zlib_end(&s->zlib_state);
     }
 
     return err;
-
 }
 
 static void ccp_sha(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
@@ -424,7 +446,7 @@ static void ccp_sha(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
 
             break;
         default:
-            qemu_log_mask(LOG_UNIMP, "CCP Error. Unimplemented SHA type %d\n", 
+            qemu_log_mask(LOG_UNIMP, "CCP Error. Unimplemented SHA type %d\n",
                           func.sha.type);
             break;
 
@@ -527,7 +549,7 @@ static void ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
 
     trace_ccp_rsa(desc->src_lo, len, rsa_dst, rsa_dst_mtype, rsa_mode, rsa_size, eom, init);
 
-    if (rsa_mode == 0 && 
+    if (rsa_mode == 0 &&
             ( (rsa_size == 256 && len == 512) || (rsa_size == 512 && len == 1024)) ) {
 
         /* TODO consistent naming */
@@ -585,13 +607,12 @@ static void ccp_execute(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
             break;
         case CCP_ENGINE_ZLIB_DECOMPRESS:
             ccp_zlib(s, id, desc);
-            qemu_log_mask(LOG_UNIMP, "CCP: Unimplemented engine (ZLIB)\n");
             break;
         case CCP_ENGINE_ECC:
             qemu_log_mask(LOG_UNIMP, "CCP: Unimplemented engine (ECC)\n");
             break;
         default:
-            qemu_log_mask(LOG_UNIMP, "CCP: Unknown engine! val 0x%x\n", 
+            qemu_log_mask(LOG_UNIMP, "CCP: Unknown engine! val 0x%x\n",
                           CCP5_CMD_ENGINE(desc));
             break;
     }
@@ -718,6 +739,10 @@ static uint32_t ccp_config_read(CcpV5State *s, hwaddr offset) {
 
     uint32_t val = 0;
     switch (offset) {
+        case 0x28:
+            /* size of zlib decompressed data? */
+            val = s->zlib_bytes_written;
+            break;
         case 0x38:
             /* The on chip bootloader waits for bit 0 to go 1. */
             val = 1;
@@ -832,7 +857,7 @@ static void ccp_init(Object *obj) {
 
     ccp_init_q(s);
     s->sha_ctx.raw = NULL;
-
+    s->zlib_bytes_written = 0;
 }
 
 static const TypeInfo ccp_info = {

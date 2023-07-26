@@ -13,6 +13,9 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
 {
     uint64_t val;
     switch(offset) {
+        case 0x51050:
+            val = 0xb1aab1aa;
+            break;
 
         case 0x5a078:
             val = 0x10;
@@ -20,6 +23,11 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
 
         case 0x5a088:
             val = 0x1;
+            break;
+
+        // Zen2 ABL0
+        case 0x5a08c:
+            val = 0x8;
             break;
 
         // Zen Tesla
@@ -84,6 +92,21 @@ static uint64_t psp_smn_misc_read(void *opaque, hwaddr offset,
         // Zen Tesla
         case 0x5fb10:
             val = 0x1e113;
+            break;
+
+        // polled by Zen2 off-chip @af2a
+        case 0x3b10024:
+            val = 0x1;
+            break;
+
+        // polled by Zen off-chip @ae22
+        case 0x3b10034:
+            val = 0x1;
+            break;
+
+        // polled by Zen off-chip @827a
+        case 0x3b10704:
+            val = 0x1;
             break;
 
         // Zen 2

@@ -173,11 +173,40 @@ static int psp_misc_load_value(hwaddr addr, uint64_t * val)
     case 0x03200050:
         *val = 0x300; break;
 
-    // TODO this should depend on dbg flag: 
+    // TODO this should depend on dbg flag:
     // https://github.com/PSPReverse/PSPEmu/blob/78e4be24e882ae67867063c894fbfb2ecbe50f3f/psp-dev-mmio-unknown.c#L67
     case 0x030101c0:
         *val = 0x80102; break;
 
+    // added by me
+
+    case 0x51808:
+        *val = 0x15; break;
+
+    case 0x51d00:
+        *val = 0xd474ca10; break;
+
+    case 0x51d04:
+        *val = 0x9d274bf4; break;
+
+    case 0x51d08:
+        *val = 0xdbfeff86; break;
+
+    case 0x51d0c:
+        *val = 0xbd111061; break;
+
+    case 0x51ef0:
+        *val = 0xb5; break;
+
+    case 0x240003fd:
+        *val = 0x60; break;
+
+    case 0x26d81e77:
+        *val = 0x7; break;
+
+    // Zen2 ABL0: needs to be at least two
+    case 0x4fd53:
+        *val = 0x2; break;
 
     default:
         /* No value found */

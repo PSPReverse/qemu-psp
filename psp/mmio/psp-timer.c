@@ -188,7 +188,6 @@ static const TypeInfo psp_timer_info = {
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_init = psp_timer_init,
     .instance_size = sizeof(PSPTimerState),
-
 };
 
 static void psp_timer_register_types(void) {

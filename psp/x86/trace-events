@@ -1,0 +1,7 @@
+# psp-osmem.c
+psp_osmem_control_write(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_control_read(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_container_write(uint64_t slot, uint64_t addr, uint64_t value) "slot=0x%"PRIx64" addr=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_container_read(uint64_t slot, uint64_t addr, uint64_t value) "slot=0x%"PRIx64" addr=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_control_write_unimplemented(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_control_read_unimplemented(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
