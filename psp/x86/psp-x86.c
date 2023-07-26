@@ -256,8 +256,10 @@ static const MemoryRegionOps x86_ctlr3_ops = {
 static void psp_x86_init(Object *obj) {
 
     PSPX86State *s = PSP_X86(obj);
+    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
 
     /* Base address of the X86 containers in the PSP address space */
+
     object_property_add_uint64_ptr(obj,"x86-container-base", &s->psp_x86_base,
                                    OBJ_PROP_FLAG_READWRITE);
 
@@ -272,41 +274,44 @@ static void psp_x86_init(Object *obj) {
 
     object_property_set_bool(OBJECT(&s->psp_x86_misc), "realized", true,
                              &error_abort);
+
+    memory_region_init_io(&s->psp_x86_control1, obj, &x86_ctlr1_ops, s, TYPE_PSP_X86, PSP_X86_CTLR1_SIZE);
+    sysbus_init_mmio(sbd, &s->psp_x86_control1);
 }
 
-static void psp_x86_init_slots(DeviceState *dev) {
-    PSPX86State *s = PSP_X86(dev);
-
-    int i;
-    char name[PSP_X86_SLOT_NAME_LEN] = { 0 };
-    hwaddr slot_offset;
-
-    for(i = 0; i < PSP_X86_SLOT_COUNT; i++) {
-        /* The X86 MMIO region of the PSP */
-        snprintf(name, PSP_X86_SLOT_NAME_LEN, "%s%d", PSP_X86_SLOT_NAME, i);
-
-        /* TODO: How to check for errors? */
-        /* Each container is an alias to the X86 addres space. Here we
-         * initialize each container beginning with the address 0 in the x86
-         * address space.
-         */
-        memory_region_init_alias(&s->psp_x86_containers[i], OBJECT(dev), name,
-                                 &s->psp_x86_space, i * PSP_X86_SLOT_SIZE,
-                                 PSP_X86_SLOT_SIZE);
-
-        /* Map the containers to the PSP address space */
-        slot_offset = s->psp_x86_base + i * PSP_X86_SLOT_SIZE;
-
-        memory_region_add_subregion_overlap(get_system_memory(), slot_offset,
-                                            &s->psp_x86_containers[i], 0);
-
-    }
-}
+// static void psp_x86_init_slots(DeviceState *dev) {
+//     PSPX86State *s = PSP_X86(dev);
+//
+//     int i;
+//     char name[PSP_X86_SLOT_NAME_LEN] = { 0 };
+//     hwaddr slot_offset;
+//
+//     for(i = 0; i < PSP_X86_SLOT_COUNT; i++) {
+//         /* The X86 MMIO region of the PSP */
+//         snprintf(name, PSP_X86_SLOT_NAME_LEN, "%s%d", PSP_X86_SLOT_NAME, i);
+//
+//         /* TODO: How to check for errors? */
+//         /* Each container is an alias to the X86 addres space. Here we
+//          * initialize each container beginning with the address 0 in the x86
+//          * address space.
+//          */
+//         memory_region_init_alias(&s->psp_x86_containers[i], OBJECT(dev), name,
+//                                  &s->psp_x86_space, i * PSP_X86_SLOT_SIZE,
+//                                  PSP_X86_SLOT_SIZE);
+//
+//         /* Map the containers to the PSP address space */
+//         slot_offset = s->psp_x86_base + i * PSP_X86_SLOT_SIZE;
+//
+//         memory_region_add_subregion_overlap(get_system_memory(), slot_offset,
+//                                             &s->psp_x86_containers[i], 0);
+//
+//     }
+// }
 
 static void psp_x86_realize(DeviceState *dev, Error **errp) {
     PSPX86State *s = PSP_X86(dev);
     SysBusDevice *sbd = SYS_BUS_DEVICE(dev);
-    MemoryRegion *mr_x86_misc;
+    //MemoryRegion *mr_x86_misc;
 
     /* The X86 control register regions */
     memory_region_init_io(&s->psp_x86_control1, OBJECT(dev), &x86_ctlr1_ops,
@@ -325,23 +330,23 @@ static void psp_x86_realize(DeviceState *dev, Error **errp) {
     sysbus_init_mmio(sbd, &s->psp_x86_control3);
 
     /* The X86 address space. Independent from the PSP address space */
-    memory_region_init(&s->psp_x86_space, OBJECT(dev), "x86-address-space",
-                       (1UL << 48) /* 48 physical address bits */);
+    //memory_region_init(&s->psp_x86_space, OBJECT(dev), "x86-address-space",
+    //                   (1UL << 48) /* 48 physical address bits */);
 
     /* A MMIO accessible UART */
-    serial_mm_init(&s->psp_x86_space, 0xfffdfc0003f8, 0,
-                   0, 115200, serial_hd(0), DEVICE_NATIVE_ENDIAN);
+    //serial_mm_init(&s->psp_x86_space, 0xfffdfc0003f8, 0,
+    //               0, 115200, serial_hd(0), DEVICE_NATIVE_ENDIAN);
 
     /* Connect the misc device to the x86 address space */
     /* TODO: FIX */
     //s->psp_x86_misc.regs = psp_regs;
     //s->psp_x86_misc.regs_count = ARRAY_SIZE(psp_regs);
 
-    mr_x86_misc = sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_x86_misc), 0);
-    memory_region_add_subregion_overlap(&s->psp_x86_space, 0x0, mr_x86_misc,
-                                        -1000);
+    //mr_x86_misc = sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_x86_misc), 0);
+    //memory_region_add_subregion_overlap(&s->psp_x86_space, 0x0, mr_x86_misc,
+    //                                    -1000);
 
-    psp_x86_init_slots(dev);
+    //psp_x86_init_slots(dev);
 
 }
 

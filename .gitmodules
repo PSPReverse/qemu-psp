@@ -1,6 +1,3 @@
-[submodule "roms/seabios"]
-	path = roms/seabios
-	url = https://gitlab.com/qemu-project/seabios.git/
 [submodule "roms/SLOF"]
 	path = roms/SLOF
 	url = https://gitlab.com/qemu-project/SLOF.git
@@ -30,9 +27,6 @@
 [submodule "roms/edk2"]
 	path = roms/edk2
 	url = https://gitlab.com/qemu-project/edk2.git
-[submodule "roms/opensbi"]
-	path = roms/opensbi
-	url = 	https://gitlab.com/qemu-project/opensbi.git
 [submodule "roms/qboot"]
 	path = roms/qboot
 	url = https://gitlab.com/qemu-project/qboot.git

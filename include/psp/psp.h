@@ -29,6 +29,7 @@
 #include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
 #include "psp/x86/psp-x86.h"
+#include "psp/x86/psp-osmem.h"
 #include "psp/mmio/psp-timer.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/ccp/ccpv5.h"
@@ -43,9 +44,12 @@
 #define TYPE_AMD_PSP_ZEN_TESLA "amd-psp-zen_tesla"
 
 #define PSP_SMN_CTRL_BASE 0x03220000
-#define PSP_X86_CTRL1_BASE 0x03230000
-#define PSP_X86_CTRL2_BASE 0x032303e0
-#define PSP_X86_CTRL3_BASE 0x032304d8
+//#define PSP_X86_CTRL1_BASE 0x03230000
+//#define PSP_X86_CTRL2_BASE 0x032303e0
+//#define PSP_X86_CTRL3_BASE 0x032304d8
+
+#define PSP_OSMEM_CTL_BASE 0x03230000
+#define PSP_OSMEM_CONTAINERS_BASE 0x04000000
 
 #define PSP_TIMER1_BASE 0x03010400
 #define PSP_TIMER2_BASE 0x03010424
@@ -60,8 +64,8 @@
 #define PSP_MMIO_BASE 0x03000000
 #define PSP_MMIO_NAME "PSP MMIO"
 
-#define PSP_X86_BASE 0x04000000
-#define PSP_X86_NAME "PSP X86"
+//#define PSP_X86_BASE 0x04000000
+//#define PSP_X86_NAME "PSP X86"
 
 #define PSP_FUSE_BASE 0x03010104
 #define PSP_FUSE_NAME "PSP Fuse"
@@ -101,6 +105,9 @@ typedef struct AmdPspState {
 
   /* This device represents the x86 address space */
   //PSPX86State x86;
+
+  /* PSP OSMem at 0x03230000 */
+  PSPOSMemState osmem;
 
   /* PSP Timer 1 at 0x03010400*/
   PSPTimerState timer1;

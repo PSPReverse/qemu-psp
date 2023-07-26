@@ -23,6 +23,7 @@
 #include "exec/memory.h"
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
+#include "psp/smn/psp-smn-smu.h"
 
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */
@@ -65,6 +66,8 @@ typedef struct PSPSmnState {
 
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;
+
+    PSPSmnSmuState psp_smn_smu;
 
 } PSPSmnState;
 #endif

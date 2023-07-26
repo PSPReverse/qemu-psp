@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
+
+#include "psp/psp.h"
+
 #include "qapi/error.h"
 #include "qemu/module.h"
 #include "system/system.h"
@@ -26,13 +29,6 @@
 #include "hw/qdev-properties.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
-#include "psp/psp.h"
-#include "psp/psp-misc.h"
-#include "psp/generations.h"
-#include "psp/smn/psp-smn.h"
-#include "psp/x86/psp-x86.h"
-#include "psp/mmio/psp-timer.h"
-#include "psp/mmio/psp-sts.h"
 #include "qemu/log.h"
 
 /* TODO: use mmio_map_overlap with memory_regions_dispatch_rw to log access to SPI flash */
@@ -95,13 +91,17 @@ static void amd_psp_init(Object *obj)
      * Based on the reset in target/arm/cpu_tcg.c cortex_a9_initfn
      * Deactivates all flags except V bit (Hivecs)
      */
-    s->cpu.reset_sctlr = 0x00c52078;
+    //s->cpu.reset_sctlr = 0x00c52078;
+    s->cpu.reset_sctlr = 0;
+    s->cpu.reset_auxcr = 0x13c00;
 
     object_initialize_child(obj, "smn", &s->smn, c->smn_type);
 
     //object_initialize_child(obj, "x86", &s->x86, TYPE_PSP_X86);
 
     object_initialize_child(obj, "base_mem", &s->base_mem, TYPE_PSP_MISC);
+
+    object_initialize_child(obj, "osmem", &s->osmem, TYPE_PSP_OSMEM);
 
     object_initialize_child(obj, "timer1", &s->timer1,TYPE_PSP_TIMER);
 
@@ -150,9 +150,9 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
     }
 
     /* TODO: Register x86 address-spaces */
-    //object_property_set_uint(OBJECT(&s->x86), "x86-container-base",
-    //                        PSP_X86_BASE, &error_abort);
-    //sysbus_realize(SYS_BUS_DEVICE(&s->x86), &err);
+    /* object_property_set_uint(OBJECT(&s->x86), "x86-container-base", */
+    /*                          PSP_X86_BASE, &error_abort); */
+    /* sysbus_realize(SYS_BUS_DEVICE(&s->x86), &err); */
 
     qdev_prop_set_uint64(DEVICE(&s->base_mem), "psp_misc_msize", (1UL << 32));
 
@@ -181,6 +181,13 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
 
     /* Map X86 control registers */
     //sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 2, PSP_X86_CTRL3_BASE);
+
+    /* Map osmem */
+    if(!sysbus_realize(SYS_BUS_DEVICE(&s->osmem), errp)) {
+        return;
+    }
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->osmem), 0, PSP_OSMEM_CTL_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->osmem), 1, PSP_OSMEM_CONTAINERS_BASE);
 
     /* Map timer 1 */
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->timer1), errp)) {
