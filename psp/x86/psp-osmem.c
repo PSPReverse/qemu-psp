@@ -85,8 +85,8 @@ static void psp_osmem_write(void *opaque, hwaddr offset, uint64_t val,
     unsigned reg = offset % PSP_OSMEM_CTL_SLOT_SIZE;
 
     if (slot >= PSP_OSMEM_NUM_SLOTS || reg != 0) {
-        qemu_log_mask(LOG_UNIMP, "PSP OSMem. Error: Unsupported MMIO accces." \
-                      "offset=0x%" HWADDR_PRIx " value 0x%lx\n", offset,
+        qemu_log_mask(LOG_UNIMP, "PSP OSMem. Error: Unsupported MMIO access. " \
+                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n", offset,
                       val);
         return;
     }
@@ -167,8 +167,8 @@ static void psp_osmem_container_write(void *opaque, hwaddr offset, uint64_t val,
     unsigned addr = offset % 0x04000000;
 
     if (slot >= PSP_OSMEM_NUM_SLOTS) {
-        qemu_log_mask(LOG_UNIMP, "PSP OSMem. Error: Unsupported MMIO accces." \
-                      "offset=0x%" HWADDR_PRIx " value 0x%lx\n", offset,
+        qemu_log_mask(LOG_UNIMP, "PSP OSMem. Error: Unsupported MMIO access. " \
+                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n", offset,
                       val);
         return;
     }

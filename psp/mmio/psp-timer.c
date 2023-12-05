@@ -145,8 +145,8 @@ static void psp_timer_write(void *opaque, hwaddr offset, uint64_t val,
             trace_psp_timer_counter_write(val);
             break;
         default:
-            qemu_log_mask(LOG_UNIMP, "PSP Timer. Error: Unsupported MMIO accces." \
-                          "offset=0x%" HWADDR_PRIx " value 0x%lx\n", offset,
+            qemu_log_mask(LOG_UNIMP, "PSP Timer. Error: Unsupported MMIO access. " \
+                          "offset=0x%" HWADDR_PRIx " value=0x%lx\n", offset,
                           val);
             break;
     }
