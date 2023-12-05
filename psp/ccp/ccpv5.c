@@ -262,14 +262,14 @@ static void ccp_perform_sha_256(CcpV5State *s, hwaddr src, uint32_t len, bool eo
         while (bytes_read < len) {
             plen = len - bytes_read;
             hsrc = cpu_physical_memory_map(src + bytes_read, &plen, false);
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped %#lx bytes\n", plen);
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped from %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
+            //qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped %#lx bytes\n", plen);
+            //qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped from %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
             ccp_update_sha256(&s->sha_ctx, plen, hsrc);
             cpu_physical_memory_unmap(hsrc, plen, false, 0);
             bytes_read += plen;
         }
 
-        qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Digested %#x bytes\n", bytes_read);
+        //qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Digested %#x bytes\n", bytes_read);
 
         if (eom) {
             ccp_digest_sha256(&s->sha_ctx, lsb_ctx);
@@ -300,14 +300,14 @@ static void ccp_perform_sha_384(CcpV5State *s, hwaddr src, uint32_t len, bool eo
         while (bytes_read < len) {
             plen = len - bytes_read;
             hsrc = cpu_physical_memory_map(src + bytes_read, &plen, false);
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped %#lx bytes\n", plen);
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped from %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
+            //qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped %#lx bytes\n", plen);
+            //qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped from %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
             ccp_update_sha384(&s->sha_ctx, plen, hsrc);
             cpu_physical_memory_unmap(hsrc, plen, false, 0);
             bytes_read += plen;
         }
 
-        qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Digested %#x bytes\n", bytes_read);
+        //qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Digested %#x bytes\n", bytes_read);
 
         if (eom) {
             ccp_digest_sha384(&s->sha_ctx, lsb_ctx);
@@ -379,8 +379,8 @@ static bool ccp_zlib(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     plen_out = CCP_ZLIB_CHUNK_SIZE;
     hdst = cpu_physical_memory_map(dst, &plen_out, false);
 
-    qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
-    qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n", (void*)dst, (void*)dst+plen_out);
+    //qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
+    //qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n", (void*)dst, (void*)dst+plen_out);
 
     ccp_zlib_status status = ccp_zlib_inflate(&s->zlib_state, plen_in, plen_out, hdst, hsrc);
     if (plen_out)
@@ -394,8 +394,8 @@ static bool ccp_zlib(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
         if (status == CCP_ZLIB_MORE_DATA_PENDING) {
             plen_out = CCP_ZLIB_CHUNK_SIZE;
             hdst = cpu_physical_memory_map(dst+s->zlib_state.total_out, &plen_out, false);
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
-            qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n", (void*)dst+s->zlib_state.total_out, (void*)dst+s->zlib_state.total_out+plen_out);
+            //qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
+            //qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n", (void*)dst+s->zlib_state.total_out, (void*)dst+s->zlib_state.total_out+plen_out);
             status = ccp_zlib_continue_inflate(&s->zlib_state, plen_out, hdst);
             if (plen_out)
                 cpu_physical_memory_unmap(hdst, plen_out, true, plen_out);
@@ -405,7 +405,7 @@ static bool ccp_zlib(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
 
     s->zlib_bytes_written += s->zlib_state.total_out;
 
-    qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: Inflation ended after %#lx bytes. (%#x total)\n", s->zlib_state.total_out, s->zlib_bytes_written);
+    //qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: Inflation ended after %#lx bytes. (%#x total)\n", s->zlib_state.total_out, s->zlib_bytes_written);
 
     if (eom) {
       ccp_zlib_end(&s->zlib_state);
