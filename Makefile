@@ -10,7 +10,8 @@ BUILD_DIR=$(CURDIR)
 # Before including a proper config-host.mak, assume we are in the source tree
 SRC_PATH=.
 
-LIBS += -lnettle
+# TODO: Figure out correct way to add nettle
+# LIBS += -lnettle
 
 # Don't use implicit rules or variables
 # we have explicit rules for everything
