@@ -677,5 +677,5 @@ config ARMSSE
     select SSE_TIMER
 
 config AMD_PSP
-    default y
     bool
+    default y
