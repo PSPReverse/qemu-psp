@@ -6,3 +6,10 @@
 
 # Load QEMU-specific sub-commands and settings
 source scripts/qemu-gdb.py
+
+source ~/.local/bin/sync.py
+
+
+define setup
+    target remote localhost:1234
+    sync
