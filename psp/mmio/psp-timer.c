@@ -29,6 +29,7 @@
 #include "psp/psp.h"
 #include "qemu/log.h"
 #include "psp/mmio/psp-timer.h"
+
 #include "trace.h"
 
 static char ident[] = "PSP Timer";

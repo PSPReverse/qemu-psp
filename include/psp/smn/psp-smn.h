@@ -21,9 +21,11 @@
 
 #include "hw/sysbus.h"
 #include "exec/memory.h"
+
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-smu.h"
+
 
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */

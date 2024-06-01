@@ -1,7 +1,6 @@
 #include "qemu/osdep.h"
 #include "qemu/module.h"
 #include "qapi/error.h"
-#include "trace-hw_arm.h"
 #include "trace.h"
 
 #include "psp/smn/psp-smn-misc.h"

@@ -1,0 +1,3 @@
+config AMD_PSP
+    bool
+    default y
