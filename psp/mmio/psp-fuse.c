@@ -11,9 +11,9 @@
 #include "qapi/error.h"
 #include "hw/sysbus.h"
 #include "hw/qdev-properties.h"
-
 #include "psp/mmio/psp-fuse.h"
 #include "trace.h"
+
 
 static uint64_t psp_fuse_read(void *opaque, hwaddr offset, unsigned int size) {
     PSPFuseState * fuse = PSP_FUSE(opaque);

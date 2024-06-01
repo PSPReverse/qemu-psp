@@ -29,9 +29,10 @@
 #include "hw/boards.h"
 #include "hw/char/serial-mm.h"
 #include "hw/loader.h"
-#include "psp/psp.h"
 #include "qemu/log.h"
+
 #include "psp/x86/psp-x86.h"
+
 
 /* TODO: Refactor */
 //static PSPMiscReg psp_regs[] = {

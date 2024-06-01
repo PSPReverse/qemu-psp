@@ -5,3 +5,4 @@ source target/Kconfig
 source hw/Kconfig
 source semihosting/Kconfig
 source rust/Kconfig
+source psp/Kconfig
