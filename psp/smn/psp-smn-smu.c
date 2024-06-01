@@ -28,7 +28,7 @@
 #include "hw/boards.h"
 #include "hw/loader.h"
 #include "qemu/log.h"
-#include "trace-hw_arm.h"
+
 #include "trace.h"
 #include "psp/smn/psp-smn-smu.h"
 

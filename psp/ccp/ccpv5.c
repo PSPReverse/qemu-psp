@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <byteswap.h>
 #include <zlib.h>
 #include "qemu/osdep.h"
@@ -34,7 +35,6 @@
 #include "psp/ccp/ccpv5.h"
 #include "psp/ccp/ccpv5-linux.h"
 #include "psp/ccp/ccpv5-nettle.h"
-#include "psp/psp.h"
 #include "crypto/hash.h"
 #include "trace.h"
 /* TODO: Restrict access to specific MemoryRegions only.
