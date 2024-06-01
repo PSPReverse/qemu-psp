@@ -48,6 +48,11 @@
 static int psp_misc_load_value(hwaddr addr, uint64_t * val)
 {
     switch (addr){
+    
+    
+    case 0x100ac: /* Checked in zen 2 off-chip bl at 00002abc*/
+        *val = 0x1;
+        break;
 
     case 0x5b304:
         /* Read by the on chip bootloader and acted upon. */
