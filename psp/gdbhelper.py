@@ -39,7 +39,7 @@ class Setup(gdb.Command):
         )
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
         qemu_log = open(self.build_dir / "qemu.log", "a")
-        cmd = Popen(shlex.split(cmd), stdout=qemu_log, stderr=qemu_log)
+        cmd = Popen(shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True)
         print(f"New qemu has PID {cmd.pid}")
         with open(path_to_pid, "w") as f:
             f.write(str(cmd.pid))
