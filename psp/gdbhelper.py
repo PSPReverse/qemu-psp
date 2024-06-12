@@ -9,7 +9,6 @@ from pathlib import Path
 sys.path.append(os.path.dirname(__file__))
 
 
-
 class Setup(gdb.Command):
 
     def __init__(self):
@@ -39,7 +38,9 @@ class Setup(gdb.Command):
         )
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
         qemu_log = open(self.build_dir / "qemu.log", "a")
-        cmd = Popen(shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True)
+        cmd = Popen(
+            shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True
+        )
         print(f"New qemu has PID {cmd.pid}")
         with open(path_to_pid, "w") as f:
             f.write(str(cmd.pid))
@@ -52,9 +53,70 @@ class Setup(gdb.Command):
         gdb.execute("sync")
         gdb.execute("si")
 
+
+class Bisect(gdb.Command):
+    def __init__(self):
+        super(Bisect, self).__init__("bisect", gdb.COMMAND_USER)
+
+    def get_location_of_bp(self, pos: int) -> int:
+        bp = [x for x in gdb.breakpoints() if x.number == pos]
+        assert len(bp) == 1
+        bp = bp[0]
+        location = bp.location.lstrip("*0x ")
+        return int(location, 16)
+
+    def invoke(self, args, _from_tty):
+        argv = gdb.string_to_argv(args)
+        assert len(argv) == 2
+        first = self.get_location_of_bp(int(argv[0]))
+        second = self.get_location_of_bp(int(argv[1]))
+        new_pos = first + (second - first) // 2
+        pos_str = f"*{hex(new_pos)}"
+        print(pos_str)
+        gdb.Breakpoint(pos_str)
+
+
+class JumpTo(gdb.Command):
+    def __init__(self):
+        super(JumpTo, self).__init__("jump_to", gdb.COMMAND_USER)
+
+    def invoke(self, args, _from_tty):
+        argv = gdb.string_to_argv(args)
+        assert len(argv) == 2
+        overwrite_location = int(argv[0], 0)  # Parse hex string
+        target = int(argv[1], 0)  # Parse hex string
+        diff = target - overwrite_location
+        assert diff > 0
+        bp = gdb.Breakpoint(f"*{argv[0]}")
+        bp.commands = f"jump *{argv[1]}\n end"
+
+
 s = Setup()
+Bisect()
+j = JumpTo()
 
 # overwrite of 0x100ac
-gdb.Breakpoint("*0x06988").commands = "set $r0=0x1 \n print $r0 \n end"
+bp = gdb.Breakpoint("*0x06988")
+bp.commands = "set $r0=0x1 \n continue \n end"
+bp.silent = True
+
+# Jump to X86_IRQ_HANLDE_WORKLOOP_MAYBE
+j.invoke("0x02b0e 0x2b8a", False)
+
+
+# overwrite of function that returns error
+# bp = gdb.Breakpoint("*0x02b14")
+# bp.commands = "set $r0=0x0 \n continue \n end"
+# bp.silent = True
+
+# Report error code in GDB
+gdb.Breakpoint("*0x00007274").commands = (
+    "echo Reached errror state \\n \n x/x 0x32000d8 \n end"
+)
+
+# fix function in x86_workloop
+bp = gdb.Breakpoint("*0x9236")
+bp.commands = "set $r0=0x0 \n continue \n end"
+bp.silent = True
 
 s.invoke("", False)
