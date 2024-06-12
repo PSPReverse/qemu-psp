@@ -35,8 +35,7 @@
 static uint64_t psp_sts_read(void *opaque, hwaddr offset, unsigned int size) {
     PSPStsState *s = PSP_STS(opaque);
     trace_psp_sts_read(s->psp_sts_val);
-    //return s->psp_sts_val;
-    return 0;
+    return s->psp_sts_val;
 }
 
 static void psp_sts_write(void *opaque, hwaddr offset,
