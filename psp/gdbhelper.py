@@ -95,28 +95,27 @@ s = Setup()
 Bisect()
 j = JumpTo()
 
-# overwrite of 0x100ac
-bp = gdb.Breakpoint("*0x06988")
-bp.commands = "set $r0=0x1 \n continue \n end"
-bp.silent = True
+import yaml
+with open(os.environ["FUZZER_CONFIG"], "r") as f:
+    config = yaml.safe_load(f)
 
-# Jump to X86_IRQ_HANLDE_WORKLOOP_MAYBE
-j.invoke("0x02b0e 0x2b8a", False)
-
-
-# overwrite of function that returns error
-# bp = gdb.Breakpoint("*0x02b14")
-# bp.commands = "set $r0=0x0 \n continue \n end"
-# bp.silent = True
+for tunnel in config["tunnels"]:
+    action = tunnel["action"]
+    if action == "Jump":
+        j.invoke(f"{tunnel["source"]} {tunnel["target"]}", False)
+    elif action == "SetConstant":
+        bp = gdb.Breakpoint(f"*{tunnel["addr"]}")
+        bp.commands = f"set ${tunnel["target"].lower()}={tunnel["value"]} \n continue \n end"
+        bp.silent = True
+    elif action == "LogRegister":
+        bp = gdb.Breakpoint(f"*{tunnel["addr"]}")
+        bp.commands = f"echo addr: {hex(tunnel["addr"])} \t \n i r {tunnel["target"].lower()}\n continue \n end"
+        bp.silent = True
 
 # Report error code in GDB
-gdb.Breakpoint("*0x00007274").commands = (
+# This is part of the sinks, so we do it manually
+gdb.Breakpoint("*0x7274").commands = (
     "echo Reached errror state \\n \n x/x 0x32000d8 \n end"
 )
-
-# fix function in x86_workloop
-bp = gdb.Breakpoint("*0x9236")
-bp.commands = "set $r0=0x0 \n continue \n end"
-bp.silent = True
 
 s.invoke("", False)
