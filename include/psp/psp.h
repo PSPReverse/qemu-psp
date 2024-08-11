@@ -27,21 +27,16 @@
 
 #include "psp/generations.h"
 #include "psp/psp-misc.h"
+#include "psp/ccp/ccpv5.h"
+#include "psp/mmio/psp-timer.h"
+#include "psp/mmio/psp-sts.h"
 #include "psp/smn/psp-smn.h"
 #include "psp/x86/psp-x86.h"
 #include "psp/x86/psp-osmem.h"
-#include "psp/mmio/psp-timer.h"
-#include "psp/mmio/psp-sts.h"
-#include "psp/ccp/ccpv5.h"
+
 
 #define TYPE_AMD_PSP "amd-psp"
 #define AMD_PSP(obj) OBJECT_CHECK(AmdPspState, (obj), TYPE_AMD_PSP)
-
-#define TYPE_AMD_PSP_ZEN "amd-psp-zen_one"
-#define TYPE_AMD_PSP_ZEN_PLUS "amd-psp-zen_plus"
-#define TYPE_AMD_PSP_ZEN_TWO "amd-psp-zen_two"
-#define TYPE_AMD_PSP_ZEN_THREE "amd-psp-zen_three"
-#define TYPE_AMD_PSP_ZEN_TESLA "amd-psp-zen_tesla"
 
 #define PSP_SMN_CTRL_BASE 0x03220000
 //#define PSP_X86_CTRL1_BASE 0x03230000
@@ -76,12 +71,6 @@
 #define PSP_ROM_BASE  0xffff0000
 #define PSP_ROM_NAME "PSP ROM"
 
-#define PSP_ROM_SIZE  0x10000
-
-#define PSP_SRAM_ADDR  0x0
-#define PSP_SRAM_SIZE_ZEN  0x40000
-#define PSP_SRAM_SIZE_ZEN_PLUS  0x40000
-#define PSP_SRAM_SIZE_ZEN_2  0x50000
 
 typedef struct AmdPspState {
   /*< private >*/
