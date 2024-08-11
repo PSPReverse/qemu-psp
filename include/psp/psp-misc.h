@@ -18,7 +18,7 @@
  */
 #ifndef AMD_PSP_MISC_H
 #define AMD_PSP_MISC_H
-
+#include "psp/generations.h"
 
 #define TYPE_PSP_MISC "amd_psp.misc"
 #define PSP_MISC(obj) OBJECT_CHECK(PSPMiscState, (obj), TYPE_PSP_MISC)
@@ -38,6 +38,9 @@ typedef struct PSPMiscState {
 
     /* Identifier of this instance */
     char *ident;
+
+    /* Which Generation is being emulated*/
+    PspGeneration generation;
 
 } PSPMiscState;
 

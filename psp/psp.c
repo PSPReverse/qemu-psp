@@ -32,24 +32,7 @@
 #include "qemu/log.h"
 
 /* TODO: use mmio_map_overlap with memory_regions_dispatch_rw to log access to SPI flash */
-// TODO: use mmio_map_overlap with memory_regions_dispatch_rw to log access to SPI flash
-
-static uint32_t PspGetSramSize(PspGeneration gen) {
-  switch(gen) {
-    case ZEN:
-      return PSP_SRAM_SIZE_ZEN;
-    case ZEN_PLUS:
-      return PSP_SRAM_SIZE_ZEN_PLUS;
-    case ZEN2:
-      return PSP_SRAM_SIZE_ZEN_2;
-    default:
-      return PSP_SRAM_SIZE_ZEN;
-  }
-
-}
-
 /* NOTE: MachineState = state of instantiated MachineClass */
-
 /* TODO: Check CPU Object properties */
 
 /* The base class */
@@ -157,6 +140,7 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
     qdev_prop_set_uint64(DEVICE(&s->base_mem), "psp_misc_msize", (1UL << 32));
 
     qdev_prop_set_string(DEVICE(&s->base_mem), "psp_misc_ident", "BASE MEM");
+    qdev_prop_set_uint32(DEVICE(&s->base_mem), "generation", PspNameToGen(DEVICE_GET_CLASS(dev)->desc));
 
     if(!sysbus_realize(SYS_BUS_DEVICE(&s->base_mem), &err)) {
         return;
@@ -258,11 +242,11 @@ static void amd_psp_zen_class_init(ObjectClass *oc, void *data) {
 
     dc->desc = PspGenToName(ZEN);
 
-    pspc->sram_size = PspGetSramSize(ZEN);
+    pspc->sram_size = 0x40000;
     pspc->sram_base = 0x0;
 
     pspc->rom_size = (64 * 1024);
-    pspc->rom_base = 0xffff0000;
+    pspc->rom_base = PSP_ROM_BASE;
 
     pspc->smn_type = TYPE_PSP_SMN_ZEN;
     pspc->smn_ctrl_base = 0x03220000;
@@ -285,11 +269,11 @@ static void amd_psp_zen_two_class_init(ObjectClass *oc, void *data) {
 
     dc->desc = PspGenToName(ZEN2);
 
-    pspc->sram_size = PspGetSramSize(ZEN2);
+    pspc->sram_size = 0x50000;
     pspc->sram_base = 0x0;
 
     pspc->rom_size = (64 * 1024);
-    pspc->rom_base = 0xffff0000;
+    pspc->rom_base = PSP_ROM_BASE;
 
     pspc->smn_type = TYPE_PSP_SMN_ZEN2;
     pspc->smn_ctrl_base = 0x03220000;
@@ -308,7 +292,7 @@ static void amd_psp_zen_three_class_init(ObjectClass *oc, void *data) {
     pspc->sram_base = 0x0;
 
     pspc->rom_size = (64 * 1024);
-    pspc->rom_base = 0xffff0000;
+    pspc->rom_base = PSP_ROM_BASE;
 
     pspc->smn_type = TYPE_PSP_SMN_ZEN3;
     pspc->smn_ctrl_base = 0x03220000;
@@ -327,7 +311,7 @@ static void amd_psp_zen_tesla_class_init(ObjectClass *oc, void *data) {
     pspc->sram_base = 0x0;
 
     pspc->rom_size = (64 * 1024);
-    pspc->rom_base = 0xffff0000;
+    pspc->rom_base = PSP_ROM_BASE;
 
     pspc->smn_type = TYPE_PSP_SMN_ZENTESLA;
     pspc->smn_ctrl_base = 0x03220000;
@@ -370,3 +354,4 @@ static const TypeInfo amd_psp_types[] = {
 };
 
 DEFINE_TYPES(amd_psp_types)
+
