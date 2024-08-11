@@ -221,20 +221,6 @@ static int psp_misc_load_value(hwaddr addr, uint64_t * val)
     return 0;
 }
 
-static void psp_misc_set_identifier(Object *obj, const char *str, Error **errp)
-{
-    PSPMiscState *s = PSP_MISC(obj);
-
-    s->ident = g_strdup(str);
-}
-
-static char *psp_misc_get_identifier(Object *obj, Error **errp)
-{
-    PSPMiscState *s = PSP_MISC(obj);
-
-    return g_strdup(s->ident);
-}
-
 static void psp_misc_write(void *opaque, hwaddr offset, uint64_t value,
                            unsigned int size)
 {
@@ -284,14 +270,6 @@ static void psp_misc_init(Object *obj)
 
     s->mmio_size = 0;
     s->ident = NULL;
-
-    /* TODO: What is the difference to e.g. DEFINE_PROP_UINT32 ? */
-    object_property_add_uint64_ptr(obj,"psp_misc_msize", &s->mmio_size,
-                                   OBJ_PROP_FLAG_READWRITE);
-
-    object_property_add_str(obj,"psp_misc_ident",psp_misc_get_identifier,
-                            psp_misc_set_identifier);
-
 }
 
 static void psp_misc_realize(DeviceState *dev, Error **errp)
@@ -308,6 +286,12 @@ static void psp_misc_realize(DeviceState *dev, Error **errp)
         return;
     }
 
+    if (s->generation == ZENTESLA + 1) {
+        error_setg(errp, "property 'psp_misc_generation' not specified");
+        return;
+    }
+
+
     memory_region_init_io(&s->iomem, OBJECT(dev), &misc_mem_ops, s,
                           s->ident, 0x44000000);
 
@@ -315,10 +299,18 @@ static void psp_misc_realize(DeviceState *dev, Error **errp)
 
 }
 
+static Property properties[] = {
+    DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
+    DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
+    DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation, ZENTESLA + 1),
+};
+
+
 static void psp_misc_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
     dc->realize = psp_misc_realize;
+    device_class_set_props(dc, properties);
 }
 
 static const TypeInfo psp_misc_info = {
