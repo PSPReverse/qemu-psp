@@ -96,6 +96,8 @@ static void amd_psp_init(Object *obj)
 
     object_initialize_child(obj, "psp-fuse", &s->fuse, TYPE_PSP_FUSE);
 
+    object_initialize_child(obj, "mailbox", &s->mailbox, TYPE_MAILBOX);
+
     object_initialize_child(obj, "unimp", &s->unimp, TYPE_UNIMPLEMENTED_DEVICE);
 }
 
@@ -196,6 +198,13 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
         return;
     }
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->ccp), 0, PSP_CCP_BASE);
+
+
+    /* Map Mailbox> */
+    if(!sysbus_realize(SYS_BUS_DEVICE(&s->mailbox), errp)) {
+        return;
+    }
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->mailbox), 0, PSP_MAILBOX_BASE);
 
     /* Map Fuse */
     if(s->dbg_mode) {
