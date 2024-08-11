@@ -10,8 +10,10 @@
  * generations
  *
  */
+
 #include <stddef.h> // for _Static_assert
 #include <stdint.h>
+
 #define TYPE_AMD_PSP_ZEN "amd-psp-zen_one"
 #define TYPE_AMD_PSP_ZEN_PLUS "amd-psp-zen_plus"
 #define TYPE_AMD_PSP_ZEN_TWO "amd-psp-zen_two"
@@ -25,8 +27,8 @@ typedef enum PspGeneration {
     ZENTESLA,
     PSP_GENERATION_MAX,
 } PspGeneration;
-_Static_assert(sizeof(PspGeneration) == sizeof(uint32_t),
-               "PspGeneration should be uint32_t");
+
+_Static_assert(sizeof(PspGeneration) == sizeof(uint32_t), "PspGeneration should be uint32_t");
 
 const char* PspGenToName(PspGeneration gen);
 PspGeneration PspNameToGen(const char* name);
