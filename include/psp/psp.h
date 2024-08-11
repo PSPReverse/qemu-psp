@@ -28,6 +28,7 @@
 #include "psp/generations.h"
 #include "psp/psp-misc.h"
 #include "psp/ccp/ccpv5.h"
+#include "psp/mmio/mailbox.h"
 #include "psp/mmio/psp-timer.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/smn/psp-smn.h"
@@ -61,6 +62,8 @@
 
 //#define PSP_X86_BASE 0x04000000
 //#define PSP_X86_NAME "PSP X86"
+
+#define PSP_MAILBOX_BASE 0x03010570
 
 #define PSP_FUSE_BASE 0x03010104
 #define PSP_FUSE_NAME "PSP Fuse"
@@ -112,6 +115,9 @@ typedef struct AmdPspState {
 
   /* Fuse */
   PSPFuseState fuse;
+
+  /* Mailbox */
+  MailboxState mailbox;
 
   /* General unimplemented devices */
   UnimplementedDeviceState unimp;

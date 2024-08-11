@@ -266,11 +266,10 @@ static const MemoryRegionOps misc_mem_ops = {
     .impl.max_access_size = 4,
 };
 
+
 static void psp_misc_init(Object *obj)
 {
     PSPMiscState *s = PSP_MISC(obj);
-
-    s->mmio_size = 0;
     s->ident = NULL;
 }
 
@@ -285,6 +284,10 @@ static void psp_misc_realize(DeviceState *dev, Error **errp)
 
     if (s->ident == NULL) {
         error_setg(errp, "property 'ident' not specified");
+        return;
+    }
+    if(s->generation == ZENTESLA + 1) {
+        error_setg(errp, "property 'generation' not specified");
         return;
     }
 
