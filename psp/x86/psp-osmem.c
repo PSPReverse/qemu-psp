@@ -28,9 +28,10 @@
 #include "hw/loader.h"
 #include "qemu/log.h"
 
-#include "trace.h"
 
 #include "psp/x86/psp-osmem.h"
+#include "trace.h"
+
 
 static char ident[] = "PSP OSMem";
 /*

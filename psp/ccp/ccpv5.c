@@ -32,10 +32,11 @@
 #include "hw/loader.h"
 #include "qemu/log-for-trace.h"
 #include "qemu/log.h"
+#include "crypto/hash.h"
+
 #include "psp/ccp/ccpv5.h"
 #include "psp/ccp/ccpv5-linux.h"
 #include "psp/ccp/ccpv5-nettle.h"
-#include "crypto/hash.h"
 #include "trace.h"
 /* TODO: Restrict access to specific MemoryRegions only.
  *       Verify correct use of cpu_physical_memory_map/unmap */
