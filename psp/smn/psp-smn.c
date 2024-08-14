@@ -57,6 +57,7 @@ typedef struct PspSmnClass {
     /*< public >*/
     hwaddr flash;
     hwaddr smu;
+    PspGeneration gen;
 } PspSmnClass;
 
 #define PSP_SMN_CLASS(klass) \
@@ -180,14 +181,10 @@ static void psp_smn_init(Object *obj)
     PSPSmnState *s = PSP_SMN(obj);
     /* SysBusDevice *sbd = SYS_BUS_DEVICE(obj); */
 
-
     /* Base address of the SMN containers in the PSP address space */
-    object_property_add_uint64_ptr(obj,"smn-container-base", &s->psp_smn_base,
-                                   OBJ_PROP_FLAG_READWRITE);
 
     object_initialize_child(obj, "smn_misc", &s->psp_smn_misc,
                             TYPE_PSP_SMN_MISC);
-
     object_initialize_child(obj, "smn_flash", &s->psp_smn_flash,
                             TYPE_PSP_SMN_FLASH);
 
@@ -233,6 +230,7 @@ static void psp_smn_realize(DeviceState *dev, Error **errp) {
     PSPSmnSmuState* smu;
     Error *err = NULL;
 
+    qdev_prop_set_uint32(DEVICE(&s->psp_smn_misc), "psp_smn_misc_generation", c->gen);
     sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_misc), &err);
     sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_flash), &err);
     sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_smu), &err);
@@ -272,6 +270,11 @@ static void psp_smn_class_init(ObjectClass *oc, void *data) {
     dc->realize = psp_smn_realize;
 }
 
+static Property psp_smn_properties[] = {
+    DEFINE_PROP_UINT64("smn-container-base", PSPSmnState, psp_smn_base, 0),
+    DEFINE_PROP_END_OF_LIST(),
+};
+
 static void psp_smn_common_class_init(ObjectClass *oc, enum PspGeneration gen) {
     DeviceClass *dc = DEVICE_CLASS(oc);
     PspSmnClass *sc = PSP_SMN_CLASS(oc);
@@ -279,6 +282,8 @@ static void psp_smn_common_class_init(ObjectClass *oc, enum PspGeneration gen) {
     dc->desc = psp_smn_configuration[gen].desc;
     sc->flash = psp_smn_configuration[gen].flash;
     sc->smu = psp_smn_configuration[gen].smu;
+    sc->gen = gen;
+    device_class_set_props(dc, psp_smn_properties);
 }
 
 static void psp_smn_zen_class_init(ObjectClass *oc, void *data) {
