@@ -1,9 +1,10 @@
 #include "qemu/osdep.h"
 #include "qemu/module.h"
 #include "qapi/error.h"
-#include "trace.h"
+#include "hw/qdev-properties.h"
 
 #include "psp/smn/psp-smn-misc.h"
+#include "trace.h"
 
 #define PSP_SMN_MISC_LOG "[PSP SMN MISC]"
 
@@ -222,28 +223,33 @@ static const MemoryRegionOps misc_mem_ops = {
     .impl.max_access_size = 4,
 };
 
-static void psp_misc_realize(DeviceState *dev, Error **errp) {
+static void psp_smn_misc_realize(DeviceState *dev, Error **errp) {
     PSPSmnMiscState * s = PSP_SMN_MISC(dev);
-
+    if(s->generation == ZENTESLA + 1) {
+        error_setg(errp, "property 'psp_smn_misc_generation' not specified");
+        return;
+    }
     /* Init mmio */
     memory_region_init_io(&s->iomem, OBJECT(dev), &misc_mem_ops, s,
                           "psp-smn-misc", UINT32_MAX);
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
-static void psp_smn_misc_init(Object *o) {
-}
+static Property psp_smn_misc_properties[] = {
+    DEFINE_PROP_UINT32("psp_smn_misc_generation", PSPSmnMiscState, generation, ZENTESLA+1),
+    DEFINE_PROP_END_OF_LIST(),
+};
 
 static void psp_smn_misc_class_init(ObjectClass *oc, void *data)
 {
     DeviceClass *dc = DEVICE_CLASS(oc);
-    dc->realize = psp_misc_realize;
+    dc->realize = psp_smn_misc_realize;
+    device_class_set_props(dc, psp_smn_misc_properties);
 }
 
 static const TypeInfo psp_smn_misc_info = {
     .name = TYPE_PSP_SMN_MISC,
     .parent = TYPE_SYS_BUS_DEVICE,
-    .instance_init = psp_smn_misc_init,
     .instance_size = sizeof(PSPSmnMiscState),
     .class_init = psp_smn_misc_class_init,
 };

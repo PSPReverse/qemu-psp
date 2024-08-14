@@ -103,7 +103,8 @@ static void amd_psp_init(Object *obj)
 
 /* Realize the psp and configure devices */
 static void amd_psp_realize(DeviceState *dev, Error **errp)
-{
+{   
+    ERRP_GUARD();
     AmdPspState *s = AMD_PSP(dev);
     AmdPspClass *c = AMD_PSP_GET_CLASS(dev);
 
@@ -112,17 +113,13 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
     qemu_log("Generation: %s\n", s->gen_ident);
     qemu_log("Generation: %s\n", DEVICE_GET_CLASS(dev)->desc);
 
-    /* TODO: Maybe use "&error_abort" instead? */
-    Error *err = NULL;
 
     /* Enable the ARM TrustZone extensions */
     /* TODO: Enable the ARM TrustZone extensions. Needed? */
     //object_property_set_bool(OBJECT(&s->cpu), "has_el3", true,  &err);
 
     /* Init CPU object. TODO convert to qdev_init_nofail */
-    qdev_realize(DEVICE(&s->cpu), NULL, &err);
-    if (err != NULL) {
-        error_propagate(errp, err);
+    if (!qdev_realize(DEVICE(&s->cpu), NULL, errp)) {
         return;
     }
 
@@ -144,7 +141,7 @@ static void amd_psp_realize(DeviceState *dev, Error **errp)
     qdev_prop_set_string(DEVICE(&s->base_mem), "psp_misc_ident", "BASE MEM");
     qdev_prop_set_uint32(DEVICE(&s->base_mem), "psp_misc_generation", PspNameToGen(DEVICE_GET_CLASS(dev)->desc));
 
-    if(!sysbus_realize(SYS_BUS_DEVICE(&s->base_mem), &err)) {
+    if(!sysbus_realize(SYS_BUS_DEVICE(&s->base_mem), errp)) {
         return;
     }
 

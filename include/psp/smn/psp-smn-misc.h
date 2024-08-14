@@ -17,6 +17,7 @@
 #define AMD_PSP_SMN_MISC_H
 
 #include "hw/sysbus.h"
+#include "psp/generations.h"
 
 #define TYPE_PSP_SMN_MISC "amd_psp.smn.misc"
 #define PSP_SMN_MISC(obj) OBJECT_CHECK(PSPSmnMiscState, (obj), TYPE_PSP_SMN_MISC)
@@ -26,6 +27,7 @@ typedef struct PSPSmnMiscState {
     SysBusDevice parent;
     /* <public> */
     MemoryRegion iomem;
+    PspGeneration generation;
 } PSPSmnMiscState;
 
 #endif

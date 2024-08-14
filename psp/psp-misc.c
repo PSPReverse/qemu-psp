@@ -287,7 +287,7 @@ static void psp_misc_realize(DeviceState *dev, Error **errp)
         return;
     }
     if(s->generation == ZENTESLA + 1) {
-        error_setg(errp, "property 'generation' not specified");
+        error_setg(errp, "property 'psp_misc_generation' not specified");
         return;
     }
 
