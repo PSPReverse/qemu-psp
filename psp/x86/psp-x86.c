@@ -76,9 +76,6 @@ static void psp_x86_map_slot(PSPX86State *s, uint32_t slot_id) {
 
     memory_region_set_alias_offset(&s->psp_x86_containers[slot_id], slot->x86_addr);
 
-
-
-
 }
 
 static void psp_x86_ctrl_write(PSPX86State *s, uint32_t slot_id, PSPX86RegId reg_id,
