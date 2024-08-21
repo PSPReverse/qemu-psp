@@ -17,7 +17,7 @@ conditial_bps = [
         # Figure out which function is called
         "0xda38",
         # Load app contents
-        "0xd5e6"
+        "0xd5e6",
     ]
 ]
 for bp in conditial_bps:
@@ -26,10 +26,13 @@ for bp in conditial_bps:
 
 class Setup(gdb.Command):
 
-    def __init__(self):
+    def __init__(self, generation, on_chip_bl, off_chip_bl):
         super(Setup, self).__init__("setup", gdb.COMMAND_USER)
         self.build_dir = Path(__file__).parent.parent / "build" / "manual"
         print(self.build_dir.absolute())
+        self.generation = generation
+        self.on_chip_bl = on_chip_bl
+        self.off_chip_bl = off_chip_bl
 
     def kill_and_restart(self):
         path_to_pid = self.build_dir / "pid.txt"
@@ -48,8 +51,8 @@ class Setup(gdb.Command):
             print(e)
         cmd = (
             f'{self.build_dir}/qemu-system-arm -d "guest_errors,trace:psp_*,trace:ccp_*" -s -S '
-            f'--machine {os.getenv("PSP_GENERATION", "amd-psp-zen2") } -device loader,file={os.environ["PSP_ON_CHIP_BL"]},addr=0xffff0000,force-raw=on '
-            f'-global driver=amd_psp.smnflash,property=flash_img,value={os.environ["PSP_FLASH_IMAGE"]}'
+            f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
+            f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl}"
         )
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
         qemu_log = open(self.build_dir / "qemu.log", "a")
@@ -113,14 +116,38 @@ class JumpTo(gdb.Command):
         bp.commands = f"jump *{argv[1]}\n end"
 
 
-s = Setup()
+import yaml
+
+config_path = Path(os.environ["FUZZER_CONFIG"])
+with open(config_path, "r") as f:
+    config = yaml.safe_load(f)
+
+zen = config["qemu"]["zen"]
+if zen == "Zen":
+    gen = "amd-psp-zen"
+elif zen == "Zen+":
+    gen = "amd-psp-zen+"
+elif zen == "Zen2":
+    gen = "amd-psp-zen2"
+elif zen == "Zen3":
+    gen = "amd-psp-zen3"
+elif zen == "ZenTesla":
+    gen = "amd-psp-zentesla"
+else:
+    raise Exception(f"Unkown zen version: {zen}")
+
+s = Setup(
+    gen,
+    config_path.parent.parent.resolve() / config["qemu"]["on_chip_bl_path"],
+    config_path.parent.parent.resolve() / config["flash"]["base"],
+)
 Bisect()
 j = JumpTo()
 
-import yaml
-
-with open(os.environ["FUZZER_CONFIG"], "r") as f:
-    config = yaml.safe_load(f)
+def log_register(addr:int, target:str) -> gdb.Breakpoint:
+    bp = gdb.Breakpoint(f"*{addr}")
+    bp.commands = f"echo addr: {hex(addr)} \t \n i r {target.lower()}\n continue \n end"
+    bp.silent = True
 
 for tunnel in config["tunnels"]:
     action = tunnel["action"]
@@ -133,9 +160,7 @@ for tunnel in config["tunnels"]:
         )
         bp.silent = True
     elif action == "LogRegister":
-        bp = gdb.Breakpoint(f"*{tunnel["addr"]}")
-        bp.commands = f"echo addr: {hex(tunnel["addr"])} \t \n i r {tunnel["target"].lower()}\n continue \n end"
-        bp.silent = True
+        log_register(tunnel["addr"], tunnel["target"])
 
 # Report error code in GDB
 # This is part of the sinks, so we do it manually
@@ -144,6 +169,8 @@ gdb.Breakpoint("*0x7274").commands = (
 )
 gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
 
+
+log_register(0xd424, "R0")
 
 class EnableDependentsBreakpoint(gdb.Breakpoint):
     def stop(self) -> bool:
