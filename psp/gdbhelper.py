@@ -23,19 +23,22 @@ conditial_bps = [
 for bp in conditial_bps:
     bp.commands = "i r r0 \n end"
 
+BUILD_DIR = Path(__file__).parent.parent / "build" / "manual"
+
+LOG_PATH = BUILD_DIR / "qemu.log"
+
 
 class Setup(gdb.Command):
 
     def __init__(self, generation, on_chip_bl, off_chip_bl):
         super(Setup, self).__init__("setup", gdb.COMMAND_USER)
-        self.build_dir = Path(__file__).parent.parent / "build" / "manual"
-        print(self.build_dir.absolute())
+        print(BUILD_DIR.absolute())
         self.generation = generation
         self.on_chip_bl = on_chip_bl
         self.off_chip_bl = off_chip_bl
 
     def kill_and_restart(self):
-        path_to_pid = self.build_dir / "pid.txt"
+        path_to_pid = BUILD_DIR / "pid.txt"
         try:
             gdb.execute("detach")
         except gdb.error as e:
@@ -50,12 +53,12 @@ class Setup(gdb.Command):
             # best effort killing
             print(e)
         cmd = (
-            f'{self.build_dir}/qemu-system-arm -d "guest_errors,trace:psp_*,trace:ccp_*" -s -S '
+            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,trace:psp_*,trace:ccp_*" -s -S '
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
             f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl}"
         )
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
-        qemu_log = open(self.build_dir / "qemu.log", "a")
+        qemu_log = open(LOG_PATH, "a")
         cmd = Popen(
             shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True
         )
@@ -144,10 +147,24 @@ s = Setup(
 Bisect()
 j = JumpTo()
 
-def log_register(addr:int, target:str) -> gdb.Breakpoint:
-    bp = gdb.Breakpoint(f"*{addr}")
-    bp.commands = f"echo addr: {hex(addr)} \t \n i r {target.lower()}\n continue \n end"
-    bp.silent = True
+
+class LoggingBreakpoint(gdb.Breakpoint):
+    def __init__(self, addr: int, target: str, msg: str = None):
+        super(LoggingBreakpoint, self).__init__(f"*{addr}")
+        self.target = target
+        self.addr = addr
+        self.msg = msg
+
+    def stop(self) -> bool:
+        reg_value = int(gdb.parse_and_eval(f"${self.target.lower()}"))
+        msg = f"{hex(self.addr)}: {self.target} = {hex(reg_value)}" + (
+            f" msg = {self.msg}" if self.msg else ""
+        )
+        print(msg)
+        with LOG_PATH.open("a") as f:
+            f.write(msg + "\n")
+        return False
+
 
 for tunnel in config["tunnels"]:
     action = tunnel["action"]
@@ -160,7 +177,8 @@ for tunnel in config["tunnels"]:
         )
         bp.silent = True
     elif action == "LogRegister":
-        log_register(tunnel["addr"], tunnel["target"])
+        print(f"Logging register {tunnel['target']} at {tunnel['addr']:x}")
+        LoggingBreakpoint(tunnel["addr"], tunnel["target"])
 
 # Report error code in GDB
 # This is part of the sinks, so we do it manually
@@ -170,7 +188,9 @@ gdb.Breakpoint("*0x7274").commands = (
 gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
 
 
-log_register(0xd424, "R0")
+LoggingBreakpoint(0xD424, "R0", "Starting load_app_id_from_flash")
+LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
+
 
 class EnableDependentsBreakpoint(gdb.Breakpoint):
     def stop(self) -> bool:
