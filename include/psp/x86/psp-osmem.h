@@ -40,6 +40,10 @@ typedef struct PSPOSMemUART {
     uint8_t value;
 } PSPOSMemUART;
 
+/**
+ * @brief This is a worse version of psp-x86.h with a bunch of hardcoded values
+ * 
+ */
 typedef struct PSPOSMemState {
     SysBusDevice parent_obj;
 

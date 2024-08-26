@@ -110,6 +110,10 @@ enum ccp_xts_aes_unit_size {
 	CCP_XTS_AES_UNIT_SIZE__LAST,
 };
 
+/**
+ * 
+ * @CCP_MEMTYPE_SB: Secure Boot memory
+ */
 typedef enum ccp_memtype {
 	CCP_MEMTYPE_SYSTEM = 0,
 	CCP_MEMTYPE_SB,

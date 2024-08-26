@@ -221,8 +221,20 @@ static void ccp_in_guest_pt(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
     if (sclean)
         cpu_physical_memory_unmap(hsrc, len, false, 0);
 }
-
-
+char const *ccp_memtype_str(ccp_memtype type);
+char const *ccp_memtype_str(ccp_memtype type)
+{
+    switch(type) {
+        case CCP_MEMTYPE_SYSTEM:
+            return "CCP_MEMTYPE_SYSTEM";
+        case CCP_MEMTYPE_SB:
+            return "CCP_MEMTYPE_SB";
+        case CCP_MEMTYPE_LOCAL:
+            return "CCP_MEMTYPE_LOCAL";
+        default:
+            return "CCP_MEMTYPE_UNKNOWN";
+    }
+}
 static void ccp_passthrough(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     /* TODO remove this function? */
     ccp_function func;
@@ -243,8 +255,9 @@ static void ccp_passthrough(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     dst = CCP5_CMD_DST_LO(desc) | ((hwaddr)(CCP5_CMD_DST_HI(desc)) << 32);
     bwise = func.pt.bitwise;
     bswap = func.pt.byteswap;
-
-    trace_ccp_passthrough(src, dst, cbytes);
+    char const * const src_type_name = ccp_memtype_str(src_type);
+    char const * const dst_type_name = ccp_memtype_str(dst_type);
+    trace_ccp_passthrough(src_type_name, src, dst_type_name, dst, cbytes);
     ccp_in_guest_pt(s, id, dst, src, cbytes, dst_type, src_type, bwise, bswap);
 }
 
