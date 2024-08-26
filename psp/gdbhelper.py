@@ -9,23 +9,23 @@ from pathlib import Path
 sys.path.append(os.path.dirname(__file__))
 
 
-conditial_bps = [
-    gdb.Breakpoint("*" + x)
-    for x in [
-        # Erroring condition
-        "0x9d68",
-        # Figure out which function is called
-        "0xda38",
-        # Load app contents
-        "0xd5e6",
-    ]
-]
-for bp in conditial_bps:
-    bp.commands = "i r r0 \n end"
+bp_defs = [("0xd1b2", "Got Entry details"), ("0x3408", "ccp_memcopy"),("0xe8c4", "load_bytes_from_file_maybe")]
+dependent_bps = []
+for bp_def in bp_defs:
+    bp = gdb.Breakpoint(f"*{bp_def[0]}")
+    bp.commands = f'print "{bp_def[1]}" \n end'
+    bp.enabled = False
+    dependent_bps.append(bp)
 
 BUILD_DIR = Path(__file__).parent.parent / "build" / "manual"
 
 LOG_PATH = BUILD_DIR / "qemu.log"
+
+
+def log_message(msg):
+    print(msg)
+    with LOG_PATH.open("a") as f:
+        f.write(msg + "\n")
 
 
 class Setup(gdb.Command):
@@ -78,7 +78,7 @@ class Setup(gdb.Command):
             if bool(argv[0]):
                 # Forgot what I wanted to do here
                 print("passed true")
-        for bp in conditial_bps:
+        for bp in dependent_bps:
             bp.enabled = False
 
 
@@ -95,13 +95,17 @@ class Bisect(gdb.Command):
 
     def invoke(self, args, _from_tty):
         argv = gdb.string_to_argv(args)
-        assert len(argv) == 2
+        assert len(argv) == 2 or len(argv) == 3
         first = self.get_location_of_bp(int(argv[0]))
         second = self.get_location_of_bp(int(argv[1]))
         new_pos = first + (second - first) // 2
         pos_str = f"*{hex(new_pos)}"
         print(pos_str)
-        gdb.Breakpoint(pos_str)
+        bp = gdb.Breakpoint(pos_str)
+        if len(argv) == 3:
+            assert argv[2] == "true"
+            bp.enabled = False
+            dependent_bps.append(bp)
 
 
 class JumpTo(gdb.Command):
@@ -151,8 +155,8 @@ j = JumpTo()
 class LoggingBreakpoint(gdb.Breakpoint):
     def __init__(self, addr: int, target: str, msg: str = None):
         super(LoggingBreakpoint, self).__init__(f"*{addr}")
-        self.target = target
         self.addr = addr
+        self.target = target
         self.msg = msg
 
     def stop(self) -> bool:
@@ -160,9 +164,7 @@ class LoggingBreakpoint(gdb.Breakpoint):
         msg = f"{hex(self.addr)}: {self.target} = {hex(reg_value)}" + (
             f" msg = {self.msg}" if self.msg else ""
         )
-        print(msg)
-        with LOG_PATH.open("a") as f:
-            f.write(msg + "\n")
+        log_message(msg)
         return False
 
 
@@ -187,17 +189,54 @@ gdb.Breakpoint("*0x7274").commands = (
 )
 gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
 
-
 LoggingBreakpoint(0xD424, "R0", "Starting load_app_id_from_flash")
 LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
 
 
 class EnableDependentsBreakpoint(gdb.Breakpoint):
     def stop(self) -> bool:
-        for bp in conditial_bps:
+        for bp in dependent_bps:
             bp.enabled = True
         return False
 
 
-EnableDependentsBreakpoint("*0xd26a")
+class CcpMemcopyBreakpoint(gdb.Breakpoint):
+    def __init__(self, addr: int):
+        super(CcpMemcopyBreakpoint, self).__init__(f"*{addr}")
+        self.addr = addr
+
+    def stop(self) -> bool:
+
+        def log_register(register, name, postprocessor=None):
+            reg_value = int(gdb.parse_and_eval(f"${register.lower()}"))
+            if postprocessor:
+                reg_value = postprocessor(reg_value)
+            else:
+                reg_value = hex(reg_value)
+            msg = f"{name}={reg_value}"
+            return msg
+
+        log_buffer = ["ccp_memcopy"]
+        log_buffer.append(log_register("R0", "src_lo"))
+        log_buffer.append(log_register("R1", "dest_lo"))
+        log_buffer.append(log_register("R2", "src_len"))
+
+        def get_memtype(x):
+            if x == 0:
+                return "CCP_MEMTYPE_SYSTEM"
+            elif x == 1:
+                return "CCP_MEMTYPE_SB"
+            elif x == 2:
+                return "CCP_MEMTYPE_LOCAL"
+            else:
+                raise "CCP_MEMTYPE_UNKNOWN"
+
+        log_buffer.append(log_register("R3", "src_memtype", lambda x: get_memtype(x)))
+
+        log_message(" ".join(log_buffer))
+        return False
+
+
+dependent_bps.append(CcpMemcopyBreakpoint("0x3404"))
+EnableDependentsBreakpoint("*0xd17c")
 s.invoke("", False)

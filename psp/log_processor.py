@@ -1,77 +1,76 @@
 import sys
 
 
-def process_log(file_path):
-    with open(file_path, "r") as log_file:
-        previous_command = None
-        previous_kv_pairs = None
-        start_addr = None
-        end_addr = None
-        values = []
+def process_log(input):
+    previous_command = None
+    previous_kv_pairs = None
+    start_addr = None
+    end_addr = None
+    values = []
 
-        for line in log_file:
-            # Split the line into parts
-            parts = line.strip().split()
+    for line in input:
+        # Split the line into parts
+        parts = line.strip().split()
 
-            if len(parts) < 3:
-                print(line.strip())
-                continue
+        if len(parts) < 3:
+            print(line.strip())
+            continue
 
-            # The first part is the command
-            command = parts[0]
+        # The first part is the command
+        command = parts[0]
 
-            # Extract key-value pairs into a dictionary, except addr and value
-            kv_pairs = {}
-            addr = None
-            value = None
-            for part in parts[1:]:
-                if "=" not in part:
-                    print(line.strip())
-                    continue
-                key, val = part.split("=")
-                if key == "addr":
-                    addr = val
-                elif key == "value":
-                    value = val
-                else:
-                    kv_pairs[key] = val
-
-            if addr is None or value is None:
-                print(line.strip())
-                continue
-
-            # Check if this line continues the sequence
-            if (
-                command == previous_command
-                and kv_pairs == previous_kv_pairs
-                and int(addr, 16) in [int(end_addr, 16) + i for i in range(1, 5)]
-            ):
-                # Continue the sequence
-                end_addr = addr
-                values.append(value)
+        # Extract key-value pairs into a dictionary, except addr and value
+        kv_pairs = {}
+        addr = None
+        value = None
+        for part in parts[1:]:
+            if "=" not in part:
+                # gets printed in addr is None check
+                break
+            key, val = part.split("=")
+            if key == "addr":
+                addr = val
+            elif key == "value":
+                value = val
             else:
-                # Print the previous sequence if it exists
-                if previous_command is not None:
-                    compact_write(
-                        previous_command,
-                        previous_kv_pairs,
-                        start_addr,
-                        end_addr,
-                        values,
-                    )
+                kv_pairs[key] = val
 
-                # Start a new sequence
-                previous_command = command
-                previous_kv_pairs = kv_pairs
-                start_addr = addr
-                end_addr = addr
-                values = [value]
+        if addr is None or value is None:
+            print(line.strip())
+            continue
 
-        # Print the last sequence if it exists
-        if previous_command is not None:
-            compact_write(
-                previous_command, previous_kv_pairs, start_addr, end_addr, values
-            )
+        # Check if this line continues the sequence
+        if (
+            command == previous_command
+            and kv_pairs == previous_kv_pairs
+            and int(addr, 16) in [int(end_addr, 16) + i for i in range(1, 5)]
+        ):
+            # Continue the sequence
+            end_addr = addr
+            values.append(value)
+        else:
+            # Print the previous sequence if it exists
+            if previous_command is not None:
+                compact_write(
+                    previous_command,
+                    previous_kv_pairs,
+                    start_addr,
+                    end_addr,
+                    values,
+                )
+
+            # Start a new sequence
+            previous_command = command
+            previous_kv_pairs = kv_pairs
+            start_addr = addr
+            end_addr = addr
+            values = [value]
+
+    # Print the last sequence if it exists
+    if previous_command is not None:
+        compact_write(
+            previous_command, previous_kv_pairs, start_addr, end_addr, values
+        )
 
 
 def compact_write(command, kv_pairs, start_addr, end_addr, values):
@@ -113,9 +112,11 @@ def rle_encode(values):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python log_processor.py <log_file_path>")
-        sys.exit(1)
+    if len(sys.argv) > 2:
+        print(f"Usage: {sys.argv[0]} <log_file>")
+    elif len(sys.argv) == 1:
+        process_log(sys.stdin)
+    else:
+        with open(sys.argv[1], "r") as log_file:
+            process_log(log_file)
 
-    log_file_path = sys.argv[1]
-    process_log(log_file_path)
