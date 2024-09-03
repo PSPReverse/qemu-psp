@@ -13,7 +13,7 @@ def process_log(input):
         parts = line.strip().split()
 
         if len(parts) < 3:
-            print(line.strip())
+            print(line.strip(), flush=True)
             continue
 
         # The first part is the command
@@ -36,7 +36,7 @@ def process_log(input):
                 kv_pairs[key] = val
 
         if addr is None or value is None:
-            print(line.strip())
+            print(line.strip(), flush=True)
             continue
 
         # Check if this line continues the sequence
@@ -80,7 +80,7 @@ def compact_write(command, kv_pairs, start_addr, end_addr, values):
     # Reconstruct the key-value pair string
     kv_pairs_str = " ".join(f"{k}={v}" for k, v in kv_pairs.items())
 
-    print(f"{command} {kv_pairs_str} addr={addr_range} value={value_str}")
+    print(f"{command} {kv_pairs_str} addr={addr_range} value={value_str}", flush=True)
 
 
 def rle_encode(values):
@@ -113,7 +113,7 @@ def rle_encode(values):
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
-        print(f"Usage: {sys.argv[0]} <log_file>")
+        print(f"Usage: {sys.argv[0]} <log_file>", flush=True)
     elif len(sys.argv) == 1:
         process_log(sys.stdin)
     else:

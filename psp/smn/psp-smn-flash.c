@@ -45,6 +45,10 @@ MemoryRegion *asp_smn_mr = NULL;
 void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr);
 void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr){
     const uint8_t *buf = ptr;
+    if (!asp_smn_mr) {
+        qemu_log_mask(LOG_GUEST_ERROR, "Memory region was not initialized prior to setting\n");
+        return;
+    }
     uint8_t *ram_ptr = qemu_map_ram_ptr(asp_smn_mr->ram_block, addr);
     memcpy(ram_ptr, buf, len);
 }
@@ -73,6 +77,10 @@ static void psp_smn_flash_realize(DeviceState *dev, Error **errp)
     // +++ End ASPFuzz code +++
 
 }
+static void psp_smn_flash_unrealize(DeviceState *dev)
+{
+    asp_smn_mr = NULL;
+}
 
 static Property psp_smn_flash_properties[] = {
     DEFINE_PROP_STRING("flash_img", PSPSmnFlashState, flash_img),
@@ -82,6 +90,7 @@ static void psp_smn_flash_class_init(ObjectClass *klass, void * data)
 {
     DeviceClass *dc = DEVICE_CLASS(klass);
     dc->realize = psp_smn_flash_realize;
+    dc->unrealize = psp_smn_flash_unrealize;
     device_class_set_props(dc, psp_smn_flash_properties);
 }
 
