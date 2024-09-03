@@ -237,7 +237,6 @@ static void psp_smn_misc_realize(DeviceState *dev, Error **errp) {
 
 static Property psp_smn_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_smn_misc_generation", PSPSmnMiscState, generation, ZENTESLA+1),
-    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void psp_smn_misc_class_init(ObjectClass *oc, void *data)

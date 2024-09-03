@@ -17,7 +17,7 @@ for bp_def in bp_defs:
     bp.enabled = False
     dependent_bps.append(bp)
 
-BUILD_DIR = Path(__file__).parent.parent / "build" / "manual"
+BUILD_DIR = Path(__file__).parents[2] / "build" / "manual"
 
 LOG_PATH = BUILD_DIR / "qemu.log"
 
@@ -53,7 +53,7 @@ class Setup(gdb.Command):
             # best effort killing
             print(e)
         cmd = (
-            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,trace:psp_*,trace:ccp_*" -s -S '
+            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_*" -s -S '
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
             f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl}"
         )
@@ -229,14 +229,14 @@ class CcpMemcopyBreakpoint(gdb.Breakpoint):
             elif x == 2:
                 return "CCP_MEMTYPE_LOCAL"
             else:
-                raise "CCP_MEMTYPE_UNKNOWN"
+                raise Exception("CCP_MEMTYPE_UNKNOWN")
 
         log_buffer.append(log_register("R3", "src_memtype", lambda x: get_memtype(x)))
-
+        log_buffer.append(log_register("R6", "dest_memtype", lambda x: get_memtype(x)))
         log_message(" ".join(log_buffer))
         return False
 
 
-dependent_bps.append(CcpMemcopyBreakpoint("0x3404"))
+dependent_bps.append(CcpMemcopyBreakpoint("0x3418"))
 EnableDependentsBreakpoint("*0xd17c")
 s.invoke("", False)
