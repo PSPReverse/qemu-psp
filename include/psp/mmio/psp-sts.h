@@ -22,6 +22,10 @@
 #define TYPE_PSP_STS "amd_psp.sts"
 #define PSP_STS(obj) OBJECT_CHECK(PSPStsState, (obj), TYPE_PSP_STS)
 
+/**
+ * @brief The PSP Status register
+ * This is used to communicate the PSP status to the host
+ */
 typedef struct PSPStsState {
     SysBusDevice parent_obj;
     MemoryRegion iomem;

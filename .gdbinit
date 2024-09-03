@@ -8,4 +8,4 @@
 source scripts/qemu-gdb.py
 
 source ~/.local/bin/sync.py
-source psp/gdbhelper.py
+source psp/scripts/gdbhelper.py
