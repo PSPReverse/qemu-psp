@@ -137,7 +137,7 @@ static uint32_t ccp_queue_read(CcpV5State *s, hwaddr offset, uint32_t id) {
     return ret;
 }
 
-static void ccp_in_guest_pt(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
+static void perform_ccp_passthrough(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
                             uint32_t len, ccp_memtype dst_type,
                             ccp_memtype src_type, ccp_pt_bitwise bwise,
                             ccp_pt_byteswap bswap) {
@@ -180,6 +180,7 @@ static void ccp_in_guest_pt(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
         /* TODO: Check whether "dst" is accessible for the CCP */
         /* sets "plen" to the length of memory that was acutally mapped */
         hdst = cpu_physical_memory_map(dst, &plen, true);
+        qemu_log_mask(LOG_UNIMP, "CCP_PASSTHROUGH: dest plen is 0x%x \n", (uint32_t)plen);
         if (hdst == NULL) {
             qemu_log_mask(LOG_GUEST_ERROR, "CCP: Couldn't map guest memory during" \
                                            " passthrough operation\n");
@@ -201,6 +202,7 @@ static void ccp_in_guest_pt(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
         /* TODO: Check whether "src" is accessible for the CCP */
         /* sets "plen" to the length of memory that was acutally mapped */
         hsrc = cpu_physical_memory_map(src, &plen, false);
+        qemu_log_mask(LOG_UNIMP, "CCP_PASSTHROUGH: src plen is 0x%x \n", (uint32_t)plen);
         if (hsrc == NULL) {
             qemu_log_mask(LOG_GUEST_ERROR, "CCP: Couldn't map guest memory during" \
                                            " passthrough operation\n");
@@ -212,7 +214,7 @@ static void ccp_in_guest_pt(CcpV5State *s, uint32_t id, hwaddr dst, hwaddr src,
 
     /* "plen" might have been shortened to the range of memory actually available */
     if (plen < len) {
-        qemu_log_mask(LOG_GUEST_ERROR, "CCP: Only copying 0x%x bytes!\n", (uint32_t) plen);
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP: Only copying 0x%x bytes instead of requested 0x%x bytes!\n", (uint32_t) plen, (uint32_t) len);
     }
     ccp_memcpy(hdst, hsrc, plen, bwise, bswap);
 
@@ -258,7 +260,7 @@ static void ccp_passthrough(CcpV5State *s, uint32_t id, ccp5_desc *desc) {
     char const * const src_type_name = ccp_memtype_str(src_type);
     char const * const dst_type_name = ccp_memtype_str(dst_type);
     trace_ccp_passthrough(src_type_name, src, dst_type_name, dst, cbytes);
-    ccp_in_guest_pt(s, id, dst, src, cbytes, dst_type, src_type, bwise, bswap);
+    perform_ccp_passthrough(s, id, dst, src, cbytes, dst_type, src_type, bwise, bswap);
 }
 
 static void ccp_perform_sha_256(CcpV5State *s, hwaddr src, uint32_t len, bool eom, bool init, uint8_t* lsb_ctx) {

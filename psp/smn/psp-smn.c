@@ -176,12 +176,17 @@ static const MemoryRegionOps smn_ctlr_ops = {
     .impl.max_access_size = 4,
 };
 
+/**
+ * @brief Initializes object on the SMN bus
+ * 
+ * @param obj -  PSPSmnState object
+ */
 static void psp_smn_init(Object *obj)
 {
     PSPSmnState *s = PSP_SMN(obj);
     /* SysBusDevice *sbd = SYS_BUS_DEVICE(obj); */
 
-    /* Base address of the SMN containers in the PSP address space */
+    /* Base address of the SMN containers in the SMN address space */
 
     object_initialize_child(obj, "smn_misc", &s->psp_smn_misc,
                             TYPE_PSP_SMN_MISC);
@@ -192,6 +197,11 @@ static void psp_smn_init(Object *obj)
                             TYPE_PSP_SMN_SMU);
 }
 
+/**
+ * @brief Initializes the mapping setup
+ * 
+ * @param dev - PSPSmnState
+ */
 static void psp_smn_init_slots(DeviceState *dev) {
     PSPSmnState *s = PSP_SMN(dev);
     int i;
@@ -241,7 +251,7 @@ static void psp_smn_realize(DeviceState *dev, Error **errp) {
 
     /* The SMN address space. Independent from the PSP address space */
     memory_region_init(&s->psp_smn_space, OBJECT(dev), "smn-address-space",
-                       0xFFFFFFFF);
+                       (1UL << 32) - 1);
 
     /* The SMN MMIO regions containing the control regs */
     memory_region_init_io(&s->psp_smn_control, OBJECT(dev), &smn_ctlr_ops, s,
@@ -272,7 +282,6 @@ static void psp_smn_class_init(ObjectClass *oc, void *data) {
 
 static Property psp_smn_properties[] = {
     DEFINE_PROP_UINT64("smn-container-base", PSPSmnState, psp_smn_base, 0),
-    DEFINE_PROP_END_OF_LIST(),
 };
 
 static void psp_smn_common_class_init(ObjectClass *oc, enum PspGeneration gen) {
