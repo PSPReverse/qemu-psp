@@ -18,19 +18,19 @@
  */
 #ifndef AMD_PSP_X86_H
 #define AMD_PSP_X86_H
-
-#include "hw/sysbus.h"
-#include "exec/memory.h"
+#include "qemu/osdep.h"
 #include "psp/psp-misc.h"
+#include "exec/memory.h"
+#include "hw/sysbus.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
 #define PSP_X86(obj) OBJECT_CHECK(PSPX86State, (obj), TYPE_PSP_X86)
-#define PSP_X86_SLOT_NAME_LEN  20
+#define PSP_X86_SLOT_NAME_LEN 20
 #define PSP_X86_SLOT_NAME "x86-slot_"
 
 #define PSP_X86_SLOT_SIZE 64 * 1024 * 1024 /* 64M */
 #define PSP_X86_SLOT_COUNT 62
-#define PSP_X86_CONTAINER_SIZE PSP_X86_SLOT_SIZE * PSP_X86_SLOT_COUNT
+#define PSP_X86_CONTAINER_SIZE PSP_X86_SLOT_SIZE *PSP_X86_SLOT_COUNT
 #define PSP_X86_REG_COUNT 6
 
 #define PSP_X86_CTLR1_SIZE PSP_X86_SLOT_COUNT * 4 * 4
@@ -38,25 +38,25 @@
 #define PSP_X86_CTLR3_SIZE PSP_X86_CTLR2_SIZE
 
 typedef enum PSPX86RegId {
-  X86BASE = 0,
-  X86_UNKNOWN1,
-  X86_UNKNOWN2,
-  X86_UNKNOWN3,
-  X86_UNKNOWN4,
-  X86_UNKNOWN5,
-  X86_REG_MAX = PSP_X86_REG_COUNT,
+    X86BASE = 0,
+    X86_UNKNOWN1,
+    X86_UNKNOWN2,
+    X86_UNKNOWN3,
+    X86_UNKNOWN4,
+    X86_UNKNOWN5,
+    X86_REG_MAX = PSP_X86_REG_COUNT,
 } PSPX86RegId;
 
 typedef uint64_t PSPX86Addr;
 typedef struct PSPX86Slot {
 
-  /* Currently mapped x86 address */
-  PSPX86Addr x86_addr;
+    /* Currently mapped x86 address */
+    PSPX86Addr x86_addr;
 
-  /* Current mapping destination */
-  hwaddr     psp_addr;
+    /* Current mapping destination */
+    hwaddr psp_addr;
 
-  uint32_t ctrl_regs[PSP_X86_REG_COUNT];
+    uint32_t ctrl_regs[PSP_X86_REG_COUNT];
 } PSPX86Slot;
 
 typedef struct PSPX86State {

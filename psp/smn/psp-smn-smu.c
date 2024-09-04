@@ -29,8 +29,8 @@
 #include "hw/loader.h"
 #include "qemu/log.h"
 
-#include "trace.h"
 #include "psp/smn/psp-smn-smu.h"
+#include "trace.h"
 
 
 static uint64_t psp_smn_smu_read(void *opaque, hwaddr offset, unsigned size) {
