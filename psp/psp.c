@@ -20,15 +20,15 @@
 
 #include "psp/psp.h"
 
+#include "system/system.h"
+
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/sysbus.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
 #include "qemu/log.h"
 
 /* TODO: use mmio_map_overlap with memory_regions_dispatch_rw to log access to SPI flash */

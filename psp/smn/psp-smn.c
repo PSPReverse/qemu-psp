@@ -35,7 +35,6 @@
 #include "psp/smn/psp-smn.h"
 #include "trace.h"
 
-/* DEFINE_PROP_STRING("rom_path", AmdPspState,flash_rom_path), */
 
 /* PSPSmnCTRL: Controller, attaches SMN devices on demand? */
 
