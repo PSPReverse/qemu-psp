@@ -20,7 +20,6 @@
 #define AMD_PSP_H
 
 #include "hw/arm/boot.h"
-#include "psp/mmio/psp-fuse.h"
 #include "hw/sysbus.h"
 #include "hw/misc/unimp.h"
 #include "target/arm/cpu.h"
@@ -29,6 +28,7 @@
 #include "psp/psp-misc.h"
 #include "psp/ccp/ccpv5.h"
 #include "psp/mmio/mailbox.h"
+#include "psp/mmio/psp-fuse.h"
 #include "psp/mmio/psp-timer.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/smn/psp-smn.h"
@@ -96,7 +96,7 @@ typedef struct AmdPspState {
   PSPSmnState smn;
 
   /* This device represents the x86 address space */
-  //PSPX86State x86;
+  PSPX86State x86;
 
   /* PSP OSMem at 0x03230000 */
   PSPOSMemState osmem;
