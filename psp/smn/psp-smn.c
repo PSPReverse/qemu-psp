@@ -33,6 +33,7 @@
 #include "trace.h"
 
 #include "psp/psp.h"
+#include "psp/util.h"
 
 /* PSPSmnCTRL: Controller, attaches SMN devices on demand? */
 
@@ -208,9 +209,8 @@ static void psp_smn_init(Object* obj)
  *
  * @param dev - PSPSmnState
  */
-static void psp_smn_init_slots(DeviceState* dev)
+static void psp_smn_realize_slots(PSPSmnState* s)
 {
-    PSPSmnState* s = PSP_SMN(dev);
     int i;
     char name[PSP_SMN_SLOT_NAME_LEN] = {0};
     hwaddr slot_offset;
@@ -224,7 +224,7 @@ static void psp_smn_init_slots(DeviceState* dev)
          * initialize each container beginning with the address 0 in the SMN
          * address space.
          */
-        memory_region_init_alias(&s->psp_smn_containers[i], OBJECT(dev), name,
+        memory_region_init_alias(&s->psp_smn_containers[i], OBJECT(s), name,
                                  &s->psp_smn_space, i * PSP_SMN_SLOT_SIZE,
                                  PSP_SMN_SLOT_SIZE);
 
@@ -238,23 +238,17 @@ static void psp_smn_init_slots(DeviceState* dev)
 
 static void psp_smn_realize(DeviceState* dev, Error** errp)
 {
+    ERRP_GUARD();
+
     PSPSmnState* s = PSP_SMN(dev);
     PspSmnClass* c = PSP_SMN_GET_CLASS(dev);
     SysBusDevice* sbd = SYS_BUS_DEVICE(dev);
-    MemoryRegion* mr_smn_misc;
-    PSPSmnFlashState* flash;
-    PSPSmnSmuState* smu;
-    Error* err = NULL;
 
     qdev_prop_set_uint32(DEVICE(&s->psp_smn_misc), "psp_smn_misc_generation",
                          c->gen);
-    sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_misc), &err);
-    sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_flash), &err);
-    sysbus_realize(SYS_BUS_DEVICE(&s->psp_smn_smu), &err);
-    if (err != NULL) {
-        error_propagate(errp, err);
-        return;
-    }
+    CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_misc), errp);
+    CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_flash), errp);
+    CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smu), errp);
 
     /* The SMN address space. Independent from the PSP address space */
     memory_region_init(&s->psp_smn_space, OBJECT(dev), "smn-address-space",
@@ -266,21 +260,22 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
 
     sysbus_init_mmio(sbd, &s->psp_smn_control);
 
-    mr_smn_misc = sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_misc), 0);
+    MemoryRegion* mr_smn_misc =
+        sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_misc), 0);
     memory_region_add_subregion_overlap(&s->psp_smn_space, 0x0, mr_smn_misc,
                                         -1000);
 
     /* Map the flash region into the SMN address space */
-    flash = &s->psp_smn_flash;
+    PSPSmnFlashState* flash = &s->psp_smn_flash;
     memory_region_add_subregion_overlap(&s->psp_smn_space, c->flash,
                                         &flash->psp_smn_flash, 0);
 
-    smu = &s->psp_smn_smu;
+    PSPSmnSmuState* smu = &s->psp_smn_smu;
     memory_region_add_subregion_overlap(&s->psp_smn_space, c->smu,
                                         &smu->psp_smn_smu, 0);
 
     /* Setup the initial SMN to PSP MemoryRegion alias. */
-    psp_smn_init_slots(dev);
+    psp_smn_realize_slots(s);
 }
 
 static void psp_smn_class_init(ObjectClass* oc, void* data)

@@ -33,15 +33,12 @@
 #include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
 #include "psp/x86/psp-osmem.h"
-#include "psp/x86/psp-x86.h"
+#include "psp/x86/psp-x86-mapper.h"
 
 #define TYPE_AMD_PSP "amd-psp"
 #define AMD_PSP(obj) OBJECT_CHECK(AmdPspState, (obj), TYPE_AMD_PSP)
 
 #define PSP_SMN_CTRL_BASE 0x03220000
-// #define PSP_X86_CTRL1_BASE 0x03230000
-// #define PSP_X86_CTRL2_BASE 0x032303e0
-// #define PSP_X86_CTRL3_BASE 0x032304d8
 
 #define PSP_OSMEM_CTL_BASE 0x03230000
 #define PSP_OSMEM_CONTAINERS_BASE 0x04000000
@@ -58,9 +55,6 @@
 
 #define PSP_MMIO_BASE 0x03000000
 #define PSP_MMIO_NAME "PSP MMIO"
-
-// #define PSP_X86_BASE 0x04000000
-// #define PSP_X86_NAME "PSP X86"
 
 #define PSP_MAILBOX_BASE 0x03010570
 
@@ -96,7 +90,7 @@ typedef struct AmdPspState {
     PSPSmnState smn;
 
     /* This device represents the x86 address space */
-    PSPX86State x86;
+    PSPX86MapperState x86;
 
     /* PSP OSMem at 0x03230000 */
     PSPOSMemState osmem;
