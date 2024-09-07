@@ -24,69 +24,24 @@
 #include "hw/sysbus.h"
 
 #include "psp/psp-misc.h"
+#include "psp/x86/x86-misc.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
 #define PSP_X86(obj) OBJECT_CHECK(PSPX86State, (obj), TYPE_PSP_X86)
-#define PSP_X86_SLOT_NAME_LEN 20
-#define PSP_X86_SLOT_NAME "x86-slot_"
 
-#define PSP_X86_SLOT_SIZE 64 * 1024 * 1024 /* 64M */
-#define PSP_X86_SLOT_COUNT 62
-#define PSP_X86_CONTAINER_SIZE PSP_X86_SLOT_SIZE* PSP_X86_SLOT_COUNT
-#define PSP_X86_REG_COUNT 6
-
-#define PSP_X86_CTLR1_SIZE PSP_X86_SLOT_COUNT * 4 * 4
-#define PSP_X86_CTLR2_SIZE PSP_X86_SLOT_COUNT * 4
-#define PSP_X86_CTLR3_SIZE PSP_X86_CTLR2_SIZE
-
-typedef enum PSPX86RegId {
-    X86BASE = 0,
-    X86_UNKNOWN1,
-    X86_UNKNOWN2,
-    X86_UNKNOWN3,
-    X86_UNKNOWN4,
-    X86_UNKNOWN5,
-    X86_REG_MAX = PSP_X86_REG_COUNT,
-} PSPX86RegId;
-
-typedef uint64_t PSPX86Addr;
-typedef struct PSPX86Slot {
-
-    /* Currently mapped x86 address */
-    PSPX86Addr x86_addr;
-
-    /* Current mapping destination */
-    hwaddr psp_addr;
-
-    uint32_t ctrl_regs[PSP_X86_REG_COUNT];
-} PSPX86Slot;
-
+/***
+ * Manages the x86 address space and all x86 related devices
+ */
 typedef struct PSPX86State {
     SysBusDevice parent_obj;
 
-    /* X86 Control regs */
-
-    /* CTRL region 1: PSP_X86_SLOT_COUNT * regsize (4) * regcount (4) = 0x3e0 */
-    MemoryRegion psp_x86_control1;
-
-    /* CTRL region 2: PSP_X86_SLOT_COUNT * regsize (4) * regcount (1) = 0xf8 */
-    MemoryRegion psp_x86_control2;
-
-    /* CTRL region 3: PSP_X86_SLOT_COUNT * regsize (4) * regcount (1) = 0xf8 */
-    MemoryRegion psp_x86_control3;
-
-    /* Base address of the x86 container range. */
-    hwaddr psp_x86_base;
-
-    MemoryRegion psp_x86_containers[PSP_X86_SLOT_COUNT];
-
-    PSPX86Slot psp_x86_slots[PSP_X86_SLOT_COUNT];
-
     /* PSP Misc device that covers the whole x86 address space */
-    PSPMiscState psp_x86_misc;
+    PSPX86MiscState psp_x86_misc;
 
     /* The X86 address space */
     MemoryRegion psp_x86_space;
 
+    /* The Generation of PSP we are emulating*/
+    PspGeneration generation;
 } PSPX86State;
 #endif

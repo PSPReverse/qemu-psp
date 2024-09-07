@@ -57,6 +57,7 @@ class Setup(gdb.Command):
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
             f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl}"
         )
+        print(f"Starting QEMU with command: {cmd}")
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
         qemu_log = open(LOG_PATH, "a")
         cmd = Popen(

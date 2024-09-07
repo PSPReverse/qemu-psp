@@ -80,7 +80,7 @@ static void amd_psp_init(Object* obj)
 
     object_initialize_child(obj, "smn", &s->smn, c->smn_type);
 
-    // object_initialize_child(obj, "x86", &s->x86, TYPE_PSP_X86);
+    object_initialize_child(obj, "x86", &s->x86, TYPE_PSP_X86_MAPPER);
 
     object_initialize_child(obj, "base_mem", &s->base_mem, TYPE_PSP_MISC);
 
@@ -158,6 +158,12 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     /* Map SMN control registers */
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->smn), 0, c->smn_ctrl_base);
 
+    qdev_prop_set_uint32(DEVICE(&s->x86), "psp_generation",
+                         PspNameToGen(DEVICE_GET_CLASS(dev)->desc));
+
+    if (!sysbus_realize(SYS_BUS_DEVICE(&s->x86), errp)) {
+        return;
+    }
     /* Map X86 control registers */
     // sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 0, PSP_X86_CTRL1_BASE);
 
@@ -166,6 +172,7 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
 
     /* Map X86 control registers */
     // sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 2, PSP_X86_CTRL3_BASE);
+    // TODO: Map magic3
 
     /* Map osmem */
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->osmem), errp)) {
