@@ -46,7 +46,8 @@ static void psp_x86_misc_realize(DeviceState* dev, Error** errp)
 {
     PSPX86MiscState* s = PSP_X86_MISC(dev);
     if (s->generation == ZENTESLA + 1) {
-        error_setg(errp, "property 'psp_x86_misc_generation' not specified");
+        error_setg(errp,
+                   "property 'generation' not specified for PSP X86 misc");
         return;
     }
     /* Init mmio */

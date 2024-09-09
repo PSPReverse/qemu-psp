@@ -23,6 +23,7 @@
 #include "exec/memory.h"
 #include "hw/sysbus.h"
 
+#include "psp/generations.h"
 #include "psp/psp-misc.h"
 #include "psp/x86/x86-misc.h"
 
@@ -39,7 +40,7 @@ typedef struct PSPX86State {
     PSPX86MiscState psp_x86_misc;
 
     /* The X86 address space */
-    MemoryRegion psp_x86_space;
+    MemoryRegion mr;
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;

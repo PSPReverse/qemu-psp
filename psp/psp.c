@@ -130,11 +130,6 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
 
-    /* TODO: Register x86 address-spaces */
-    /* object_property_set_uint(OBJECT(&s->x86), "x86-container-base", */
-    /*                          PSP_X86_BASE, &error_abort); */
-    /* sysbus_realize(SYS_BUS_DEVICE(&s->x86), &err); */
-
     qdev_prop_set_uint64(DEVICE(&s->base_mem), "psp_misc_msize", (1UL << 32));
 
     qdev_prop_set_string(DEVICE(&s->base_mem), "psp_misc_ident", "BASE MEM");
@@ -160,10 +155,10 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
 
     qdev_prop_set_uint32(DEVICE(&s->x86), "psp_generation",
                          PspNameToGen(DEVICE_GET_CLASS(dev)->desc));
-
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->x86), errp)) {
         return;
     }
+
     /* Map X86 control registers */
     // sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 0, PSP_X86_CTRL1_BASE);
 
