@@ -10,7 +10,6 @@
 
 #include "exec/address-spaces.h"
 #include "hw/boards.h"
-#include "hw/char/serial.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
 #include "hw/sysbus.h"
@@ -252,8 +251,8 @@ static void realize_mapping_slots(DeviceState* dev)
          * address space.
          */
         memory_region_init_alias(&s->psp_x86_containers[i], OBJECT(dev), name,
-                                 &s->x86_memory.psp_x86_space,
-                                 i * PSP_X86_SLOT_SIZE, PSP_X86_SLOT_SIZE);
+                                 &s->x86_memory.mr, i * PSP_X86_SLOT_SIZE,
+                                 PSP_X86_SLOT_SIZE);
 
         /* Map the containers to the PSP address space */
         hwaddr slot_offset = PSP_X86_MAPPING_BASE + i * PSP_X86_SLOT_SIZE;
@@ -270,17 +269,17 @@ static void mapper_realize(DeviceState* dev, Error** errp)
     SysBusDevice* sbd = SYS_BUS_DEVICE(dev);
 
     if (s->generation == ZENTESLA + 1) {
-        error_setg(
-            errp, "property 'psp_generation' not specified for PSP X86 Mapper");
+        error_setg(errp,
+                   "property 'generation' not specified for PSP X86 Mapper");
         return;
     }
     qdev_prop_set_uint32(DEVICE(&s->x86_memory), "psp_generation",
                          s->generation);
-
     sysbus_realize(SYS_BUS_DEVICE(&s->x86_memory), errp);
     if (*errp) {
         return;
     }
+
     /* The X86 control register regions */
     memory_region_init_io(&s->psp_x86_control, OBJECT(dev), &x86_ctlr1_ops, s,
                           "psp-x86-ctrl", PSP_X86_CTLR_SIZE);

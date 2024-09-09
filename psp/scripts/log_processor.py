@@ -23,12 +23,16 @@ def process_log(input):
         kv_pairs = {}
         addr = None
         value = None
+        addr_is_offset = False
         for part in parts[1:]:
             if "=" not in part:
                 # gets printed in addr is None check
                 break
             key, val = part.split("=")
             if key == "addr":
+                addr = val
+            elif key == "offset":
+                addr_is_offset = True
                 addr = val
             elif key == "value":
                 value = val
@@ -57,6 +61,7 @@ def process_log(input):
                     start_addr,
                     end_addr,
                     values,
+                    addr_is_offset
                 )
 
             # Start a new sequence
@@ -69,23 +74,25 @@ def process_log(input):
     # Print the last sequence if it exists
     if previous_command is not None:
         compact_write(
-            previous_command, previous_kv_pairs, start_addr, end_addr, values
+            previous_command, previous_kv_pairs, start_addr, end_addr, values,addr_is_offset
         )
 
 
-def compact_write(command, kv_pairs, start_addr, end_addr, values):
+def compact_write(command, kv_pairs, start_addr, end_addr, values, addr_is_offset):
     addr_range = f"{start_addr}-{end_addr}" if start_addr != end_addr else start_addr
     value_str = rle_encode(values)
 
     # Reconstruct the key-value pair string
     kv_pairs_str = " ".join(f"{k}={v}" for k, v in kv_pairs.items())
 
-    print(f"{command} {kv_pairs_str} addr={addr_range} value={value_str}", flush=True)
+    print(f"{command} {kv_pairs_str} {'offset' if addr_is_offset else 'addr'}={addr_range} value={value_str}", flush=True)
 
 
 def rle_encode(values):
     if not values:
         return "[]"
+    if len(values) == 1:
+        return values[0]
 
     encoded_values = []
     current_value = values[0]
