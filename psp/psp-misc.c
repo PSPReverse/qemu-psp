@@ -314,6 +314,7 @@ static void psp_misc_init(Object* obj)
 
 static void psp_misc_realize(DeviceState* dev, Error** errp)
 {
+    ERRP_GUARD();
     PSPMiscState* s = PSP_MISC(dev);
 
     if (s->mmio_size == 0) {

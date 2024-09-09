@@ -33,7 +33,6 @@
 static void psp_x86_init(Object* obj)
 {
     PSPX86State* s = PSP_X86(obj);
-    // TODO: Initialize and Map x86-misc
     object_initialize_child(obj, "misc", &s->psp_x86_misc, TYPE_PSP_X86_MISC);
 }
 
@@ -47,16 +46,23 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
         return;
     }
 
+    if (s->generation == ZENTESLA + 1) {
+        error_setg(errp, "property 'generation' not specified for PSP X86");
+        return;
+    }
+
     /* The X86 address space. Independent from the PSP address space */
-    memory_region_init(&s->psp_x86_space, OBJECT(dev), "x86-address-space",
+    memory_region_init(&s->mr, OBJECT(dev), "x86-address-space",
                        (1UL << 48) /* 48 physical address bits */);
 
     /* A MMIO accessible UART */
-    // serial_mm_init(&s->psp_x86_space, 0xfffdfc0003f8, 0, 0, 115200,
-    // serial_hd(0), DEVICE_NATIVE_ENDIAN);
+    serial_mm_init(&s->mr, 0xfffdfc0003f8, 0, 0, 115200, serial_hd(0),
+                   DEVICE_NATIVE_ENDIAN);
 
     /* Connect the misc device to the x86 address space */
     // TODO: Add RAM to the x86 address space
+    qdev_prop_set_uint32(DEVICE(&s->psp_x86_misc), "psp_generation",
+                         s->generation);
 
     /* Connect the misc device to the x86 address space */
     qdev_prop_set_uint32(DEVICE(&s->psp_x86_misc), "psp_generation",
@@ -68,8 +74,7 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
 
     MemoryRegion* mr_x86_misc =
         sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_x86_misc), 0);
-    memory_region_add_subregion_overlap(&s->psp_x86_space, 0x0, mr_x86_misc,
-                                        -1000);
+    memory_region_add_subregion_overlap(&s->mr, 0x0, mr_x86_misc, -1000);
 }
 
 static Property properties[] = {

@@ -11,6 +11,7 @@
 #include "exec/memory.h"
 #include "hw/sysbus.h"
 
+#include "psp/generations.h"
 #include "psp/psp-misc.h"
 #include "psp/x86/psp-x86.h"
 
@@ -129,6 +130,5 @@ typedef struct PSPX86MapperState {
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
-
 } PSPX86MapperState;
 #endif

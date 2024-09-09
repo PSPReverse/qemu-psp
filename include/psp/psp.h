@@ -89,7 +89,9 @@ typedef struct AmdPspState {
      */
     PSPSmnState smn;
 
-    /* This device represents the x86 address space */
+    /*** Manages the x86 address space and the MMIO registers and memory
+     *  containers that map into it
+     */
     PSPX86MapperState x86;
 
     /* PSP OSMem at 0x03230000 */
