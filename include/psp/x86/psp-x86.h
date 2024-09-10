@@ -40,6 +40,9 @@ typedef struct PSPX86State {
     PSPX86MiscState psp_x86_misc;
 
     /* The X86 address space */
+    AddressSpace as;
+
+    /* The memory region backing the x86 address space */
     MemoryRegion mr;
 
     /* The Generation of PSP we are emulating*/
