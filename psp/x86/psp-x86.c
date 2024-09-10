@@ -50,14 +50,14 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
         error_setg(errp, "property 'generation' not specified for PSP X86");
         return;
     }
-
     /* The X86 address space. Independent from the PSP address space */
-    memory_region_init(&s->mr, OBJECT(dev), "x86-address-space",
+    memory_region_init(&s->mr, OBJECT(dev), "x86-memory",
                        (1UL << 48) /* 48 physical address bits */);
+    address_space_init(&s->as, &s->mr, "x86 address space");
 
     /* A MMIO accessible UART */
-    serial_mm_init(&s->mr, 0xfffdfc0003f8, 0, 0, 115200, serial_hd(0),
-                   DEVICE_NATIVE_ENDIAN);
+    // serial_mm_init(&s->mr, 0xfffdfc0003f8, 0, 0, 115200, serial_hd(0),
+    // DEVICE_NATIVE_ENDIAN);
 
     /* Connect the misc device to the x86 address space */
     // TODO: Add RAM to the x86 address space

@@ -1,12 +1,20 @@
 # psp-osmem.c
 psp_osmem_control_write(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
 psp_osmem_control_read(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_control_write_unimplemented(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_control_read_unimplemented(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
+
 psp_osmem_container_write(uint64_t slot, uint64_t addr, uint64_t value) "slot=0x%"PRIx64" addr=0x%"PRIx64" value=0x%"PRIx64
 psp_osmem_container_read(uint64_t slot, uint64_t addr, uint64_t value) "slot=0x%"PRIx64" addr=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_container_write_unimplemented(uint64_t slot, uint64_t addr, uint64_t value) "slot=0x%"PRIx64" addr=0x%"PRIx64" value=0x%"PRIx64
+psp_osmem_container_read_unimplemented(uint64_t slot, uint64_t addr, uint64_t value) "slot=0x%"PRIx64" addr=0x%"PRIx64" value=0x%"PRIx64
 
 # psp-x86-mapper.c
 internal_state_read(uint32_t slot_id, uint32_t reg_id, uint32_t value) "slot=%d reg=%d val=0x%x"
 internal_state_write(uint32_t slot_id, uint32_t reg_id, uint32_t value) "slot=%d reg=%d val=0x%x"
+
+internal_state_read_unimplemented(uint32_t slot_id, uint32_t reg_id, uint32_t value) "slot=%d reg=%d val=0x%x"
+internal_state_write_unimplemented(uint32_t slot_id, uint32_t reg_id, uint32_t value) "slot=%d reg=%d val=0x%x"
 
 magic3_read(uint32_t value) "value=%d"
 magic3_write(uint32_t value, uint32_t counter) "value=%d counter=%d"

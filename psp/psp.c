@@ -84,7 +84,7 @@ static void amd_psp_init(Object* obj)
 
     object_initialize_child(obj, "base_mem", &s->base_mem, TYPE_PSP_MISC);
 
-    object_initialize_child(obj, "osmem", &s->osmem, TYPE_PSP_OSMEM);
+    // object_initialize_child(obj, "osmem", &s->osmem, TYPE_PSP_OSMEM);
 
     object_initialize_child(obj, "timer1", &s->timer1, TYPE_PSP_TIMER);
 
@@ -160,21 +160,21 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     }
 
     /* Map X86 control registers */
-    // sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 0, PSP_X86_CTRL1_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 0, PSP_X86_CTRL_BASE);
 
     /* Map X86 control registers */
-    // sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 1, PSP_X86_CTRL2_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 1, PSP_X86_MAGIC1_BASE);
 
     /* Map X86 control registers */
-    // sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 2, PSP_X86_CTRL3_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 2, PSP_X86_MAGIC2_BASE);
     // TODO: Map magic3
-
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 3, PSP_X86_MAGIC3_BASE);
     /* Map osmem */
-    if (!sysbus_realize(SYS_BUS_DEVICE(&s->osmem), errp)) {
-        return;
-    }
-    sysbus_mmio_map(SYS_BUS_DEVICE(&s->osmem), 0, PSP_OSMEM_CTL_BASE);
-    sysbus_mmio_map(SYS_BUS_DEVICE(&s->osmem), 1, PSP_OSMEM_CONTAINERS_BASE);
+    // if (!sysbus_realize(SYS_BUS_DEVICE(&s->osmem), errp)) {
+    //     return;
+    // }
+    // sysbus_mmio_map(SYS_BUS_DEVICE(&s->osmem), 0, PSP_OSMEM_CTL_BASE);
+    // sysbus_mmio_map(SYS_BUS_DEVICE(&s->osmem), 1, PSP_OSMEM_CONTAINERS_BASE);
 
     /* Map timer 1 */
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->timer1), errp)) {

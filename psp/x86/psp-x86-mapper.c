@@ -25,9 +25,8 @@
 static uint32_t internal_state_read(PSPX86MapperState* s, uint32_t slot_id,
                                     PSPX86RegId reg_id)
 {
-    if (slot_id >= PSP_X86_SLOT_COUNT) {
-        qemu_log_mask(LOG_GUEST_ERROR, "PSP X86 Error: Unknown X86 slot: %d\n",
-                      slot_id);
+    if (slot_id >= PSP_X86_SLOT_COUNT || reg_id >= X86_REG_MAX) {
+        trace_internal_state_read_unimplemented(slot_id, reg_id, 0);
         return 0;
     }
 
@@ -52,9 +51,8 @@ static void psp_x86_map_slot(PSPX86MapperState* s, uint32_t slot_id)
 static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
                                  PSPX86RegId reg_id, uint32_t val)
 {
-    if (slot_id >= PSP_X86_SLOT_COUNT) {
-        qemu_log_mask(LOG_GUEST_ERROR, "PSP X86 Error: Unknown X86 slot: %d\n",
-                      slot_id);
+    if (slot_id >= PSP_X86_SLOT_COUNT || reg_id >= X86_REG_MAX) {
+        trace_internal_state_write_unimplemented(slot_id, reg_id, val);
         return;
     }
 
@@ -283,22 +281,20 @@ static void mapper_realize(DeviceState* dev, Error** errp)
     /* The X86 control register regions */
     memory_region_init_io(&s->psp_x86_control, OBJECT(dev), &x86_ctlr1_ops, s,
                           "psp-x86-ctrl", PSP_X86_CTLR_SIZE);
-
     sysbus_init_mmio(sbd, &s->psp_x86_control);
 
     memory_region_init_io(&s->psp_x86_magic1, OBJECT(dev), &x86_magic1_ops, s,
                           "psp-x86-magic1", PSP_X86_MAGIC1_SIZE);
-
     sysbus_init_mmio(sbd, &s->psp_x86_magic1);
 
     memory_region_init_io(&s->psp_x86_magic2, OBJECT(dev), &x86_magic2_ops, s,
                           "psp-x86-magic2", PSP_X86_MAGIC2_SIZE);
-
     sysbus_init_mmio(sbd, &s->psp_x86_magic2);
+
     memory_region_init_io(&s->psp_x86_magic3, OBJECT(dev), &x86_magic3_ops, s,
                           "psp-x86-magic3", PSP_X86_MAGIC3_SIZE);
-
     sysbus_init_mmio(sbd, &s->psp_x86_magic3);
+
     realize_mapping_slots(dev);
 }
 

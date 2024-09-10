@@ -53,15 +53,16 @@ class Setup(gdb.Command):
             # best effort killing
             print(e)
         cmd = (
-            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_*" -s -S '
+            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_*" -D {str(LOG_PATH.absolute())} -s -S '
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
-            f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl}"
+            f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl} "
+            "-chardev socket,id=mon0,host=127.0.0.1,port=4444,server=on,wait=off "
+            "-monitor chardev:mon0"
         )
         print(f"Starting QEMU with command: {cmd}")
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
-        qemu_log = open(LOG_PATH, "a")
         cmd = Popen(
-            shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True
+            shlex.split(cmd), start_new_session=True
         )
         print(f"New qemu has PID {cmd.pid}")
         with open(path_to_pid, "w") as f:
