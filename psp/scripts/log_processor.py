@@ -28,7 +28,7 @@ def process_log(input):
             if "=" not in part:
                 # gets printed in addr is None check
                 break
-            key, val = part.split("=")
+            key, val = part.split("=", 1)
             if key == "addr":
                 addr = val
             elif key == "offset":
