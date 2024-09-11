@@ -9,7 +9,11 @@ from pathlib import Path
 sys.path.append(os.path.dirname(__file__))
 
 
-bp_defs = [("0xd1b2", "Got Entry details"), ("0x3408", "ccp_memcopy"),("0xe8c4", "load_bytes_from_file_maybe")]
+bp_defs = [
+    ("0xd1b2", "Got Entry details"),
+    ("0x3408", "ccp_memcopy"),
+    ("0xe8c4", "load_bytes_from_file_maybe"),
+]
 dependent_bps = []
 for bp_def in bp_defs:
     bp = gdb.Breakpoint(f"*{bp_def[0]}")
@@ -28,6 +32,9 @@ def log_message(msg):
         f.write(msg + "\n")
 
 
+gdb.execute("set pagination off")
+
+
 class Setup(gdb.Command):
 
     def __init__(self, generation, on_chip_bl, off_chip_bl):
@@ -36,6 +43,8 @@ class Setup(gdb.Command):
         self.generation = generation
         self.on_chip_bl = on_chip_bl
         self.off_chip_bl = off_chip_bl
+        self.gdb_port = 1234
+        self.monitor_port = 4444
 
     def kill_and_restart(self):
         path_to_pid = BUILD_DIR / "pid.txt"
@@ -53,33 +62,42 @@ class Setup(gdb.Command):
             # best effort killing
             print(e)
         cmd = (
-            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_*" -D {str(LOG_PATH.absolute())} -s -S '
+            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_passthrough,trace:ccp_rsa,trace:ccp_sha*" -gdb tcp::{self.gdb_port} -S '
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
             f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl} "
-            "-chardev socket,id=mon0,host=127.0.0.1,port=4444,server=on,wait=off "
+            f"-chardev socket,id=mon0,host=127.0.0.1,port={self.monitor_port},server=on,wait=off "
             "-monitor chardev:mon0"
         )
         print(f"Starting QEMU with command: {cmd}")
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
+        qemu_log = open(LOG_PATH, "a")
         cmd = Popen(
-            shlex.split(cmd), start_new_session=True
+            shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True
         )
+
         print(f"New qemu has PID {cmd.pid}")
         with open(path_to_pid, "w") as f:
             f.write(str(cmd.pid))
 
     def invoke(self, args, _from_tty):
+        global BUILD_DIR
+        global LOG_PATH
+        argv = gdb.string_to_argv(args)
+        self.os_mem_hack = False
+        if len(argv) > 0 and bool(argv[0]):
+            print("OS MEM HACKING")
+            self.gdb_port = 1235
+            self.monitor_port = 4445
+            BUILD_DIR = BUILD_DIR.parent / "osmem"
+            LOG_PATH = BUILD_DIR / "qemu.log"
+            self.os_mem_hack = True
         self.kill_and_restart()
         # some time to start the emulator
         time.sleep(0.5)
-        gdb.execute("target remote localhost:1234")
-        gdb.execute("sync")
+        gdb.execute(f"target remote localhost:{self.gdb_port}")
+        if not self.os_mem_hack:
+            gdb.execute("sync")
         gdb.execute("si")
-        argv = gdb.string_to_argv(args)
-        if len(argv) > 0:
-            if bool(argv[0]):
-                # Forgot what I wanted to do here
-                print("passed true")
         for bp in dependent_bps:
             bp.enabled = False
 
@@ -240,5 +258,5 @@ class CcpMemcopyBreakpoint(gdb.Breakpoint):
 
 
 dependent_bps.append(CcpMemcopyBreakpoint("0x3418"))
-EnableDependentsBreakpoint("*0xd17c")
-s.invoke("", False)
+# EnableDependentsBreakpoint("*0xd17c")
+# s.invoke("", False)

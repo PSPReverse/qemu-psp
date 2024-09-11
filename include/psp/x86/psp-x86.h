@@ -45,6 +45,9 @@ typedef struct PSPX86State {
     /* The memory region backing the x86 address space */
     MemoryRegion mr;
 
+    /* The Part of the DRAM that gets blocked for exclusive use of the PSP */
+    MemoryRegion secure_dram;
+
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
 } PSPX86State;
