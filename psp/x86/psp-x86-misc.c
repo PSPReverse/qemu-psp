@@ -19,6 +19,9 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr offset,
     case 0xfed81e77:
         val = 0x7;
         break;
+    case 0xfffdfc0003fd:
+        val = 0x60;
+        break;
     default:
         trace_psp_x86_misc_read_unimplemented(offset);
         return 0;

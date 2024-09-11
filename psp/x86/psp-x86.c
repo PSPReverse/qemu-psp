@@ -35,6 +35,10 @@ static void psp_x86_init(Object* obj)
     PSPX86State* s = PSP_X86(obj);
     object_initialize_child(obj, "misc", &s->psp_x86_misc, TYPE_PSP_X86_MISC);
 }
+/* 12.5MiB*/
+#define SECURE_DRAM_SIZE (125 * 1024 * 1024 / 10)
+/* TODO: First guess, needs to be updated*/
+#define SECURE_DRAM_BASE 0xfffdfb000000
 
 static void psp_x86_realize(DeviceState* dev, Error** errp)
 {
@@ -55,6 +59,16 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
                        (1UL << 48) /* 48 physical address bits */);
     address_space_init(&s->as, &s->mr, "x86 address space");
 
+    /* Init SRAM */
+    memory_region_init_ram(&s->secure_dram, OBJECT(dev), "secure_dram",
+                           SECURE_DRAM_SIZE, &error_abort);
+    memory_region_add_subregion(&s->mr, SECURE_DRAM_BASE, &s->secure_dram);
+    // int constant = 0x60;
+    // MemTxResult res = address_space_write(&s->as, 0xfffdfc0003fd,
+    // MEMTXATTRS_UNSPECIFIED, &constant, 1); if (res != MEMTX_OK) {
+    //     error_setg(errp, "Failed to write to x86 address space");
+    //     return;
+    // }
     /* A MMIO accessible UART */
     // serial_mm_init(&s->mr, 0xfffdfc0003f8, 0, 0, 115200, serial_hd(0),
     // DEVICE_NATIVE_ENDIAN);

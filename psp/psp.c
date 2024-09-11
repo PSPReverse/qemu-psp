@@ -167,7 +167,6 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
 
     /* Map X86 control registers */
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 2, PSP_X86_MAGIC2_BASE);
-    // TODO: Map magic3
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->x86), 3, PSP_X86_MAGIC3_BASE);
     /* Map osmem */
     // if (!sysbus_realize(SYS_BUS_DEVICE(&s->osmem), errp)) {
