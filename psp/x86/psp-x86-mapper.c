@@ -26,13 +26,13 @@ static uint32_t internal_state_read(PSPX86MapperState* s, uint32_t slot_id,
                                     PSPX86RegId reg_id)
 {
     if (slot_id >= PSP_X86_SLOT_COUNT || reg_id >= X86_REG_MAX) {
-        trace_internal_state_read_unimplemented(slot_id, reg_id, 0);
+        trace_psp_x86_mapper_state_read_unimplemented(slot_id, reg_id, 0);
         return 0;
     }
 
     PSPX86Slot* slot = &s->psp_x86_slots[slot_id];
     uint32_t ret = slot->ctrl_regs[reg_id];
-    trace_internal_state_read(slot_id, reg_id, ret);
+    trace_psp_x86_mapper_state_read(slot_id, reg_id, ret);
 
     return ret;
 }
@@ -52,7 +52,7 @@ static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
                                  PSPX86RegId reg_id, uint32_t val)
 {
     if (slot_id >= PSP_X86_SLOT_COUNT || reg_id >= X86_REG_MAX) {
-        trace_internal_state_write_unimplemented(slot_id, reg_id, val);
+        trace_psp_x86_mapper_state_write_unimplemented(slot_id, reg_id, val);
         return;
     }
 
@@ -62,15 +62,15 @@ static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
     if (reg_id == X86BASE) {
         psp_x86_map_slot(s, slot_id);
     }
-    trace_internal_state_write(slot_id, reg_id, val);
+    trace_psp_x86_mapper_state_write(slot_id, reg_id, val);
 }
 
-static void register_write_handler(void* opaque, hwaddr offset, uint64_t value,
-                                   unsigned int size)
+static void ctrl_write(void* opaque, hwaddr offset, uint64_t value,
+                       unsigned int size)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(opaque);
     uint32_t slot_id = offset / (4 * sizeof(uint32_t));
-    uint32_t reg_id = offset % (4 * sizeof(uint32_t));
+    uint32_t reg_id = (offset % (4 * sizeof(uint32_t))) / 4;
 
     if (size != sizeof(uint32_t)) {
         qemu_log_mask(LOG_GUEST_ERROR,
@@ -82,12 +82,11 @@ static void register_write_handler(void* opaque, hwaddr offset, uint64_t value,
     internal_state_write(s, slot_id, reg_id, value);
 }
 
-static uint64_t psp_x86_ctrl_read(void* opaque, hwaddr offset,
-                                  unsigned int size)
+static uint64_t ctrl_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(opaque);
     uint32_t slot_id = offset / (4 * sizeof(uint32_t));
-    uint32_t reg_id = offset % (4 * sizeof(uint32_t));
+    uint32_t reg_id = (offset % (4 * sizeof(uint32_t))) / 4;
 
     if (size != sizeof(uint32_t)) {
         qemu_log_mask(LOG_GUEST_ERROR,
@@ -170,8 +169,8 @@ static uint64_t magic2_read(void* opaque, hwaddr offset, unsigned int size)
 }
 
 static const MemoryRegionOps x86_ctlr1_ops = {
-    .read = psp_x86_ctrl_read,
-    .write = register_write_handler,
+    .read = ctrl_read,
+    .write = ctrl_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
     .impl.min_access_size = 1,
     .impl.max_access_size = 4,
@@ -203,6 +202,7 @@ static uint64_t magic3_read(void* opaque, hwaddr offset, unsigned int size)
             size);
         return 0;
     }
+    trace_psp_x86_mapper_magic3_read(s->magic3.value);
     return s->magic3.value;
 }
 
@@ -219,11 +219,8 @@ static void magic3_write(void* opaque, hwaddr offset, uint64_t value,
     }
     if (value == 0x3333) {
         s->magic3.counter++;
-    } else {
-        qemu_log_mask(LOG_UNIMP,
-                      "Unkown magic3 write at offset 0x%lx with value 0x%lx\n",
-                      offset, value);
     }
+    trace_psp_x86_mapper_magic3_write(value, s->magic3.counter);
     s->magic3.value = value;
 }
 

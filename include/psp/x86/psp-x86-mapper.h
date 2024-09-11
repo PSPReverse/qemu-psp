@@ -18,9 +18,10 @@
 #define PSP_X86_MAPPER_NAME "PSP X86 Mapper"
 #define PSP_X86_MAPPING_BASE 0x04000000
 #define PSP_X86_CTRL_BASE 0x03230000
-#define PSP_X86_MAGIC1_BASE 0x032303e0
-#define PSP_X86_MAGIC2_BASE 0x032304d8
-#define PSP_X86_MAGIC3_BASE 0x032305ec
+#define PSP_X86_MAGIC1_BASE (PSP_X86_CTRL_BASE + 0x3e0)
+#define PSP_X86_MAGIC2_BASE (PSP_X86_CTRL_BASE + 0x4d8)
+// TOOD: Figure out why hnj and Buhren have 0x5ec here
+#define PSP_X86_MAGIC3_BASE (PSP_X86_CTRL_BASE + 0x5f0)
 
 #define TYPE_PSP_X86_MAPPER "amd_psp.x86.mapper"
 #define PSP_X86_MAPPER(obj)                                                    \

@@ -43,6 +43,13 @@ static uint64_t psp_uart_read(PSPOSMemAddr offset, unsigned int size) {
 }
 */
 
+static uint64_t get_x86_addr_for_slot(PSPOSMemState* s, unsigned slot_id)
+{
+
+    return (s->psp_osmem_control[slot_id] & 0x3f) << 26 |
+           ((uint64_t)(s->psp_osmem_control[slot_id] >> 6)) << 32;
+}
+
 static uint64_t psp_osmem_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPOSMemState* s = PSP_OSMEM(opaque);
@@ -87,7 +94,6 @@ static void psp_osmem_write(void* opaque, hwaddr offset, uint64_t val,
 
     unsigned slot = offset / PSP_OSMEM_CTL_SLOT_SIZE;
     unsigned reg = offset % PSP_OSMEM_CTL_SLOT_SIZE;
-
     if (slot >= PSP_OSMEM_NUM_SLOTS || reg != 0) {
         trace_psp_osmem_control_write_unimplemented(offset, val);
         return;
@@ -116,9 +122,10 @@ static uint64_t psp_osmem_container_read(void* opaque, hwaddr offset,
     unsigned addr = offset % PSP_OSMEM_CONTAINER_SLOT_SIZE;
 
     val = 0;
+    uint64_t x86_addr = get_x86_addr_for_slot(s, slot);
 
     if (slot >= PSP_OSMEM_NUM_SLOTS) {
-        trace_psp_osmem_container_read_unimplemented(slot, addr, val);
+        trace_psp_osmem_container_read_unimplemented(slot, addr, val, x86_addr);
         return val;
     }
 
@@ -148,7 +155,7 @@ static uint64_t psp_osmem_container_read(void* opaque, hwaddr offset,
         break;
     }
 
-    trace_psp_osmem_container_read(slot, addr, val);
+    trace_psp_osmem_container_read(slot, addr, val, x86_addr);
 
     return val;
 }
@@ -170,9 +177,11 @@ static void psp_osmem_container_write(void* opaque, hwaddr offset, uint64_t val,
 
     unsigned slot = offset / PSP_OSMEM_CONTAINER_SLOT_SIZE;
     unsigned addr = offset % 0x04000000;
+    uint64_t x86_addr = get_x86_addr_for_slot(s, slot);
 
     if (slot >= PSP_OSMEM_NUM_SLOTS) {
-        trace_psp_osmem_container_write_unimplemented(slot, addr, val);
+        trace_psp_osmem_container_write_unimplemented(slot, addr, val,
+                                                      x86_addr);
         return;
     }
 
@@ -189,7 +198,7 @@ static void psp_osmem_container_write(void* opaque, hwaddr offset, uint64_t val,
 
     s->psp_osmem_container_ram[addr] = val;
 
-    trace_psp_osmem_container_write(slot, addr, val);
+    trace_psp_osmem_container_write(slot, addr, val, x86_addr);
 }
 
 static const MemoryRegionOps osmem_mem_ops = {
