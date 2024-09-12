@@ -16,6 +16,7 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr offset,
     uint64_t val;
     switch (offset) {
     /* The off chip bootloader waits for bits 0-2 to be set. */
+    /* AOACx77 DEVSTS_27*/
     case 0xfed81e77:
         val = 0x7;
         break;
