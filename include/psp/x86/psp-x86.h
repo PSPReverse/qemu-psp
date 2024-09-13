@@ -25,6 +25,7 @@
 
 #include "psp/generations.h"
 #include "psp/psp-misc.h"
+#include "psp/x86/config-space.h"
 #include "psp/x86/x86-misc.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
@@ -38,6 +39,9 @@ typedef struct PSPX86State {
 
     /* PSP Misc device that covers the whole x86 address space */
     PSPX86MiscState psp_x86_misc;
+
+    /*The PCI Config Space also known as PCICFG*/
+    PSPX86ConfigSpaceState psp_x86_config_space;
 
     /* The X86 address space */
     AddressSpace as;
