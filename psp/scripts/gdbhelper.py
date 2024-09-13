@@ -212,6 +212,7 @@ gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
 LoggingBreakpoint(0xD424, "R0", "Starting load_app_id_from_flash")
 LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
 
+LoggingBreakpoint(0xd2ee, "R0", "Starting SecOS")
 
 class EnableDependentsBreakpoint(gdb.Breakpoint):
     def stop(self) -> bool:

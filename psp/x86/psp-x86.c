@@ -34,6 +34,8 @@ static void psp_x86_init(Object* obj)
 {
     PSPX86State* s = PSP_X86(obj);
     object_initialize_child(obj, "misc", &s->psp_x86_misc, TYPE_PSP_X86_MISC);
+    object_initialize_child(obj, "config_space", &s->psp_x86_config_space,
+                            TYPE_PSP_X86_CONFIG_SPACE);
 }
 /* 12.5MiB*/
 #define SECURE_DRAM_SIZE (125 * 1024 * 1024 / 10)
@@ -74,7 +76,20 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     // DEVICE_NATIVE_ENDIAN);
 
     /* Connect the misc device to the x86 address space */
+    qdev_prop_set_uint32(DEVICE(&s->psp_x86_config_space), "psp_generation",
+                         s->generation);
+
+    sysbus_realize(SYS_BUS_DEVICE(&s->psp_x86_config_space), errp);
+    if (*errp) {
+        return;
+    }
+
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->psp_x86_config_space), 0,
+                    PSP_X86_CONFIG_SPACE_SECURE_DRAM_LOCATION);
+
     // TODO: Add RAM to the x86 address space
+
+    /* Connect the misc device to the x86 address space */
     qdev_prop_set_uint32(DEVICE(&s->psp_x86_misc), "psp_generation",
                          s->generation);
 
