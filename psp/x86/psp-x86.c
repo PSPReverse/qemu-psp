@@ -83,9 +83,11 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     if (*errp) {
         return;
     }
+    MemoryRegion* mr_x86_config_space =
+        sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_x86_config_space), 0);
 
-    sysbus_mmio_map(SYS_BUS_DEVICE(&s->psp_x86_config_space), 0,
-                    PSP_X86_CONFIG_SPACE_SECURE_DRAM_LOCATION);
+    memory_region_add_subregion(
+        &s->mr, PSP_X86_CONFIG_SPACE_SECURE_DRAM_LOCATION, mr_x86_config_space);
 
     // TODO: Add RAM to the x86 address space
 
