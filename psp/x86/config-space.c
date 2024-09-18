@@ -18,11 +18,11 @@
 #define BUS_COUNT 8
 
 typedef struct PciIdentifier {
-    uint32_t offset : 11;
-    uint32_t function : 2;
-    uint32_t device : 4;
+    uint32_t offset : 12;
+    uint32_t function : 3;
+    uint32_t device : 5;
     uint32_t bus : 8;
-    uint32_t filler : 1;
+    uint32_t filler : 4;
     uint32_t filler2;
 } PciIdentifier;
 
@@ -35,7 +35,6 @@ static void cs_write(void* opaque, hwaddr offset, uint64_t value,
 }
 static uint64_t cs_read(void* opaque, hwaddr offset, unsigned int size)
 {
-
     PciIdentifier* id = (PciIdentifier*)&offset;
     uint64_t val = 0;
     trace_psp_x86_config_space_write_unimplemented(
