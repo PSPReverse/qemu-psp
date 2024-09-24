@@ -9,11 +9,7 @@ from pathlib import Path
 sys.path.append(os.path.dirname(__file__))
 
 
-bp_defs = [
-    ("0xd1b2", "Got Entry details"),
-    ("0x3408", "ccp_memcopy"),
-    ("0xe8c4", "load_bytes_from_file_maybe"),
-]
+bp_defs = []
 dependent_bps = []
 for bp_def in bp_defs:
     bp = gdb.Breakpoint(f"*{bp_def[0]}")
@@ -173,11 +169,12 @@ j = JumpTo()
 
 
 class LoggingBreakpoint(gdb.Breakpoint):
-    def __init__(self, addr: int, target: str, msg: str = None):
+    def __init__(self, addr: int, target: str, msg: str = None, should_stop=False):
         super(LoggingBreakpoint, self).__init__(f"*{addr}")
         self.addr = addr
         self.target = target
         self.msg = msg
+        self.should_stop = should_stop
 
     def stop(self) -> bool:
         reg_value = int(gdb.parse_and_eval(f"${self.target.lower()}"))
@@ -185,7 +182,7 @@ class LoggingBreakpoint(gdb.Breakpoint):
             f" msg = {self.msg}" if self.msg else ""
         )
         log_message(msg)
-        return False
+        return self.should_stop
 
 
 for tunnel in config["tunnels"]:
@@ -212,7 +209,24 @@ gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
 LoggingBreakpoint(0xD424, "R0", "Starting load_app_id_from_flash")
 LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
 
-LoggingBreakpoint(0xd2ee, "R0", "Starting SecOS")
+LoggingBreakpoint(0xD2EE, "R0", "Starting SecOS", True)
+
+dependent_bps.extend(
+    [
+        LoggingBreakpoint(0x3F00, "R0", "Got SVC call number"),
+        LoggingBreakpoint(0x298, "SP", "Returning from SVC call"),
+        LoggingBreakpoint(0x298, "LR", "Returning from SVC call"),
+        LoggingBreakpoint(0x2C8, "R0", "Returning from UNDEF call"),
+        LoggingBreakpoint(0x2C8, "LR", "Returning from UNDEF call"),
+        LoggingBreakpoint(0x710, "R0", "Switch to Context"),
+        LoggingBreakpoint(0x710, "LR", "Switch to Context"),
+        LoggingBreakpoint(0xF6E, "R0", "FIQ called"),
+        LoggingBreakpoint(0x10, "LR", "UNDEF triggered", should_stop=True),
+        LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
+        LoggingBreakpoint(0x2022C2, "R0", "Known good location", should_stop=True),
+    ]
+)
+
 
 class EnableDependentsBreakpoint(gdb.Breakpoint):
     def stop(self) -> bool:
@@ -258,6 +272,4 @@ class CcpMemcopyBreakpoint(gdb.Breakpoint):
         return False
 
 
-dependent_bps.append(CcpMemcopyBreakpoint("0x3418"))
-# EnableDependentsBreakpoint("*0xd17c")
-# s.invoke("", False)
+EnableDependentsBreakpoint("*0xD2EE")

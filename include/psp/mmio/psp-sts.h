@@ -25,14 +25,22 @@
 #define PSP_STS(obj) OBJECT_CHECK(PSPStsState, (obj), TYPE_PSP_STS)
 
 /**
- * @brief The PSP Status register
- * This is used to communicate the PSP status to the host
+ * @brief The ASP Status register
+ * This is used to communicate the ASP status to the host
+ *
+ * This register exists in two places
+ * 1. In the ASP MMIO Space
+ * 2. In the Secure DRAM, where it is only written by the master ASP
+ *
+ * To differentiate the two places the property "in_x86_space" is used
  */
 typedef struct PSPStsState {
     SysBusDevice parent_obj;
     MemoryRegion iomem;
 
     uint32_t psp_sts_val;
+
+    bool in_x86_space;
 
 } PSPStsState;
 

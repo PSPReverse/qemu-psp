@@ -1,1107 +1,1107 @@
 [
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId0",
         "Description": "Device/Vendor ID Function 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand0",
         "Description": "Status Command Function 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId0",
         "Description": "Class Code Revision ID Function 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType0",
         "Description": "Header Type Function 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr0",
         "Description": "Capabilities Pointer Function 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x040",
+        "Offset": 64,
         "Name": "DF::FabricBlockInstanceCount",
         "Description": "Fabric Block Instance Count"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x044",
+        "Offset": 68,
         "Name": "DF::FabricBlockInstanceInformation0",
         "Description": "Fabric Block Instance Information 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x048",
+        "Offset": 72,
         "Name": "DF::FabricBlockInstanceInformation1",
         "Description": "Fabric Block Instance Information 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x04C",
+        "Offset": 76,
         "Name": "DF::FabricBlockInstanceInformation2",
         "Description": "Fabric Block Instance Information 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x050",
+        "Offset": 80,
         "Name": "DF::FabricBlockInstanceInformation3_CSNCSPIEALLM",
         "Description": "Fabric Block Instance Information 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x050",
+        "Offset": 80,
         "Name": "DF::FabricBlockInstanceInformation3_IOS",
         "Description": "Fabric Block Instance Information 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x050",
+        "Offset": 80,
         "Name": "DF::FabricBlockInstanceInformation3_TCDXCAKE",
         "Description": "Fabric Block Instance Information 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x080",
+        "Offset": 128,
         "Name": "DF::VGAEn",
         "Description": "VGA Enable"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x084",
+        "Offset": 132,
         "Name": "DF::CfgAddressCntl",
         "Description": "Config Address Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x090",
+        "Offset": 144,
         "Name": "DF::DfCapability",
         "Description": "DF Capability"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x09C",
+        "Offset": 156,
         "Name": "DF::CfgBus0Type1DstFabricIDReg1",
         "Description": "Configuration Bus0 Type1 Destination Fabric ID Register-1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr0",
         "Description": "Enhanced Capability Header Function 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x104",
+        "Offset": 260,
         "Name": "DF::DramHoleControl",
         "Description": "DRAM Hole Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x1B4",
+        "Offset": 436,
         "Name": "DF::DramOffset",
         "Description": "DRAM Offset"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x384",
+        "Offset": 900,
         "Name": "DF::SecureLoaderConfig",
         "Description": "Secure Loader Configuration"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 0,
-        "Offset": "0x3F8",
+        "Offset": 1016,
         "Name": "DF::DfGlobalCtrl",
         "Description": "DF Global Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId1",
         "Description": "Device/Vendor ID Function 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand1",
         "Description": "Status Command Function 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId1",
         "Description": "Class Code Revision ID Function 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType1",
         "Description": "Header Type Function 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr1",
         "Description": "Capabilities Pointer Function 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr1",
         "Description": "Enhanced Capability Header Function 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x200",
+        "Offset": 512,
         "Name": "DF::SystemCfg",
         "Description": "System Configuration"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x208",
+        "Offset": 520,
         "Name": "DF::SystemFabricIdMask0",
         "Description": "System Fabric ID Mask 0"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 1,
-        "Offset": "0x20C",
+        "Offset": 524,
         "Name": "DF::SystemFabricIdMask1",
         "Description": "System Fabric ID Mask 1"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 2,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId2",
         "Description": "Device/Vendor ID Function 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 2,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand2",
         "Description": "Status Command Function 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 2,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId2",
         "Description": "Class Code Revision ID Function 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 2,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType2",
         "Description": "Header Type Function 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 2,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr2",
         "Description": "Capabilities Pointer Function 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 2,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr2",
         "Description": "Enhanced Capability Header Function 2"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 3,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId3",
         "Description": "Device/Vendor ID Function 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 3,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand3",
         "Description": "Status Command Function 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 3,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId3",
         "Description": "Class Code Revision ID Function 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 3,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType3",
         "Description": "Header Type Function 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 3,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr3",
         "Description": "Capabilities Pointer Function 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 3,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr3",
         "Description": "Enhanced Capability Header Function 3"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId4",
         "Description": "Device/Vendor ID Function 4"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand4",
         "Description": "Status Command Function 4"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId4",
         "Description": "Class Code Revision ID Function 4"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType4",
         "Description": "Header Type Function 4"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr4",
         "Description": "Capabilities Pointer Function 4"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x040",
+        "Offset": 64,
         "Name": "DF::FabricConfigAccessControl",
         "Description": "Fabric Configuration Access Control (FCAC)"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x044",
+        "Offset": 68,
         "Name": "DF::CoreMasterAccessCtrl",
         "Description": "Core Coherent Master Configuration Access Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x0C0",
+        "Offset": 192,
         "Name": "DF::MasterRequestControl",
         "Description": "Master Request Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 4,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr4",
         "Description": "Enhanced Capability Header Function 4"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId5",
         "Description": "Device/Vendor ID Function 5"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand5",
         "Description": "Status Command Function 5"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId5",
         "Description": "Class Code Revision ID Function 5"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType5",
         "Description": "Header Type Function 5"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr5",
         "Description": "Capabilities Pointer Function 5"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x090",
+        "Offset": 144,
         "Name": "DF::PIEFabricCompCnt",
         "Description": "PIE Fabric Component Count"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr5",
         "Description": "Enhanced Capability Header Function 5"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x104",
+        "Offset": 260,
         "Name": "DF::PIEConfig",
         "Description": "PIE Configuration"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 5,
-        "Offset": "0x108",
+        "Offset": 264,
         "Name": "DF::PIEControl",
         "Description": "PIE Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId6",
         "Description": "Device/Vendor ID Function 6"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand6",
         "Description": "Status Command Function 6"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId6",
         "Description": "Class Code Revision ID Function 6"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType6",
         "Description": "Header Type Function 6"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr6",
         "Description": "Capabilities Pointer Function 6"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x040",
+        "Offset": 64,
         "Name": "DF::DramScrubBaseAddr",
         "Description": "DRAM Scrubber Base Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x044",
+        "Offset": 68,
         "Name": "DF::DramScrubLimitAddr",
         "Description": "DRAM Scrubber Limit Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x048",
+        "Offset": 72,
         "Name": "DF::DramScrubAddrLo",
         "Description": "DRAM Scrubber Address Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x04C",
+        "Offset": 76,
         "Name": "DF::DramScrubAddrHi",
         "Description": "DRAM Scrubber Address High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x050",
+        "Offset": 80,
         "Name": "DF::DramScrubBaseAddr1",
         "Description": "DRAM Scrubber Base Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x054",
+        "Offset": 84,
         "Name": "DF::DramScrubLimitAddr1",
         "Description": "DRAM Scrubber Limit Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x058",
+        "Offset": 88,
         "Name": "DF::DramScrubAddrLo1",
         "Description": "DRAM Scrubber Address Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x05C",
+        "Offset": 92,
         "Name": "DF::DramScrubAddrHi1",
         "Description": "DRAM Scrubber Address High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x060",
+        "Offset": 96,
         "Name": "DF::DramScrubBaseAddr2",
         "Description": "DRAM Scrubber Base Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x064",
+        "Offset": 100,
         "Name": "DF::DramScrubLimitAddr2",
         "Description": "DRAM Scrubber Limit Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x068",
+        "Offset": 104,
         "Name": "DF::DramScrubAddrLo2",
         "Description": "DRAM Scrubber Address Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x06C",
+        "Offset": 108,
         "Name": "DF::DramScrubAddrHi2",
         "Description": "DRAM Scrubber Address High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x070",
+        "Offset": 112,
         "Name": "DF::DramScrubBaseAddr3",
         "Description": "DRAM Scrubber Base Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x074",
+        "Offset": 116,
         "Name": "DF::DramScrubLimitAddr3",
         "Description": "DRAM Scrubber Limit Address"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x078",
+        "Offset": 120,
         "Name": "DF::DramScrubAddrLo3",
         "Description": "DRAM Scrubber Address Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x07C",
+        "Offset": 124,
         "Name": "DF::DramScrubAddrHi3",
         "Description": "DRAM Scrubber Address High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x0B0",
+        "Offset": 176,
         "Name": "DF::DramScrubErrAddrLo",
         "Description": "DRAM Scrubber Error Address Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x0B4",
+        "Offset": 180,
         "Name": "DF::DramScrubErrAddrHi",
         "Description": "DRAM Scrubber Error Address High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x0B8",
+        "Offset": 184,
         "Name": "DF::RedirScrubCtrl",
         "Description": "Redirect Scrubber Control"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr6",
         "Description": "Enhanced Capability Header Function 6"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x1E8",
+        "Offset": 488,
         "Name": "DF::RSPQWDTIoTransLogLow",
         "Description": "RSPQ Watchdog Timer Log Register Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x1EC",
+        "Offset": 492,
         "Name": "DF::RSPQWDTIoTransLogHi",
         "Description": "RSPQ Watchdog Timer Status Hi"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x1F0",
+        "Offset": 496,
         "Name": "DF::HardwareAssertStatusLow",
         "Description": "Hardware Assert Status Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x1F4",
+        "Offset": 500,
         "Name": "DF::HardwareAssertStatusHigh",
         "Description": "Hardware Assert Status High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x1F8",
+        "Offset": 504,
         "Name": "DF::HardwareAssertMaskLow",
         "Description": "Hardware Assert Mask Low"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 6,
-        "Offset": "0x1FC",
+        "Offset": 508,
         "Name": "DF::HardwareAssertMaskHigh",
         "Description": "Hardware Assert Mask High"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 7,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "DF::DeviceVendorId7",
         "Description": "Device/Vendor ID Function 7"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 7,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "DF::StatusCommand7",
         "Description": "Status Command Function 7"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 7,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "DF::ClassCodeRevId7",
         "Description": "Class Code Revision ID Function 7"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 7,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "DF::HeaderType7",
         "Description": "Header Type Function 7"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 7,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "DF::CapabilitiesPtr7",
         "Description": "Capabilities Pointer Function 7"
     },
     {
         "Bus": 0,
-        "Device": 18,
+        "Device": 24,
         "Function": 7,
-        "Offset": "0x100",
+        "Offset": 256,
         "Name": "DF::EnhCapabilityHdr7",
         "Description": "Enhanced Capability Header Function 7"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x000",
+        "Offset": 0,
         "Name": "FCH::ITF::LPC::LPC_VENDOR_ID"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x002",
+        "Offset": 2,
         "Name": "FCH::ITF::LPC::LPC_DEVICE_ID"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x004",
+        "Offset": 4,
         "Name": "FCH::ITF::LPC::PCI_COMMAND"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x006",
+        "Offset": 6,
         "Name": "FCH::ITF::LPC::PCI_STATUS"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x008",
+        "Offset": 8,
         "Name": "FCH::ITF::LPC::Revision_ID_Class_Code"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x00C",
+        "Offset": 12,
         "Name": "FCH::ITF::LPC::PCI_CACHE_LINE_SIZE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x00D",
+        "Offset": 13,
         "Name": "FCH::ITF::LPC::PCI_LATENCY_TIMER"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x00E",
+        "Offset": 14,
         "Name": "FCH::ITF::LPC::PCI_HEADER_TYPE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x00F",
+        "Offset": 15,
         "Name": "FCH::ITF::LPC::PCI_BIST"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x02C",
+        "Offset": 44,
         "Name": "FCH::ITF::LPC::Subsystem_ID_Subsystem_Vendor_ID"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x034",
+        "Offset": 52,
         "Name": "FCH::ITF::LPC::CAPABILITIES_POINTER"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x040",
+        "Offset": 64,
         "Name": "FCH::ITF::LPC::PCI_CONTROL"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x044",
+        "Offset": 68,
         "Name": "FCH::ITF::LPC::IO_PORT_DECODE_ENABLE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x048",
+        "Offset": 72,
         "Name": "FCH::ITF::LPC::IO_MEM_PORT_DECODE_ENABLE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x04C",
+        "Offset": 76,
         "Name": "FCH::ITF::LPC::MEMORY_RANGE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x050",
+        "Offset": 80,
         "Name": "FCH::ITF::LPC::ROM_PROTECT_0"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x054",
+        "Offset": 84,
         "Name": "FCH::ITF::LPC::ROM_PROTECT_1"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x058",
+        "Offset": 88,
         "Name": "FCH::ITF::LPC::ROM_PROTECT_2"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x05C",
+        "Offset": 92,
         "Name": "FCH::ITF::LPC::ROM_PROTECT_3"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x060",
+        "Offset": 96,
         "Name": "FCH::ITF::LPC::PCI_MEMORY_START_ADDRESS_FOR_LPC_TARGET_CYCLES"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x062",
+        "Offset": 98,
         "Name": "FCH::ITF::LPC::PCI_MEMORY_END_ADDRESS_FOR_LPC_TARGET_CYCLES"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x064",
+        "Offset": 100,
         "Name": "FCH::ITF::LPC::PCI_IO_BASE_ADDRESS_FOR_WIDE_GENERIC_PORT"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x068",
+        "Offset": 104,
         "Name": "FCH::ITF::LPC::ROM_Address_Range_1_Start"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x06A",
+        "Offset": 106,
         "Name": "FCH::ITF::LPC::ROM_Address_Range_1_End"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x06C",
+        "Offset": 108,
         "Name": "FCH::ITF::LPC::ROM_Address_Range_2_Start"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x06E",
+        "Offset": 110,
         "Name": "FCH::ITF::LPC::ROM_Address_Range_2_End"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x074",
+        "Offset": 116,
         "Name": "FCH::ITF::LPC::ALTERNATIVE_WIDE_IO_RANGE_ENABLE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x078",
+        "Offset": 120,
         "Name": "FCH::ITF::LPC::MISCELLANEOUS_CONTROL_BITS"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x07C",
+        "Offset": 124,
         "Name": "FCH::ITF::LPC::TPM_TRUSTED_PLATFORM_MODULE"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x07D",
+        "Offset": 125,
         "Name": "FCH::ITF::LPC::LPCCLKCNTL"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x080",
+        "Offset": 128,
         "Name": "FCH::ITF::LPC::RESERVED"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x084",
+        "Offset": 132,
         "Name": "FCH::ITF::LPC::TMKBC_BASEADDRLOW"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x088",
+        "Offset": 136,
         "Name": "FCH::ITF::LPC::TMKBC_BASEADDRHIGH"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x08C",
+        "Offset": 140,
         "Name": "FCH::ITF::LPC::TMKBC_REMAP"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x090",
+        "Offset": 144,
         "Name": "FCH::ITF::LPC::WIDE_IO_2"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0A0",
+        "Offset": 160,
         "Name": "FCH::ITF::LPC::BASE_ADDR"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0A8",
+        "Offset": 168,
         "Name": "FCH::ITF::LPC::BAR_64MB_ROM3_LOW_RO"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0AC",
+        "Offset": 172,
         "Name": "FCH::ITF::LPC::BAR_64MB_ROM3_HIGH_RO"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0B0",
+        "Offset": 176,
         "Name": "FCH::ITF::LPC::ROMDMASRCADDR"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0B4",
+        "Offset": 180,
         "Name": "FCH::ITF::LPC::ROMDMADSTADDR"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0B8",
+        "Offset": 184,
         "Name": "FCH::ITF::LPC::ROMDMACONTROL"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0BB",
+        "Offset": 187,
         "Name": "FCH::ITF::LPC::LPC_HOSTCONTROL"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0D0",
+        "Offset": 208,
         "Name": "FCH::ITF::LPC::CLKGATECNTRL"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0D1",
+        "Offset": 209,
         "Name": "FCH::ITF::LPC::CLKPINCNTRL"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0D2",
+        "Offset": 210,
         "Name": "FCH::ITF::LPC::CLKRUNOVRID"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0D3",
+        "Offset": 211,
         "Name": "FCH::ITF::LPC::CLKRUNEN"
     },
     {
         "Bus": 0,
-        "Device": 14,
+        "Device": 20,
         "Function": 3,
-        "Offset": "0x0D4",
+        "Offset": 212,
         "Name": "FCH::ITF::LPC::CLKRUNOPTION"
     }
 ]

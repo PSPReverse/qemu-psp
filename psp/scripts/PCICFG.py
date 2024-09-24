@@ -15,7 +15,10 @@ import re
 import json
 
 # Regex to match the log format
-field_header_pattern = re.compile(r"(?:B(\d+)|)D(\d+)F(\d+)x([\da-fA-F]+)\s(?:\[(.+)\]\s)?\((.+)\)")
+field_header_pattern = re.compile(
+    r"(?:B(\d+)|)D(\d+)F(\d+)x([\da-fA-F]+)\s(?:\[(.+)\]\s)?\((.+)\)"
+)
+
 
 def extract_field_header(line):
     match = field_header_pattern.match(line)
@@ -25,15 +28,16 @@ def extract_field_header(line):
             bus = 0
         new_entry = {
             "Bus": "Any" if bus == "XX" else int(bus),
-            "Device": int(device),
-            "Function": int(function),
-            "Offset": int(offset),
-            "Name": name
+            "Device": int(device, 16),
+            "Function": int(function, 16),
+            "Offset": int(offset, 16),
+            "Name": name,
         }
         if description:
             new_entry["Description"] = description
         return new_entry
     return None
+
 
 def parse_raw_pdf_lines(log_lines):
     parsed_lines = []
@@ -49,7 +53,7 @@ with open("out.txt", "r") as f:
 
 # Dumping parsed logs as JSON
 json_output = json.dumps(found_headers, indent=4)
-with open("out.json", "w") as f:
+with open("pci_config.json", "w") as f:
     f.write(json_output)
 print(json_output)
 print(len(found_headers))
