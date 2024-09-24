@@ -20,18 +20,34 @@
 
 #include "psp/mmio/mailbox.h"
 
-#include "exec/address-spaces.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
-#include "qapi/error.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
 #include "trace.h"
 
-#include "psp/psp.h"
+/** BEGIN Exposing the mbox for ASPFuzz */
+static MailboxState* global_mbox = NULL;
+int update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher);
+int update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher)
+{
+    if (global_mbox == NULL) {
+        return -1;
+    }
+    global_mbox->values[0] = mbox;
+    global_mbox->values[1] = ptr_lower;
+    global_mbox->values[2] = ptr_higher;
+    return 0;
+}
+int read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher);
+int read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher)
+{
+    if (global_mbox == NULL) {
+        return -1;
+    }
+    *mbox = global_mbox->values[0];
+    *ptr_lower = global_mbox->values[1];
+    *ptr_higher = global_mbox->values[2];
+    return 0;
+}
+/** END Exposing the mbox for ASPFuzz */
 
 static const char* index_to_name(int index)
 {
@@ -79,20 +95,33 @@ static const MemoryRegionOps mailbox_mem_ops = {
 static void mailbox_init(Object* obj)
 {
     MailboxState* s = MAILBOX(obj);
-    SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
 
     s->values[0] = 0;
     s->values[1] = 0;
     s->values[2] = 0;
-    memory_region_init_io(&s->iomem, obj, &mailbox_mem_ops, s, TYPE_MAILBOX,
-                          4 * 3);
-
-    sysbus_init_mmio(sbd, &s->iomem);
 }
 
+static void realize(DeviceState* dev, Error** errp)
+{
+    MailboxState* s = MAILBOX(dev);
+    SysBusDevice* sbd = SYS_BUS_DEVICE(dev);
+
+    memory_region_init_io(&s->iomem, OBJECT(dev), &mailbox_mem_ops, s,
+                          TYPE_MAILBOX, 4 * 3);
+
+    sysbus_init_mmio(sbd, &s->iomem);
+    global_mbox = s;
+}
+
+static void class_init(ObjectClass* oc, void* data)
+{
+    DeviceClass* dc = DEVICE_CLASS(oc);
+    dc->realize = realize;
+}
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
     .parent = TYPE_SYS_BUS_DEVICE,
+    .class_init = class_init,
     .instance_init = mailbox_init,
     .instance_size = sizeof(MailboxState),
 

@@ -20,22 +20,24 @@
 
 #include "psp/mmio/psp-sts.h"
 
-#include "exec/address-spaces.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
 #include "trace.h"
 
-#include "psp/psp.h"
+static char const* bool_to_str(bool b)
+{
+    if (b) {
+        return "true";
+    } else {
+        return "false";
+    }
+}
 
 static uint64_t psp_sts_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPStsState* s = PSP_STS(opaque);
-    trace_psp_sts_read(s->psp_sts_val);
+    trace_psp_sts_read(s->psp_sts_val, bool_to_str(s->in_x86_space));
     return s->psp_sts_val;
 }
 
@@ -44,7 +46,7 @@ static void psp_sts_write(void* opaque, hwaddr offset, uint64_t value,
 {
     PSPStsState* s = PSP_STS(opaque);
     s->psp_sts_val = value;
-    trace_psp_sts_write(value);
+    trace_psp_sts_write(value, bool_to_str(s->in_x86_space));
 }
 
 static const MemoryRegionOps sts_mem_ops = {
@@ -61,18 +63,28 @@ static void psp_sts_init(Object* obj)
     SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
 
     s->psp_sts_val = 0;
-
+    s->in_x86_space = false;
     memory_region_init_io(&s->iomem, obj, &sts_mem_ops, s, TYPE_PSP_STS, 4);
 
     sysbus_init_mmio(sbd, &s->iomem);
 }
 
+static Property properties[] = {
+    DEFINE_PROP_BOOL("in_x86_space", PSPStsState, in_x86_space, false),
+};
+
+static void class_init(ObjectClass* oc, void* data)
+{
+    DeviceClass* dc = DEVICE_CLASS(oc);
+    device_class_set_props(dc, properties);
+}
+
 static const TypeInfo psp_sts_info = {
     .name = TYPE_PSP_STS,
     .parent = TYPE_SYS_BUS_DEVICE,
+    .class_init = class_init,
     .instance_init = psp_sts_init,
     .instance_size = sizeof(PSPStsState),
-
 };
 
 static void psp_sts_register_types(void)

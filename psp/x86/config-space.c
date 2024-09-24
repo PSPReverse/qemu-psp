@@ -37,7 +37,7 @@ static uint64_t cs_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PciIdentifier* id = (PciIdentifier*)&offset;
     uint64_t val = 0;
-    trace_psp_x86_config_space_write_unimplemented(
+    trace_psp_x86_config_space_read_unimplemented(
         id->bus, id->device, id->function, id->offset, val);
     return val;
 }

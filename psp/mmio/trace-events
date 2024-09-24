@@ -1,6 +1,6 @@
 # psp-sts.c
-psp_sts_write(uint64_t value) "value=0x%"PRIx64
-psp_sts_read(uint64_t value) "value=0x%"PRIx64
+psp_sts_write(uint64_t value, char const * in_x86_space) "value=0x%"PRIx64" is_x86_space=%s"
+psp_sts_read(uint64_t value, char const * in_x86_space) "value=0x%"PRIx64" is_x86_space=%s"
 
 # psp-timer.c
 psp_timer_control_write(uint64_t off, uint64_t value) "offset=0x%"PRIx64" value=0x%"PRIx64
