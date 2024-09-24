@@ -17,7 +17,7 @@
 #define PSP_X86_CONFIG_SPACE(obj)                                              \
     OBJECT_CHECK(PSPX86ConfigSpaceState, (obj), TYPE_PSP_X86_CONFIG_SPACE)
 
-#define PSP_X86_CONFIG_SPACE_SECURE_DRAM_LOCATION 0xfffe000UL << 20
+#define PCI_CONFIG_SPACE_BASE 0xfffe000UL << 20
 
 /**
  * @brief The PCI Configuration space exposed as MMIO

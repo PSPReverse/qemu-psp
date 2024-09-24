@@ -24,7 +24,7 @@
 #include "hw/sysbus.h"
 
 #include "psp/generations.h"
-#include "psp/psp-misc.h"
+#include "psp/mmio/psp-sts.h"
 #include "psp/x86/config-space.h"
 #include "psp/x86/x86-misc.h"
 
@@ -41,7 +41,10 @@ typedef struct PSPX86State {
     PSPX86MiscState psp_x86_misc;
 
     /*The PCI Config Space also known as PCICFG*/
-    PSPX86ConfigSpaceState psp_x86_config_space;
+    PSPX86ConfigSpaceState pci_config_space;
+
+    /* The centralized PSP Status register */
+    PSPStsState sts;
 
     /* The X86 address space */
     AddressSpace as;
@@ -51,6 +54,9 @@ typedef struct PSPX86State {
 
     /* The Part of the DRAM that gets blocked for exclusive use of the PSP */
     MemoryRegion secure_dram;
+
+    /* DRAM exposed to the host software */
+    MemoryRegion regular_dram;
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
