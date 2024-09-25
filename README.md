@@ -9,14 +9,14 @@ flowchart LR;
 
 VanillaQemu["Vanilla QEMU"];
 LibAFLQemu["LibAFL QEMU"];
-LibAFLPSPQemu{{"QEMU-ASP-LibAFL"}};
+LibAFLPSPQemu{{"QEMU-ASP-LibAFL - This Repo"}};
 
 VanillaQemu --> LibAFLQemu --> QEMU-ASP-LibAFL;
 ```
 
-### Repos
+## Repos
+
 - [Vanilla QEMU](https://github.com/qemu/qemu)
-- [AMD SP QEMU](https://github.com/pascalharp/qemu)
 - [LibAFL QEMU](https://github.com/AFLplusplus/qemu-libafl-bridge)
 
 ## Usage

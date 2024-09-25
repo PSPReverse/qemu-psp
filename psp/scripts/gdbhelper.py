@@ -209,7 +209,7 @@ gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
 LoggingBreakpoint(0xD424, "R0", "Starting load_app_id_from_flash")
 LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
 
-LoggingBreakpoint(0xD2EE, "R0", "Starting SecOS", True)
+LoggingBreakpoint(0xD2EE, "R0", "Starting SecOS", should_stop=True)
 
 dependent_bps.extend(
     [
@@ -221,9 +221,10 @@ dependent_bps.extend(
         LoggingBreakpoint(0x710, "R0", "Switch to Context"),
         LoggingBreakpoint(0x710, "LR", "Switch to Context"),
         LoggingBreakpoint(0xF6E, "R0", "FIQ called"),
-        LoggingBreakpoint(0x10, "LR", "UNDEF triggered", should_stop=True),
+        LoggingBreakpoint(0x10, "LR", "DATA_ABORT triggered", should_stop=True),
         LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
-        LoggingBreakpoint(0x2022C2, "R0", "Known good location", should_stop=True),
+        LoggingBreakpoint(0x200120, "R0", "Known good location", should_stop=True),
+        LoggingBreakpoint(0x2000e0, "R0", "Start of memcpy"),
     ]
 )
 

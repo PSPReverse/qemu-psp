@@ -72,7 +72,6 @@ static void zen_init_common(MachineState* machine)
      * TODO Consider using arm_boot_info from boot.h
      */
     ms->soc.cpu.env.regs[15] = 0xffff0000;
-
     /* TODO trigger on -kernel flag if it is provided */
     /* TODO can we maybe use -pflash flag for off chip bl? */
     /* TODO consider emulating/skipping on-chip-bl if not set */
