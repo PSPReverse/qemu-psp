@@ -53,6 +53,8 @@ typedef struct PSPSmnState {
 
     /* Full 32bit SMN address space */
     MemoryRegion psp_smn_space;
+    /* Full 32bit SMN address space */
+    AddressSpace psp_smn_space_as;
 
     /* PSP Misc device that covers the whole SMN address space */
     // PSPMiscState psp_smn_misc;

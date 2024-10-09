@@ -49,6 +49,27 @@ void aspfuzz_smn_update_slot(uint32_t idx)
                                    addr);
     trace_psp_smn_update_slot(idx, addr);
 }
+
+AddressSpace* global_smn_as = NULL;
+int aspfuzz_smn_write(hwaddr addr, void* buf, int size);
+int aspfuzz_smn_write(hwaddr addr, void* buf, int size)
+{
+    if (global_smn_as == NULL) {
+        return -1;
+    }
+    return address_space_write_rom(global_smn_as, addr, MEMTXATTRS_UNSPECIFIED,
+                                   buf, size);
+}
+int aspfuzz_smn_read(hwaddr addr, void* buf, int size);
+int aspfuzz_smn_read(hwaddr addr, void* buf, int size)
+{
+    if (global_smn_as == NULL) {
+        return -1;
+    }
+    return address_space_read(global_smn_as, addr, MEMTXATTRS_UNSPECIFIED, buf,
+                              size);
+}
+
 //// +++ End ASPFuzz code +++
 
 typedef struct PspSmnClass {
@@ -251,8 +272,11 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
     CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smu), errp);
 
     /* The SMN address space. Independent from the PSP address space */
-    memory_region_init(&s->psp_smn_space, OBJECT(dev), "smn-address-space",
+    memory_region_init(&s->psp_smn_space, OBJECT(dev), "smn-memory",
                        (1UL << 32) - 1);
+    address_space_init(&s->psp_smn_space_as, &s->psp_smn_space,
+                       "smn-address-space");
+    global_smn_as = &s->psp_smn_space_as;
 
     /* The SMN MMIO regions containing the control regs */
     memory_region_init_io(&s->psp_smn_control, OBJECT(dev), &smn_ctlr_ops, s,
