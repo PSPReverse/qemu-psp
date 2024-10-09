@@ -33,8 +33,8 @@
 /** BEGIN exposing the x86 AddressSpace for ASPFuzz */
 
 AddressSpace* global_x86_as = NULL;
-int x86_write(hwaddr addr, void* buf, int size);
-int x86_write(hwaddr addr, void* buf, int size)
+int aspfuzz_x86_write(hwaddr addr, void* buf, int size);
+int aspfuzz_x86_write(hwaddr addr, void* buf, int size)
 {
     if (global_x86_as == NULL) {
         return -1;
@@ -42,8 +42,8 @@ int x86_write(hwaddr addr, void* buf, int size)
     return address_space_write_rom(global_x86_as, addr, MEMTXATTRS_UNSPECIFIED,
                                    buf, size);
 }
-int x86_read(hwaddr addr, void* buf, int size);
-int x86_read(hwaddr addr, void* buf, int size)
+int aspfuzz_x86_read(hwaddr addr, void* buf, int size);
+int aspfuzz_x86_read(hwaddr addr, void* buf, int size)
 {
     if (global_x86_as == NULL) {
         return -1;
