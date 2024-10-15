@@ -88,7 +88,7 @@ static const MemoryRegionOps mailbox_mem_ops = {
     .read = mailbox_read,
     .write = mailbox_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
-    .valid.min_access_size = 4,
+    .valid.min_access_size = 1,
     .valid.max_access_size = 4,
 };
 
