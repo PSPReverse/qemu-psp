@@ -122,7 +122,6 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
 
-    qdev_prop_set_int32(DEVICE(&s->smn), "smn-container-base", PSP_SMN_BASE);
     // TODO: Do we really need to solve this with a prop?
     qdev_prop_set_int32(DEVICE(&s->smn), "smn-container-base",
                         c->smn_container_base);
