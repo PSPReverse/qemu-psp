@@ -25,8 +25,8 @@
 
 /** BEGIN Exposing the mbox for ASPFuzz */
 static MailboxState* global_mbox = NULL;
-int update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher);
-int update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher)
+uint32_t update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher);
+uint32_t update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher)
 {
     if (global_mbox == NULL) {
         return -1;
@@ -36,8 +36,9 @@ int update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher)
     global_mbox->values[2] = ptr_higher;
     return 0;
 }
-int read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher);
-int read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher)
+uint32_t read_mailbox(uint32_t* mbox, uint32_t* ptr_lower,
+                      uint32_t* ptr_higher);
+uint32_t read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher)
 {
     if (global_mbox == NULL) {
         return -1;
