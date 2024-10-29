@@ -26,6 +26,7 @@
 #include "psp/generations.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/x86/config-space.h"
+#include "psp/x86/write-catcher.h"
 #include "psp/x86/x86-misc.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
@@ -46,6 +47,8 @@ typedef struct PSPX86State {
     /* The centralized PSP Status register */
     PSPStsState sts;
 
+    /* Write catcher*/
+    WriteCatcherState write_catcher;
     /* The X86 address space */
     AddressSpace as;
 
