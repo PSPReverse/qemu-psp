@@ -32,7 +32,6 @@
 #include "psp/mmio/psp-timer.h"
 #include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
-#include "psp/x86/psp-osmem.h"
 #include "psp/x86/psp-x86-mapper.h"
 
 #define TYPE_AMD_PSP "amd-psp"
@@ -93,9 +92,6 @@ typedef struct AmdPspState {
      *  containers that map into it
      */
     PSPX86MapperState x86;
-
-    /* PSP OSMem at 0x03230000 */
-    PSPOSMemState osmem;
 
     /* PSP Timer 1 at 0x03010400*/
     PSPTimerState timer1;
