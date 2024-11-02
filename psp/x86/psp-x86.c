@@ -33,8 +33,8 @@
 /** BEGIN exposing the x86 AddressSpace for ASPFuzz */
 
 PSPX86State* global_x86_state = NULL;
-int aspfuzz_x86_write(hwaddr addr, void* buf, int size);
-int aspfuzz_x86_write(hwaddr addr, void* buf, int size)
+int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size);
+int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
 {
     if (global_x86_state == NULL) {
         return -1;
@@ -42,8 +42,8 @@ int aspfuzz_x86_write(hwaddr addr, void* buf, int size)
     return address_space_write_rom(&(global_x86_state->as), addr,
                                    MEMTXATTRS_UNSPECIFIED, buf, size);
 }
-int aspfuzz_x86_read(hwaddr addr, void* buf, int size);
-int aspfuzz_x86_read(hwaddr addr, void* buf, int size)
+int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size);
+int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size)
 {
     if (global_x86_state == NULL) {
         return -1;
@@ -52,8 +52,8 @@ int aspfuzz_x86_read(hwaddr addr, void* buf, int size)
                               MEMTXATTRS_UNSPECIFIED, buf, size);
 }
 
-int aspfuzz_write_catcher_activate(hwaddr addr, int size);
-int aspfuzz_write_catcher_activate(hwaddr addr, int size)
+int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size);
+int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size)
 {
     if (global_x86_state == NULL) {
         return -1;
@@ -65,8 +65,8 @@ int aspfuzz_write_catcher_activate(hwaddr addr, int size)
     return 0;
 }
 
-int aspfuzz_write_catcher_deactivate(void);
-int aspfuzz_write_catcher_deactivate(void)
+int32_t aspfuzz_write_catcher_reset(void);
+int32_t aspfuzz_write_catcher_reset(void)
 {
     if (global_x86_state == NULL) {
         return -1;
@@ -75,11 +75,13 @@ int aspfuzz_write_catcher_deactivate(void)
     memory_region_set_size(&global_x86_state->write_catcher.iomem, 0);
     global_x86_state->write_catcher.base = 0;
     global_x86_state->write_catcher.size = 0;
+    global_x86_state->write_catcher.observed_illegal_read = 0;
+    global_x86_state->write_catcher.observed_illegal_write = 0;
     return 0;
 }
 
-int aspfuzz_write_catcher_status(bool get_read, hwaddr* addr);
-int aspfuzz_write_catcher_status(bool get_read, hwaddr* addr)
+int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr);
+int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr)
 {
     if (global_x86_state == NULL) {
         return -1;

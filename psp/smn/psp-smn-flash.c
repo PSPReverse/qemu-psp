@@ -42,6 +42,7 @@
 
 // +++ Begin ASPFuzz code +++
 // TODO: Replace this with AddressSpace write and an offset
+// TODO: What if the ram ptr isn't long enough
 MemoryRegion* asp_smn_mr = NULL;
 void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr);
 void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr)
