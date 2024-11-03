@@ -5,21 +5,37 @@
 
 #include "psp/x86/write-catcher.h"
 
+#include "exec/cpu-defs.h" // Defined target_ulong for exit and cpu
 #include "hw/qdev-properties.h"
+#include "libafl/cpu.h"
+#include "libafl/exit.h"
 #include "qapi/error.h"
+#include "qemu/log.h"
 #include "trace.h"
 
+static void access_catcher_trigger_breakpoint(void)
+{
+    CPUState* state = libafl_qemu_current_cpu();
+    if (!state) {
+        qemu_log_mask(LOG_UNIMP, "Couldn't get CPU state in WriteCatcher\n");
+        return;
+    }
+    libafl_qemu_trigger_breakpoint(state);
+}
 static void cs_write(void* opaque, hwaddr offset, uint64_t value,
                      unsigned int size)
 {
     WriteCatcherState* s = PSP_X86_WRITE_CATCHER(opaque);
     s->observed_illegal_write = s->base + offset;
+    access_catcher_trigger_breakpoint();
 }
 static uint64_t cs_read(void* opaque, hwaddr offset, unsigned int size)
 {
     WriteCatcherState* s = PSP_X86_WRITE_CATCHER(opaque);
     uint64_t val = 0;
     s->observed_illegal_read = s->base + offset;
+    access_catcher_trigger_breakpoint();
+
     return val;
 }
 
