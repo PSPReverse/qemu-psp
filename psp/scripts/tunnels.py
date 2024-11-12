@@ -89,7 +89,7 @@ class JumpTo(gdb.Command):
         diff = target - overwrite_location
         assert diff > 0
         bp = gdb.Breakpoint(f"*{argv[0]}")
-        bp.commands = f"jump *{argv[1]}\n end"
+        bp.commands = f"jump *{argv[1]}\n end"  # Jump to target
 
 
 jump = JumpTo()
@@ -191,12 +191,12 @@ def apply_config(config_path: Path) -> Setup:
             )
             bp.silent = True
         elif action == "LogRegister":
-            print(f"Logging register {tunnel['target']} at {tunnel['addr']:x}")
+            print(f"Logging register {tunnel['target']} at 0x{tunnel['addr']:x}")
             LoggingBreakpoint(tunnel["addr"], tunnel["target"])
     ApplyInputCommand(config)
     LoggingBreakpoint(config["harness"]["start"], "pc", "Start of fuzzing. Run apply_input <path>", True)
     for sink in config["harness"]["sinks"]:
-        LoggingBreakpoint(sink, "RO", "Reached sink", True)
+        LoggingBreakpoint(sink, "R0", "Reached sink", True)
     return Setup(
         gen,
         config_path.parent.parent.resolve() / config["qemu"]["on_chip_bl_path"],
