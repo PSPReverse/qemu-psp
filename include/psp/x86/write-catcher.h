@@ -24,7 +24,10 @@ typedef struct WriteCatcherState {
     uint64_t base;
 
     hwaddr observed_illegal_read;
+    vaddr pc_illegal_read;
     hwaddr observed_illegal_write;
+    vaddr pc_illegal_write;
+
 } WriteCatcherState;
 
 #endif // PSP_X86_WRITE_CATCHER_H

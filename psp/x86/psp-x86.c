@@ -76,20 +76,24 @@ int32_t aspfuzz_write_catcher_reset(void)
     global_x86_state->write_catcher.base = 0;
     global_x86_state->write_catcher.size = 0;
     global_x86_state->write_catcher.observed_illegal_read = 0;
+    global_x86_state->write_catcher.pc_illegal_read = 0;
     global_x86_state->write_catcher.observed_illegal_write = 0;
+    global_x86_state->write_catcher.pc_illegal_write = 0;
     return 0;
 }
 
-int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr);
-int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr)
+int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr, vaddr* pc);
+int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr, vaddr* pc)
 {
     if (global_x86_state == NULL) {
         return -1;
     }
     if (get_read) {
         *addr = global_x86_state->write_catcher.observed_illegal_read;
+        *pc = global_x86_state->write_catcher.pc_illegal_read;
     } else {
         *addr = global_x86_state->write_catcher.observed_illegal_write;
+        *pc = global_x86_state->write_catcher.pc_illegal_write;
     }
     return 0;
 }
@@ -191,7 +195,7 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     MemoryRegion* mr_write_catcher =
         sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->write_catcher), 0);
     // Positive priority, so this gets written to before all other regions
-    memory_region_add_subregion_overlap(&s->mr, 0x0, mr_write_catcher, 1);
+    memory_region_add_subregion_overlap(&s->mr, 0, mr_write_catcher, 1);
 }
 
 static Property properties[] = {
