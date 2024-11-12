@@ -16,10 +16,14 @@
 static vaddr get_pc(void)
 {
     CPUState* state = libafl_qemu_current_cpu();
-    CPUClass* cc = CPU_GET_CLASS(state);
 
-    if (!state || !cc) {
+    if (!state) {
         qemu_log_mask(LOG_UNIMP, "Couldn't get CPU state in WriteCatcher\n");
+        return 0;
+    }
+    CPUClass* cc = CPU_GET_CLASS(state);
+    if (!cc) {
+        qemu_log_mask(LOG_UNIMP, "Couldn't get CPUClass in WriteCatcher\n");
         return 0;
     }
     return cc->get_pc(state);
