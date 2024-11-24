@@ -58,12 +58,10 @@ int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size)
     if (global_x86_state == NULL) {
         return -1;
     }
-    bql_lock();
     global_x86_state->write_catcher.base = addr;
     global_x86_state->write_catcher.size = size;
     memory_region_set_address(&global_x86_state->write_catcher.iomem, addr);
     memory_region_set_size(&global_x86_state->write_catcher.iomem, size);
-    bql_unlock();
     return 0;
 }
 
@@ -73,8 +71,6 @@ int32_t aspfuzz_write_catcher_reset(void)
     if (global_x86_state == NULL) {
         return -1;
     }
-    bql_lock();
-
     memory_region_set_address(&global_x86_state->write_catcher.iomem, 0);
     memory_region_set_size(&global_x86_state->write_catcher.iomem, 0);
     global_x86_state->write_catcher.base = 0;
@@ -83,8 +79,6 @@ int32_t aspfuzz_write_catcher_reset(void)
     global_x86_state->write_catcher.pc_illegal_read = 0;
     global_x86_state->write_catcher.observed_illegal_write = 0;
     global_x86_state->write_catcher.pc_illegal_write = 0;
-    bql_unlock();
-
     return 0;
 }
 
