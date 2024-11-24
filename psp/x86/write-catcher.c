@@ -13,23 +13,6 @@
 #include "qemu/log.h"
 #include "trace.h"
 
-int32_t set_pc(CPUState* state, vaddr new_pc);
-int32_t set_pc(CPUState* state, vaddr new_pc)
-{
-    if (!state) {
-        qemu_log_mask(LOG_UNIMP, "Got nullptr CPU state in set_pc\n");
-        return -1;
-    }
-    CPUClass* cc = CPU_GET_CLASS(state);
-    if (!cc) {
-        qemu_log_mask(LOG_UNIMP, "Couldn't get CPUClass in set_pc\n");
-        return -1;
-    }
-    qemu_log_mask(LOG_UNIMP, "Setting PC to %ld\n", new_pc);
-    cc->set_pc(state, new_pc);
-    return 0;
-}
-
 static vaddr get_pc(void)
 {
     CPUState* state = libafl_qemu_current_cpu();

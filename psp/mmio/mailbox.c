@@ -23,31 +23,7 @@
 #include "qemu/log.h"
 #include "trace.h"
 
-/** BEGIN Exposing the mbox for ASPFuzz */
-static MailboxState* global_mbox = NULL;
-int32_t update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher);
-int32_t update_mailbox(uint32_t mbox, uint32_t ptr_lower, uint32_t ptr_higher)
-{
-    if (global_mbox == NULL) {
-        return -1;
-    }
-    global_mbox->values[0] = mbox;
-    global_mbox->values[1] = ptr_lower;
-    global_mbox->values[2] = ptr_higher;
-    return 0;
-}
-int32_t read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher);
-int32_t read_mailbox(uint32_t* mbox, uint32_t* ptr_lower, uint32_t* ptr_higher)
-{
-    if (global_mbox == NULL) {
-        return -1;
-    }
-    *mbox = global_mbox->values[0];
-    *ptr_lower = global_mbox->values[1];
-    *ptr_higher = global_mbox->values[2];
-    return 0;
-}
-/** END Exposing the mbox for ASPFuzz */
+#include "psp/psp.h"
 
 static const char* index_to_name(int index)
 {
@@ -110,7 +86,6 @@ static void realize(DeviceState* dev, Error** errp)
                           TYPE_MAILBOX, 4 * 3);
 
     sysbus_init_mmio(sbd, &s->iomem);
-    global_mbox = s;
 }
 
 static void class_init(ObjectClass* oc, void* data)
