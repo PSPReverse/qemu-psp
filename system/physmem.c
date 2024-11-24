@@ -2681,7 +2681,9 @@ MemoryRegionSection *iotlb_to_section(CPUState *cpu,
     AddressSpaceDispatch *d = cpuas->memory_dispatch;
     int section_index = index & ~TARGET_PAGE_MASK;
     MemoryRegionSection *ret;
-
+    if (section_index >= d->map.sections_nb) {
+        printf("iotlb_to_section: index %d max_index %d \n", section_index, d->map.sections_nb);
+    }
     assert(section_index < d->map.sections_nb);
     ret = d->map.sections + section_index;
     assert(ret->mr);
