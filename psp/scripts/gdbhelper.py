@@ -51,8 +51,6 @@ Bisect()
 gdb.Breakpoint("*0x7274").commands = (
     "echo Reached errror state \\n \n x/x 0x32000d8 \n end"
 )
-gdb.Breakpoint("*0x210").commands = "echo Reached wait for interrupt \n end"
-
 LoggingBreakpoint(0xD424, "R0", "Starting load_app_id_from_flash")
 LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
 
