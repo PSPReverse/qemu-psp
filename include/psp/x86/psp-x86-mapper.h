@@ -132,4 +132,6 @@ typedef struct PSPX86MapperState {
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
 } PSPX86MapperState;
+
+void cycle_x86_mappings(void);
 #endif

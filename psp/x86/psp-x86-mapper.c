@@ -256,6 +256,18 @@ static void realize_mapping_slots(DeviceState* dev)
                                             &s->psp_x86_containers[i], 0);
     }
 }
+static PSPX86MapperState* static_mapper_state;
+void cycle_x86_mappings(void)
+{
+    if (!static_mapper_state) {
+        return;
+    }
+    for (int slot_id = 0; slot_id < PSP_X86_SLOT_COUNT; slot_id++) {
+        memory_region_set_alias_offset(
+            &static_mapper_state->psp_x86_containers[slot_id], 0);
+        psp_x86_map_slot(static_mapper_state, slot_id);
+    }
+}
 
 static void mapper_realize(DeviceState* dev, Error** errp)
 {
@@ -293,6 +305,7 @@ static void mapper_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(sbd, &s->psp_x86_magic3);
 
     realize_mapping_slots(dev);
+    static_mapper_state = s;
 }
 
 static void mapper_init(Object* obj)
