@@ -30,6 +30,8 @@
 #include "qemu/log.h"
 #include "system/system.h"
 
+#include "psp/x86/psp-x86-mapper.h"
+
 /** BEGIN exposing the x86 AddressSpace for ASPFuzz */
 
 PSPX86State* global_x86_state = NULL;
@@ -63,8 +65,9 @@ int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size)
     memory_region_transaction_begin();
     memory_region_set_address(&global_x86_state->write_catcher.iomem, addr);
     memory_region_set_size(&global_x86_state->write_catcher.iomem, size);
-    // Trying to get iotlb of the cpu in a valid state
+    cycle_x86_mappings();
     memory_region_transaction_commit();
+
     return 0;
 }
 
@@ -143,12 +146,12 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     address_space_init(&s->as, &s->mr, "x86 address space");
 
     /* Init Secure DRAM */
-    memory_region_init_ram(&s->secure_dram, OBJECT(dev), "secure_dram",
+    memory_region_init_ram(&s->secure_dram, OBJECT(dev), "x86.secure_dram",
                            SECURE_DRAM_SIZE, &error_abort);
     memory_region_add_subregion(&s->mr, SECURE_DRAM_BASE, &s->secure_dram);
 
     /* Init regular DRAM */
-    memory_region_init_ram(&s->regular_dram, OBJECT(dev), "regular_dram",
+    memory_region_init_ram(&s->regular_dram, OBJECT(dev), "x86.regular_dram",
                            REGULAR_DRAM_SIZE, &error_abort);
     memory_region_add_subregion(&s->mr, REGULAR_DRAM_BASE, &s->regular_dram);
 
