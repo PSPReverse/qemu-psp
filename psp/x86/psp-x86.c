@@ -60,8 +60,11 @@ int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size)
     }
     global_x86_state->write_catcher.base = addr;
     global_x86_state->write_catcher.size = size;
+    memory_region_transaction_begin();
     memory_region_set_address(&global_x86_state->write_catcher.iomem, addr);
     memory_region_set_size(&global_x86_state->write_catcher.iomem, size);
+    // Trying to get iotlb of the cpu in a valid state
+    memory_region_transaction_commit();
     return 0;
 }
 
