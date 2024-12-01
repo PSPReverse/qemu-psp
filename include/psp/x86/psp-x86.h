@@ -26,12 +26,12 @@
 #include "psp/generations.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/x86/config-space.h"
-#include "psp/x86/write-catcher.h"
 #include "psp/x86/x86-misc.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
 #define PSP_X86(obj) OBJECT_CHECK(PSPX86State, (obj), TYPE_PSP_X86)
 
+#define X86_PHYS_ADDR_SPACE_SIZE (1UL << 48) /* 48 physical address bits */
 /***
  * Manages the x86 address space and all x86 related devices
  */
@@ -47,8 +47,6 @@ typedef struct PSPX86State {
     /* The centralized PSP Status register */
     PSPStsState sts;
 
-    /* Write catcher*/
-    WriteCatcherState write_catcher;
     /* The X86 address space */
     AddressSpace as;
 

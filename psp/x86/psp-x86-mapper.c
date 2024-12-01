@@ -246,7 +246,7 @@ static void realize_mapping_slots(DeviceState* dev)
          * address space.
          */
         memory_region_init_alias(&s->psp_x86_containers[i], OBJECT(dev), name,
-                                 &s->x86_memory.mr, i * PSP_X86_SLOT_SIZE,
+                                 &s->write_catcher.mr, i * PSP_X86_SLOT_SIZE,
                                  PSP_X86_SLOT_SIZE);
 
         /* Map the containers to the PSP address space */
@@ -256,33 +256,20 @@ static void realize_mapping_slots(DeviceState* dev)
                                             &s->psp_x86_containers[i], 0);
     }
 }
-static PSPX86MapperState* static_mapper_state;
-void cycle_x86_mappings(void)
-{
-    if (!static_mapper_state) {
-        return;
-    }
-    for (int slot_id = 0; slot_id < PSP_X86_SLOT_COUNT; slot_id++) {
-        memory_region_set_alias_offset(
-            &static_mapper_state->psp_x86_containers[slot_id], 0);
-        psp_x86_map_slot(static_mapper_state, slot_id);
-    }
-}
-
 static void mapper_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
     PSPX86MapperState* s = PSP_X86_MAPPER(dev);
     SysBusDevice* sbd = SYS_BUS_DEVICE(dev);
 
-    if (s->generation == ZENTESLA + 1) {
+    if (s->generation == PSP_GENERATION_MAX) {
         error_setg(errp,
                    "property 'generation' not specified for PSP X86 Mapper");
         return;
     }
-    qdev_prop_set_uint32(DEVICE(&s->x86_memory), "psp_generation",
+    qdev_prop_set_uint32(DEVICE(&s->write_catcher), "psp_generation",
                          s->generation);
-    sysbus_realize(SYS_BUS_DEVICE(&s->x86_memory), errp);
+    sysbus_realize(SYS_BUS_DEVICE(&s->write_catcher), errp);
     if (*errp) {
         return;
     }
@@ -305,18 +292,18 @@ static void mapper_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(sbd, &s->psp_x86_magic3);
 
     realize_mapping_slots(dev);
-    static_mapper_state = s;
 }
 
 static void mapper_init(Object* obj)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(obj);
-    object_initialize_child(obj, "x86", &s->x86_memory, TYPE_PSP_X86);
+    object_initialize_child(obj, "write-catcher", &s->write_catcher,
+                            TYPE_PSP_X86_WRITE_CATCHER);
 }
 
 static Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MapperState, generation,
-                       ZENTESLA + 1),
+                       PSP_GENERATION_MAX),
 };
 
 static void mapper_class_init(ObjectClass* oc, void* data)
