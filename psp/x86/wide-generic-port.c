@@ -28,7 +28,7 @@ static const MemoryRegionOps misc_mem_ops = {
 static void psp_x86_misc_realize(DeviceState* dev, Error** errp)
 {
     PSPX86MiscState* s = PSP_X86_MISC(dev);
-    if (s->generation == ZENTESLA + 1) {
+    if (s->generation == PSP_GENERATION_MAX) {
         error_setg(errp,
                    "property 'generation' not specified for PSP X86 misc");
         return;
@@ -41,7 +41,7 @@ static void psp_x86_misc_realize(DeviceState* dev, Error** errp)
 
 static Property psp_x86_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MiscState, generation,
-                       ZENTESLA + 1),
+                       PSP_GENERATION_MAX),
     DEFINE_PROP_LINK("owning-device", MMIODeviceState, owning_device,
                      TYPE_OWNING_DEVICE, OwningDeviceState*),
 };

@@ -149,7 +149,7 @@ static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
         ptr = cpu_physical_memory_map(addr, len, write);
         if (ptr == NULL) {
             qemu_log_mask(LOG_GUEST_ERROR,
-                          "CCP: Couldn't map guest memory during"
+                          "CCP Error: Couldn't map guest memory during"
                           " passthrough operation\n");
             return ptr;
         }
@@ -180,7 +180,7 @@ static void perform_ccp_passthrough(CcpV5State* s, uint32_t id, hwaddr dst,
          bswap != CCP_PASSTHRU_BYTESWAP_256BIT)) {
 
         qemu_log_mask(LOG_UNIMP,
-                      "CCP: Unimplemented passthrough bit ops: "
+                      "CCP Error: Unimplemented passthrough bit ops: "
                       "bitwise 0x%x byteswap 0x%x\n",
                       bwise, bswap);
         return;
@@ -188,7 +188,7 @@ static void perform_ccp_passthrough(CcpV5State* s, uint32_t id, hwaddr dst,
 
     if (dst_type == CCP_MEMTYPE_SYSTEM || src_type == CCP_MEMTYPE_SYSTEM) {
         qemu_log_mask(LOG_UNIMP,
-                      "CCP: Unimplemented memtype CCP_MEMTYPE_SYSTEM\n");
+                      "CCP Error: Unimplemented memtype CCP_MEMTYPE_SYSTEM\n");
         return;
     }
     do {
@@ -201,16 +201,16 @@ static void perform_ccp_passthrough(CcpV5State* s, uint32_t id, hwaddr dst,
         void* hsrc = get_raw_ptr(s, src, &src_len, src_type, false);
         if (hsrc == NULL) {
             if (dst_type == CCP_MEMTYPE_LOCAL)
-                cpu_physical_memory_unmap(hdst, len, true, 0);
+                cpu_physical_memory_unmap(hdst, dest_len, true, 0);
             return;
         }
         hwaddr min_len = MIN(MIN(dest_len, src_len), len);
         ccp_memcpy(hdst, hsrc, min_len, bwise, bswap);
 
         if (dst_type == CCP_MEMTYPE_LOCAL)
-            cpu_physical_memory_unmap(hdst, len, true, 0);
+            cpu_physical_memory_unmap(hdst, dest_len, true, min_len);
         if (src_type == CCP_MEMTYPE_LOCAL)
-            cpu_physical_memory_unmap(hsrc, len, false, 0);
+            cpu_physical_memory_unmap(hsrc, src_len, false, min_len);
         dst += min_len;
         src += min_len;
         len -= min_len;
@@ -230,9 +230,8 @@ char const* ccp_memtype_str(ccp_memtype type)
         return "CCP_MEMTYPE_UNKNOWN";
     }
 }
-static void ccp_passthrough(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+static void decode_ccp_passthrough(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
-    /* TODO remove this function? */
     ccp_function func;
     ccp_memtype src_type;
     ccp_memtype dst_type;
@@ -282,7 +281,7 @@ static void ccp_perform_sha_256(CcpV5State* s, hwaddr src, uint32_t len,
             // plen); qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped from
             // %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
             ccp_update_sha256(&s->sha_ctx, plen, hsrc);
-            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            cpu_physical_memory_unmap(hsrc, plen, false, plen);
             bytes_read += plen;
         }
 
@@ -299,7 +298,7 @@ static void ccp_perform_sha_256(CcpV5State* s, hwaddr src, uint32_t len,
         }
     } else {
         qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP SHA256 Error: SHA context not initialized\n");
+                      "CCP Error SHA256: SHA context not initialized\n");
         return;
     }
 }
@@ -328,7 +327,7 @@ static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
             // plen); qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped from
             // %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
             ccp_update_sha384(&s->sha_ctx, plen, hsrc);
-            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            cpu_physical_memory_unmap(hsrc, plen, false, plen);
             bytes_read += plen;
         }
 
@@ -346,7 +345,7 @@ static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
 
     } else {
         qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP SHA384 Error: SHA context not initialized\n");
+                      "CCP Error SHA384: SHA context not initialized\n");
         return;
     }
 }
@@ -381,7 +380,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     trace_ccp_zlib(src, dst, len, src_type, dst_type, init, eom);
 
     if (!init || !eom) {
-        qemu_log_mask(LOG_UNIMP, "CCP ZLIB Error: Only EOM=1 and INIT=1 Zlib "
+        qemu_log_mask(LOG_UNIMP, "CCP Error ZLIB: Only EOM=1 and INIT=1 Zlib "
                                  "ops are currently supported\n");
         return true;
     }
@@ -399,7 +398,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     hsrc = cpu_physical_memory_map(src, &plen_in, false);
     if (plen_in != len) {
         qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP ZLIB Error: Zlib couldn't map guest input memory\n");
+                      "CCP Error ZLIB: Couldn't map guest input memory\n");
         cpu_physical_memory_unmap(hsrc, plen_in, true, plen_in);
         return true;
     }
@@ -422,7 +421,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         if (status == CCP_ZLIB_ERROR) {
             qemu_log_mask(
                 LOG_GUEST_ERROR,
-                "CCP ZLIB ERROR: Inflation failed after %#lx bytes.\n",
+                "CCP ERROR ZLIB: Inflation failed after %#lx bytes.\n",
                 s->zlib_state.total_out);
             break;
         }
@@ -486,7 +485,7 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
         break;
     default:
-        qemu_log_mask(LOG_UNIMP, "CCP Error. Unimplemented SHA type %d\n",
+        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented SHA type %d\n",
                       func.sha.type);
         break;
     }
@@ -501,6 +500,7 @@ static void ccp_copy_to_host(CcpV5State* s, void* hdst, hwaddr src,
 
     if (stype == CCP_MEMTYPE_LOCAL) {
         hsrc = cpu_physical_memory_map(src, &plen, false);
+        assert(plen == len);
         memcpy(hdst, hsrc, len);
         cpu_physical_memory_unmap(hsrc, len, false, plen);
     } else if (stype == CCP_MEMTYPE_SB) {
@@ -518,6 +518,7 @@ static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
     if (dtype == CCP_MEMTYPE_LOCAL) {
         /* TODO: Check for error */
         hdst = cpu_physical_memory_map(dst, &plen, true);
+        assert(plen == len);
         memcpy(hdst, hsrc, plen);
         cpu_physical_memory_unmap(hdst, plen, true, plen);
     } else if (dtype == CCP_MEMTYPE_SB) {
@@ -525,32 +526,6 @@ static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
         memcpy(hdst, hsrc, len);
     }
 }
-
-/* TODO use ccp_copy_to_host instead */
-/* static void ccp_get_key(CcpV5State* s,ccp5_desc *desc, void *buffer, size_t
- * key_len) { */
-/*     hwaddr key_addr; */
-/*     hwaddr klen = key_len; */
-/*     void* src = NULL; */
-
-/*     key_addr = CCP5_CMD_KEY_LO(desc) | ((hwaddr)(CCP5_CMD_KEY_HI(desc)) <<
- * 32); */
-/*     if (CCP5_CMD_KEY_MEM(desc) == CCP_MEMTYPE_LOCAL) { */
-/*         src = cpu_physical_memory_map(key_addr, &klen, false); */
-/*         if (klen != key_len) { */
-/*             qemu_log_mask(LOG_GUEST_ERROR, "CCP Error. Couldn't map guest
- * memory\n"); */
-/*         } */
-/*         memcpy(buffer, src, key_len); */
-/*         cpu_physical_memory_unmap(src, klen, false, klen); */
-/*     } else if (CCP5_CMD_KEY_MEM(desc) == CCP_MEMTYPE_SB) { */
-/*         /1* TODO Ensure correct length *1/ */
-/*         src = s->lsb.u.lsb + key_addr; */
-/*         memcpy(buffer, src, key_len); */
-/*     } */
-
-/* } */
-
 static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
     uint16_t rsa_size;
@@ -643,7 +618,7 @@ static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         ccp_rsa(s, id, desc);
         break;
     case CCP_ENGINE_PASSTHRU:
-        ccp_passthrough(s, id, desc);
+        decode_ccp_passthrough(s, id, desc);
         break;
     case CCP_ENGINE_ZLIB_DECOMPRESS:
         ccp_zlib(s, id, desc);

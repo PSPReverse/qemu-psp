@@ -13,7 +13,7 @@
 
 #include "psp/generations.h"
 #include "psp/psp-misc.h"
-#include "psp/x86/psp-x86.h"
+#include "psp/x86/write-catcher.h"
 
 #define PSP_X86_MAPPER_NAME "PSP X86 Mapper"
 #define PSP_X86_MAPPING_BASE 0x04000000
@@ -126,8 +126,7 @@ typedef struct PSPX86MapperState {
 
     PSPX86Slot psp_x86_slots[PSP_X86_SLOT_COUNT];
 
-    /* Manages the underlying address space and all devices mounted into it*/
-    PSPX86State x86_memory;
+    WriteCatcherState write_catcher;
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;

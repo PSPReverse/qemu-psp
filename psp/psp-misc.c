@@ -326,7 +326,7 @@ static void psp_misc_realize(DeviceState* dev, Error** errp)
         error_setg(errp, "property 'ident' not specified");
         return;
     }
-    if (s->generation == ZENTESLA + 1) {
+    if (s->generation == PSP_GENERATION_MAX) {
         error_setg(errp, "property 'psp_misc_generation' not specified");
         return;
     }
@@ -346,7 +346,7 @@ static Property properties[] = {
     DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
     DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
     DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation,
-                       ZENTESLA + 1),
+                       PSP_GENERATION_MAX),
 };
 
 static void psp_misc_class_init(ObjectClass* oc, void* data)
