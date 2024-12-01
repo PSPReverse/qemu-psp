@@ -52,7 +52,7 @@ static const MemoryRegionOps mem_ops = {
 static void realize(DeviceState* dev, Error** errp)
 {
     PSPX86ConfigSpaceState* s = PSP_X86_CONFIG_SPACE(dev);
-    if (s->generation == ZENTESLA + 1) {
+    if (s->generation == PSP_GENERATION_MAX) {
         error_setg(errp,
                    "property 'generation' not specified for PSP X86 misc");
         return;
@@ -66,7 +66,7 @@ static void realize(DeviceState* dev, Error** errp)
 
 static Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86ConfigSpaceState, generation,
-                       ZENTESLA + 1),
+                       PSP_GENERATION_MAX),
 };
 
 static void class_init(ObjectClass* oc, void* data)

@@ -56,29 +56,41 @@ LoggingBreakpoint(0xD472, "R0", "Done with load_app_id_from_flash")
 
 LoggingBreakpoint(0xD2EE, "R0", "Starting SecOS", should_stop=True)
 
-dependent_bps.extend(
-    [
-        LoggingBreakpoint(0x3F00, "R0", "Got SVC call number"),
-        LoggingBreakpoint(0x298, "SP", "Returning from SVC call"),
-        LoggingBreakpoint(0x298, "LR", "Returning from SVC call"),
-        LoggingBreakpoint(0x2C8, "R0", "Returning from UNDEF call"),
-        LoggingBreakpoint(0x2C8, "LR", "Returning from UNDEF call"),
-        LoggingBreakpoint(0x710, "R0", "Switch to Context"),
-        LoggingBreakpoint(0x710, "LR", "Switch to Context"),
-        LoggingBreakpoint(0xF6E, "R0", "FIQ called"),
-        LoggingBreakpoint(0x10, "LR", "DATA_ABORT triggered", should_stop=True),
-        LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
-        LoggingBreakpoint(0x200120, "R0", "Known good location", should_stop=True),
-        LoggingBreakpoint(0x2000e0, "R0", "Start of memcpy"),
-    ]
-)
-
-
 class EnableDependentsBreakpoint(gdb.Breakpoint):
     def stop(self) -> bool:
         for bp in dependent_bps:
             bp.enabled = True
         return False
+    
+# SecOS breakpoints
+# dependent_bps.extend(
+#     [
+#         LoggingBreakpoint(0x3F00, "R0", "Got SVC call number"),
+#         LoggingBreakpoint(0x298, "SP", "Returning from SVC call"),
+#         LoggingBreakpoint(0x298, "LR", "Returning from SVC call"),
+#         LoggingBreakpoint(0x2C8, "R0", "Returning from UNDEF call"),
+#         LoggingBreakpoint(0x2C8, "LR", "Returning from UNDEF call"),
+#         LoggingBreakpoint(0x710, "R0", "Switch to Context"),
+#         LoggingBreakpoint(0x710, "LR", "Switch to Context"),
+#         LoggingBreakpoint(0xF6E, "R0", "FIQ called"),
+#         LoggingBreakpoint(0x10, "LR", "DATA_ABORT triggered", should_stop=True),
+#         LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
+#         LoggingBreakpoint(0x200120, "R0", "Known good location", should_stop=True),
+#         LoggingBreakpoint(0x2000e0, "R0", "Start of memcpy"),
+#     ]
+# )
+
+# EnableDependentsBreakpoint("*0xD2EE")
+
+dependent_bps.extend(
+    [
+        LoggingBreakpoint(0xd46a, "R0", "Load header"),
+        LoggingBreakpoint(0xd48c, "R0", "load_crypto_constants_maybe"),
+        LoggingBreakpoint(0xd4a2, "R0", "load_file_and_verify")
+    ]
+)
+EnableDependentsBreakpoint("*0xd1be")
+
 
 
 class CcpMemcopyBreakpoint(gdb.Breakpoint):
@@ -118,4 +130,3 @@ class CcpMemcopyBreakpoint(gdb.Breakpoint):
         return False
 
 
-EnableDependentsBreakpoint("*0xD2EE")

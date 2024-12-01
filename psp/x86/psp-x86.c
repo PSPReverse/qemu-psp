@@ -34,7 +34,7 @@
 
 /** BEGIN exposing the x86 AddressSpace for ASPFuzz */
 
-PSPX86State* global_x86_state = NULL;
+static PSPX86State* global_x86_state = NULL;
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size);
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
 {
@@ -53,57 +53,6 @@ int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size)
     return address_space_read(&(global_x86_state->as), addr,
                               MEMTXATTRS_UNSPECIFIED, buf, size);
 }
-
-int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size);
-int32_t aspfuzz_write_catcher_activate(hwaddr addr, hwaddr size)
-{
-    if (global_x86_state == NULL) {
-        return -1;
-    }
-    global_x86_state->write_catcher.base = addr;
-    global_x86_state->write_catcher.size = size;
-    memory_region_transaction_begin();
-    memory_region_set_address(&global_x86_state->write_catcher.iomem, addr);
-    memory_region_set_size(&global_x86_state->write_catcher.iomem, size);
-    cycle_x86_mappings();
-    memory_region_transaction_commit();
-
-    return 0;
-}
-
-int32_t aspfuzz_write_catcher_reset(void);
-int32_t aspfuzz_write_catcher_reset(void)
-{
-    if (global_x86_state == NULL) {
-        return -1;
-    }
-    memory_region_set_address(&global_x86_state->write_catcher.iomem, 0);
-    memory_region_set_size(&global_x86_state->write_catcher.iomem, 0);
-    global_x86_state->write_catcher.base = 0;
-    global_x86_state->write_catcher.size = 0;
-    global_x86_state->write_catcher.observed_illegal_read = 0;
-    global_x86_state->write_catcher.pc_illegal_read = 0;
-    global_x86_state->write_catcher.observed_illegal_write = 0;
-    global_x86_state->write_catcher.pc_illegal_write = 0;
-    return 0;
-}
-
-int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr, vaddr* pc);
-int32_t aspfuzz_write_catcher_status(bool get_read, hwaddr* addr, vaddr* pc)
-{
-    if (global_x86_state == NULL) {
-        return -1;
-    }
-    if (get_read) {
-        *addr = global_x86_state->write_catcher.observed_illegal_read;
-        *pc = global_x86_state->write_catcher.pc_illegal_read;
-    } else {
-        *addr = global_x86_state->write_catcher.observed_illegal_write;
-        *pc = global_x86_state->write_catcher.pc_illegal_write;
-    }
-    return 0;
-}
-
 /** END exposing the x86 AddressSpace for ASPFuzz */
 
 static void psp_x86_init(Object* obj)
@@ -113,8 +62,6 @@ static void psp_x86_init(Object* obj)
     object_initialize_child(obj, "config_space", &s->pci_config_space,
                             TYPE_PSP_X86_CONFIG_SPACE);
     object_initialize_child(obj, "psp-x86-sts", &s->sts, TYPE_PSP_STS);
-    object_initialize_child(obj, "write-catcher", &s->write_catcher,
-                            TYPE_PSP_X86_WRITE_CATCHER);
 }
 /* 3.25GiB*/
 #define REGULAR_DRAM_SIZE (0xD0000000)
@@ -135,14 +82,14 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     PSPX86State* s = PSP_X86(dev);
     global_x86_state = s;
 
-    if (s->generation == ZENTESLA + 1) {
+    if (s->generation == PSP_GENERATION_MAX) {
         error_setg(errp, "property 'generation' not specified for PSP X86");
         return;
     }
 
     /* The X86 address space. Independent from the PSP address space */
     memory_region_init(&s->mr, OBJECT(dev), "x86-memory",
-                       (1UL << 48) /* 48 physical address bits */);
+                       X86_PHYS_ADDR_SPACE_SIZE);
     address_space_init(&s->as, &s->mr, "x86 address space");
 
     /* Init Secure DRAM */
@@ -191,21 +138,11 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     MemoryRegion* mr_x86_misc =
         sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_x86_misc), 0);
     memory_region_add_subregion_overlap(&s->mr, 0x0, mr_x86_misc, -1000);
-
-    /* Configure write catcher overlay device to enable catching access
-    while fuzzing*/
-    sysbus_realize(SYS_BUS_DEVICE(&s->write_catcher), errp);
-    if (*errp) {
-        return;
-    }
-    MemoryRegion* mr_write_catcher =
-        sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->write_catcher), 0);
-    // Positive priority, so this gets written to before all other regions
-    memory_region_add_subregion_overlap(&s->mr, 0, mr_write_catcher, 1);
 }
 
 static Property properties[] = {
-    DEFINE_PROP_UINT32("psp_generation", PSPX86State, generation, ZENTESLA + 1),
+    DEFINE_PROP_UINT32("psp_generation", PSPX86State, generation,
+                       PSP_GENERATION_MAX),
 };
 
 static void psp_x86_class_init(ObjectClass* oc, void* data)
