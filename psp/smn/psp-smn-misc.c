@@ -227,7 +227,7 @@ static const MemoryRegionOps misc_mem_ops = {
 static void psp_smn_misc_realize(DeviceState* dev, Error** errp)
 {
     PSPSmnMiscState* s = PSP_SMN_MISC(dev);
-    if (s->generation == ZENTESLA + 1) {
+    if (s->generation == PSP_GENERATION_MAX) {
         error_setg(errp, "property 'psp_smn_misc_generation' not specified");
         return;
     }
@@ -239,7 +239,7 @@ static void psp_smn_misc_realize(DeviceState* dev, Error** errp)
 
 static Property psp_smn_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_smn_misc_generation", PSPSmnMiscState, generation,
-                       ZENTESLA + 1),
+                       PSP_GENERATION_MAX),
 };
 
 static void psp_smn_misc_class_init(ObjectClass* oc, void* data)
