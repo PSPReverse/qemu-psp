@@ -132,7 +132,8 @@ static void realize(DeviceState* dev, Error** errp)
 static void instance_init(Object* obj)
 {
     WriteCatcherState* s = PSP_X86_WRITE_CATCHER(obj);
-    object_initialize_child(obj, "write-catcher", &s->x86_memory, TYPE_PSP_X86);
+    object_initialize_child(obj, "x86-full-memory", &s->x86_memory,
+                            TYPE_PSP_X86);
     s->base = 0;
     s->size = 0;
 }
