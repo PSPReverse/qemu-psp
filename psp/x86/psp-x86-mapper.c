@@ -236,7 +236,7 @@ static void realize_mapping_slots(DeviceState* dev)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(dev);
 
-    for (int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
+    for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
         char name[PSP_X86_SLOT_NAME_LEN] = {0};
         /* The X86 MMIO region of the PSP */
         snprintf(name, PSP_X86_SLOT_NAME_LEN, "%s%d", PSP_X86_SLOT_NAME, i);
@@ -251,7 +251,6 @@ static void realize_mapping_slots(DeviceState* dev)
 
         /* Map the containers to the PSP address space */
         hwaddr slot_offset = PSP_X86_MAPPING_BASE + i * PSP_X86_SLOT_SIZE;
-
         memory_region_add_subregion_overlap(get_system_memory(), slot_offset,
                                             &s->psp_x86_containers[i], 0);
     }
