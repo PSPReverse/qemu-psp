@@ -93,7 +93,7 @@ static uint64_t cs_read(void* opaque, hwaddr addr, unsigned int size)
 {
     WriteCatcherState* s = PSP_X86_WRITE_CATCHER(opaque);
     if (addr >= s->base && addr < s->base + s->size) {
-        s->observed_illegal_read = s->base + addr;
+        s->observed_illegal_read = addr;
         s->pc_illegal_read = get_pc();
     }
     uint64_t value;
