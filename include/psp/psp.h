@@ -55,6 +55,7 @@
 #define PSP_MMIO_BASE 0x03000000
 #define PSP_MMIO_NAME "PSP MMIO"
 
+// TODO: check if this is consistent across versions
 #define PSP_MAILBOX_BASE 0x03010570
 
 #define PSP_FUSE_BASE 0x03010104
