@@ -7,96 +7,17 @@ from subprocess import Popen
 from pathlib import Path
 
 sys.path.append(os.path.dirname(__file__))
-
+from tunnels import apply_config, LoggingBreakpoint, dependent_bps, log_message
 
 bp_defs = []
-dependent_bps = []
 for bp_def in bp_defs:
     bp = gdb.Breakpoint(f"*{bp_def[0]}")
     bp.commands = f'print "{bp_def[1]}" \n end'
     bp.enabled = False
     dependent_bps.append(bp)
 
-BUILD_DIR = Path(__file__).parents[2] / "build" / "manual"
-
-LOG_PATH = BUILD_DIR / "qemu.log"
-
-
-def log_message(msg):
-    print(msg)
-    with LOG_PATH.open("a") as f:
-        f.write(msg + "\n")
-
-
 gdb.execute("set pagination off")
-
-
-class Setup(gdb.Command):
-
-    def __init__(self, generation, on_chip_bl, off_chip_bl):
-        super(Setup, self).__init__("setup", gdb.COMMAND_USER)
-        print(BUILD_DIR.absolute())
-        self.generation = generation
-        self.on_chip_bl = on_chip_bl
-        self.off_chip_bl = off_chip_bl
-        self.gdb_port = 1234
-        self.monitor_port = 4444
-
-    def kill_and_restart(self):
-        path_to_pid = BUILD_DIR / "pid.txt"
-        try:
-            gdb.execute("detach")
-        except gdb.error as e:
-            # we might not be attached
-            pass
-        try:
-            with open(path_to_pid, "r") as file:
-                data = file.read().rstrip()
-                print(f"Attempting to kill QEMU with pid {data}")
-                os.kill(int(data), signal.SIGKILL)
-        except Exception as e:
-            # best effort killing
-            print(e)
-        cmd = (
-            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_passthrough,trace:ccp_rsa,trace:ccp_sha*" -gdb tcp::{self.gdb_port} -S '
-            f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
-            f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl} "
-            f"-chardev socket,id=mon0,host=127.0.0.1,port={self.monitor_port},server=on,wait=off "
-            "-monitor chardev:mon0"
-        )
-        print(f"Starting QEMU with command: {cmd}")
-        # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
-        qemu_log = open(LOG_PATH, "a")
-        cmd = Popen(
-            shlex.split(cmd), stdout=qemu_log, stderr=qemu_log, start_new_session=True
-        )
-
-        print(f"New qemu has PID {cmd.pid}")
-        with open(path_to_pid, "w") as f:
-            f.write(str(cmd.pid))
-
-    def invoke(self, args, _from_tty):
-        global BUILD_DIR
-        global LOG_PATH
-        argv = gdb.string_to_argv(args)
-        self.os_mem_hack = False
-        if len(argv) > 0 and bool(argv[0]):
-            print("OS MEM HACKING")
-            self.gdb_port = 1235
-            self.monitor_port = 4445
-            BUILD_DIR = BUILD_DIR.parent / "osmem"
-            LOG_PATH = BUILD_DIR / "qemu.log"
-            self.os_mem_hack = True
-        self.kill_and_restart()
-        # some time to start the emulator
-        time.sleep(0.5)
-        gdb.execute(f"target remote localhost:{self.gdb_port}")
-        if not self.os_mem_hack:
-            gdb.execute("sync")
-        gdb.execute("si")
-        for bp in dependent_bps:
-            bp.enabled = False
-
+setup = apply_config(Path(os.environ["FUZZER_CONFIG"]))
 
 class Bisect(gdb.Command):
     def __init__(self):
@@ -123,81 +44,7 @@ class Bisect(gdb.Command):
             bp.enabled = False
             dependent_bps.append(bp)
 
-
-class JumpTo(gdb.Command):
-    def __init__(self):
-        super(JumpTo, self).__init__("jump_to", gdb.COMMAND_USER)
-
-    def invoke(self, args, _from_tty):
-        argv = gdb.string_to_argv(args)
-        assert len(argv) == 2
-        overwrite_location = int(argv[0], 0)  # Parse hex string
-        target = int(argv[1], 0)  # Parse hex string
-        diff = target - overwrite_location
-        assert diff > 0
-        bp = gdb.Breakpoint(f"*{argv[0]}")
-        bp.commands = f"jump *{argv[1]}\n end"
-
-
-import yaml
-
-config_path = Path(os.environ["FUZZER_CONFIG"])
-with open(config_path, "r") as f:
-    config = yaml.safe_load(f)
-
-zen = config["qemu"]["zen"]
-if zen == "Zen":
-    gen = "amd-psp-zen"
-elif zen == "Zen+":
-    gen = "amd-psp-zen+"
-elif zen == "Zen2":
-    gen = "amd-psp-zen2"
-elif zen == "Zen3":
-    gen = "amd-psp-zen3"
-elif zen == "ZenTesla":
-    gen = "amd-psp-zentesla"
-else:
-    raise Exception(f"Unkown zen version: {zen}")
-
-s = Setup(
-    gen,
-    config_path.parent.parent.resolve() / config["qemu"]["on_chip_bl_path"],
-    config_path.parent.parent.resolve() / config["flash"]["base"],
-)
 Bisect()
-j = JumpTo()
-
-
-class LoggingBreakpoint(gdb.Breakpoint):
-    def __init__(self, addr: int, target: str, msg: str = None, should_stop=False):
-        super(LoggingBreakpoint, self).__init__(f"*{addr}")
-        self.addr = addr
-        self.target = target
-        self.msg = msg
-        self.should_stop = should_stop
-
-    def stop(self) -> bool:
-        reg_value = int(gdb.parse_and_eval(f"${self.target.lower()}"))
-        msg = f"{hex(self.addr)}: {self.target} = {hex(reg_value)}" + (
-            f" msg = {self.msg}" if self.msg else ""
-        )
-        log_message(msg)
-        return self.should_stop
-
-
-for tunnel in config["tunnels"]:
-    action = tunnel["action"]
-    if action == "Jump":
-        j.invoke(f"{tunnel["source"]} {tunnel["target"]}", False)
-    elif action == "SetConstant":
-        bp = gdb.Breakpoint(f"*{tunnel["addr"]}")
-        bp.commands = (
-            f"set ${tunnel["target"].lower()}={tunnel["value"]} \n continue \n end"
-        )
-        bp.silent = True
-    elif action == "LogRegister":
-        print(f"Logging register {tunnel['target']} at {tunnel['addr']:x}")
-        LoggingBreakpoint(tunnel["addr"], tunnel["target"])
 
 # Report error code in GDB
 # This is part of the sinks, so we do it manually
