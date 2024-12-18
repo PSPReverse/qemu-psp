@@ -128,7 +128,7 @@ class ApplyInputCommand(gdb.Command):
         input_path = Path(argv[0])
         with open(input_path, "rb") as f:
             data = f.read()
-        input_types = ["flash", "psp", "x86"]
+        input_types = [ "psp", ] #"flash", "x86"] // TODO: Support the other two input types
         print(self.config["input"])
         for input_type,inputs in [(input_type,self.config["input"].get(input_type, [])) for input_type in input_types]:
             if not inputs:
@@ -194,9 +194,10 @@ def apply_config(config_path: Path) -> Setup:
             print(f"Logging register {tunnel['target']} at 0x{tunnel['addr']:x}")
             LoggingBreakpoint(tunnel["addr"], tunnel["target"])
     ApplyInputCommand(config)
-    LoggingBreakpoint(config["harness"]["start"], "pc", "Start of fuzzing. Run apply_input <path>", True)
-    for sink in config["harness"]["sinks"]:
-        LoggingBreakpoint(sink, "R0", "Reached sink", True)
+    if config.get("harness", None):
+        LoggingBreakpoint(config["harness"]["start"], "pc", "Start of fuzzing. Run apply_input <path>", True)
+        for sink in config["harness"]["sinks"]:
+            LoggingBreakpoint(sink, "R0", "Reached sink", True)
     return Setup(
         gen,
         config_path.parent.parent.resolve() / config["qemu"]["on_chip_bl_path"],
