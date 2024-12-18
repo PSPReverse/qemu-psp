@@ -235,18 +235,21 @@ static const MemoryRegionOps x86_magic3_ops = {
 static void realize_mapping_slots(DeviceState* dev)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(dev);
+    MemoryRegion* target_mr = &s->x86_memory.mr;
+    if (s->use_access_observer) {
+        target_mr = &s->access_observer.mr;
+    }
 
     for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
         char name[PSP_X86_SLOT_NAME_LEN] = {0};
         /* The X86 MMIO region of the PSP */
         snprintf(name, PSP_X86_SLOT_NAME_LEN, "%s%d", PSP_X86_SLOT_NAME, i);
-
         /* Each container is an alias to the X86 addres space. Here we
          * initialize each container beginning with the address 0 in the x86
          * address space.
          */
         memory_region_init_alias(&s->psp_x86_containers[i], OBJECT(dev), name,
-                                 &s->write_catcher.mr, i * PSP_X86_SLOT_SIZE,
+                                 target_mr, i * PSP_X86_SLOT_SIZE,
                                  PSP_X86_SLOT_SIZE);
 
         /* Map the containers to the PSP address space */
@@ -266,13 +269,20 @@ static void mapper_realize(DeviceState* dev, Error** errp)
                    "property 'generation' not specified for PSP X86 Mapper");
         return;
     }
-    qdev_prop_set_uint32(DEVICE(&s->write_catcher), "psp_generation",
+    // Initialize both
+    qdev_prop_set_uint32(DEVICE(&s->x86_memory), "psp_generation",
                          s->generation);
-    sysbus_realize(SYS_BUS_DEVICE(&s->write_catcher), errp);
+    sysbus_realize(SYS_BUS_DEVICE(&s->x86_memory), errp);
     if (*errp) {
         return;
     }
 
+    object_property_set_link(OBJECT(&s->access_observer), "x86_memory",
+                             OBJECT(&s->x86_memory), errp);
+    sysbus_realize(SYS_BUS_DEVICE(&s->access_observer), errp);
+    if (*errp) {
+        return;
+    }
     /* The X86 control register regions */
     memory_region_init_io(&s->psp_x86_control, OBJECT(dev), &x86_ctlr1_ops, s,
                           "psp-x86-ctrl", PSP_X86_CTLR_SIZE);
@@ -296,13 +306,19 @@ static void mapper_realize(DeviceState* dev, Error** errp)
 static void mapper_init(Object* obj)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(obj);
-    object_initialize_child(obj, "write-catcher", &s->write_catcher,
-                            TYPE_PSP_X86_WRITE_CATCHER);
+    object_initialize_child(obj, "access-observer", &s->access_observer,
+                            TYPE_PSP_X86_ACCESS_OBSERVER);
+    object_initialize_child(obj, "x86-full-memory", &s->x86_memory,
+                            TYPE_PSP_X86);
 }
 
 static Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MapperState, generation,
                        PSP_GENERATION_MAX),
+    /* This only gets used when fuzzing with ASPFuzz, as it makes some of the
+       emulation worse */
+    DEFINE_PROP_BOOL("use_access_observer", PSPX86MapperState,
+                     use_access_observer, false),
 };
 
 static void mapper_class_init(ObjectClass* oc, void* data)
