@@ -13,7 +13,8 @@
 
 #include "psp/generations.h"
 #include "psp/psp-misc.h"
-#include "psp/x86/write-catcher.h"
+#include "psp/x86/access-observer.h"
+#include "psp/x86/psp-x86.h"
 
 #define PSP_X86_MAPPER_NAME "PSP X86 Mapper"
 #define PSP_X86_MAPPING_BASE 0x04000000UL
@@ -126,7 +127,11 @@ typedef struct PSPX86MapperState {
 
     PSPX86Slot psp_x86_slots[PSP_X86_SLOT_COUNT];
 
-    WriteCatcherState write_catcher;
+    AccessObserverState access_observer;
+
+    PSPX86State x86_memory;
+
+    bool use_access_observer;
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
