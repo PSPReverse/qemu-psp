@@ -62,34 +62,36 @@ class EnableDependentsBreakpoint(gdb.Breakpoint):
             bp.enabled = True
         return False
     
-# SecOS breakpoints
-# dependent_bps.extend(
-#     [
-#         LoggingBreakpoint(0x3F00, "R0", "Got SVC call number"),
-#         LoggingBreakpoint(0x298, "SP", "Returning from SVC call"),
-#         LoggingBreakpoint(0x298, "LR", "Returning from SVC call"),
-#         LoggingBreakpoint(0x2C8, "R0", "Returning from UNDEF call"),
-#         LoggingBreakpoint(0x2C8, "LR", "Returning from UNDEF call"),
-#         LoggingBreakpoint(0x710, "R0", "Switch to Context"),
-#         LoggingBreakpoint(0x710, "LR", "Switch to Context"),
-#         LoggingBreakpoint(0xF6E, "R0", "FIQ called"),
-#         LoggingBreakpoint(0x10, "LR", "DATA_ABORT triggered", should_stop=True),
-#         LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
-#         LoggingBreakpoint(0x200120, "R0", "Known good location", should_stop=True),
-#         LoggingBreakpoint(0x2000e0, "R0", "Start of memcpy"),
-#     ]
-# )
-
-# EnableDependentsBreakpoint("*0xD2EE")
-
+#SecOS breakpoints
 dependent_bps.extend(
     [
-        LoggingBreakpoint(0xd46a, "R0", "Load header"),
-        LoggingBreakpoint(0xd48c, "R0", "load_crypto_constants_maybe"),
-        LoggingBreakpoint(0xd4a2, "R0", "load_file_and_verify")
+        LoggingBreakpoint(0x238, "SP", "Got SVC call (Current process pointer)"),
+        LoggingBreakpoint(0x270, "R0", "Got SVC call (SVC Number)"),
+        LoggingBreakpoint(0x270, "LR", "Got SVC call (Caller)"),
+        LoggingBreakpoint(0x298, "SP", "Returning from SVC call (New process pointer)"),
+        LoggingBreakpoint(0x298, "LR", "Returning from SVC call (Execution resumption)"),
+        LoggingBreakpoint(0x2C8, "R0", "Returning from UNDEF call"),
+        LoggingBreakpoint(0x2C8, "LR", "Returning from UNDEF call"),
+        LoggingBreakpoint(0x710, "R0", "Switch to Context"),
+        LoggingBreakpoint(0x710, "LR", "Switch to Context"),
+        LoggingBreakpoint(0xF6E, "R0", "FIQ called"),
+        LoggingBreakpoint(0x10, "LR", "DATA_ABORT triggered", should_stop=True),
+        LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
+        LoggingBreakpoint(0x200120, "R0", "Known good location"),
+        LoggingBreakpoint(0x2000e0, "R0", "Start of memcpy"),
     ]
 )
-EnableDependentsBreakpoint("*0xd1be")
+
+EnableDependentsBreakpoint("*0xD2EE")
+
+# dependent_bps.extend(
+#     [
+#         LoggingBreakpoint(0xd46a, "R0", "Load header"),
+#         LoggingBreakpoint(0xd48c, "R0", "load_crypto_constants_maybe"),
+#         LoggingBreakpoint(0xd4a2, "R0", "load_file_and_verify")
+#     ]
+# )
+# EnableDependentsBreakpoint("*0xd1be")
 
 
 

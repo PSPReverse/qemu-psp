@@ -101,7 +101,7 @@ static uint32_t ccp_queue_read(CcpV5State* s, hwaddr offset, uint32_t id)
         break;
     default:
         qemu_log_mask(LOG_UNIMP,
-                      "CCP: CCP queue read at unknown "
+                      "CCP Error: CCP queue read at unknown "
                       "offset: 0x%" HWADDR_PRIx "\n",
                       offset);
         ret = 0;
@@ -115,7 +115,7 @@ static void ccp_memcpy(void* dst, void* src, size_t len, ccp_pt_bitwise bwise,
 {
 
     if (bwise != CCP_PASSTHRU_BITWISE_NOOP) {
-        qemu_log_mask(LOG_UNIMP, "CCP: Error unimplemeted bitwise op: %d\n",
+        qemu_log_mask(LOG_UNIMP, "CCP Error: unimplemeted bitwise op: %d\n",
                       bwise);
         return;
     }
@@ -130,7 +130,7 @@ static void ccp_memcpy(void* dst, void* src, size_t len, ccp_pt_bitwise bwise,
     if (bswap == CCP_PASSTHRU_BYTESWAP_256BIT) {
         /* For now, we only support swap-size aligned ops */
         if (len % 0x20) {
-            qemu_log_mask(LOG_UNIMP, "CCP: Error, unaligned bswap op is not"
+            qemu_log_mask(LOG_UNIMP, "CCP Error:, unaligned bswap op is not"
                                      " supported yet\n");
             return;
         }
@@ -603,13 +603,14 @@ static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
     switch (engine) {
     case CCP_ENGINE_AES:
-        qemu_log_mask(LOG_UNIMP, "CCP: Unimplemented engine (AES)\n");
+        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (AES)\n");
         break;
     case CCP_ENGINE_XTS_AES_128:
-        qemu_log_mask(LOG_UNIMP, "CCP: Unimplemented engine (AES-XTS-128)\n");
+        qemu_log_mask(LOG_UNIMP,
+                      "CCP Error: Unimplemented engine (AES-XTS-128)\n");
         break;
     case CCP_ENGINE_DES3:
-        qemu_log_mask(LOG_UNIMP, "CCP: Unimplemented engine (DES3)\n");
+        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (DES3)\n");
         break;
     case CCP_ENGINE_SHA:
         ccp_sha(s, id, desc);
@@ -624,10 +625,10 @@ static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         ccp_zlib(s, id, desc);
         break;
     case CCP_ENGINE_ECC:
-        qemu_log_mask(LOG_UNIMP, "CCP: Unimplemented engine (ECC)\n");
+        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (ECC)\n");
         break;
     default:
-        qemu_log_mask(LOG_UNIMP, "CCP: Unknown engine! val 0x%x\n",
+        qemu_log_mask(LOG_UNIMP, "CCP Error: Unknown engine! val 0x%x\n",
                       CCP5_CMD_ENGINE(desc));
         break;
     }
@@ -707,7 +708,7 @@ static void ccp_queue_write(CcpV5State* s, hwaddr offset, uint32_t val,
         break;
     default:
         qemu_log_mask(LOG_UNIMP,
-                      "CCP: CCP queue write at unknown "
+                      "CCP Error: CCP queue write at unknown "
                       "offset: 0x%" HWADDR_PRIx " val 0x%x\n",
                       offset, val);
     }
@@ -785,9 +786,6 @@ static uint64_t ccp_read(void* opaque, hwaddr offset, unsigned int size)
     CcpV5State* s = CCP_V5(opaque);
     uint32_t ret = 0;
     uint32_t id = 0;
-
-    /* qemu_log_mask(LOG_UNIMP, "CCP: MMIO read at 0x%" HWADDR_PRIx "\n", */
-    /*               offset); */
 
     if (size != sizeof(uint32_t)) {
         qemu_log_mask(LOG_GUEST_ERROR,
