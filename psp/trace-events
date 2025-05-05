@@ -3,4 +3,8 @@ psp_misc_read(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx6
 psp_misc_write(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
 psp_misc_read_unimplemented(uint64_t off, unsigned int size) "offset=0x%"PRIx64" value=0x0 (default) size=0x%x"
 psp_misc_write_unimplemented(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
+psp_irq_read_unimplemented(uint64_t off, unsigned int size) "offset=0x%"PRIx64" value=0x0 (default) size=0x%x"
+psp_irq_write_unimplemented(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
+psp_irq_read_bitfield(uint64_t off, unsigned int size) "offset=0x%"PRIx64" value=0x0 (default) size=0x%x"
+psp_irq_write_bitfield(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
 

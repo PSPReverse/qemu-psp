@@ -137,6 +137,15 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
 
+    /* Init IRQ */
+    qdev_prop_set_string(DEVICE(&s->irq), "psp_irq_ident", PSP_IRQ_NAME);
+    qdev_prop_set_uint32(DEVICE(&s->irq), "psp_irq_generation",
+                         PspNameToGen(DEVICE_GET_CLASS(dev)->desc));
+    if (!sysbus_realize(SYS_BUS_DEVICE(&s->irq), errp)) {
+        return;
+    }
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->irq), 0, PSP_IRQ_BASE);
+
     /* Init SRAM */
     memory_region_init_ram(&s->sram, OBJECT(dev), "sram", c->sram_size,
                            &error_abort);
