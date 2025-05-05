@@ -30,6 +30,7 @@
 #include "psp/mmio/psp-fuse.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/mmio/psp-timer.h"
+#include "psp/psp-irq.h"
 #include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
 #include "psp/x86/psp-x86-mapper.h"
@@ -51,6 +52,9 @@
 
 #define PSP_MMIO_BASE 0x03000000
 #define PSP_MMIO_NAME "PSP MMIO"
+
+#define PSP_IRQ_BASE 0x03010200
+#define PSP_IRQ_NAME "PSP IRQ"
 
 // TODO: check if this is consistent across versions
 #define PSP_MAILBOX_BASE 0x03010570
@@ -81,6 +85,10 @@ typedef struct AmdPspState {
     /* This device covers every MMIO address we have not covered somewhere else
      */
     PSPMiscState base_mem;
+
+    /* This device covers every IRQ stuff.
+     */
+    PSPIrqState irq;
 
     /* This device represents the SMN address space including control registers
      */
