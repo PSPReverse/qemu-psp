@@ -20,9 +20,11 @@
 #define AMD_PSP_IRQ_H
 
 #include "qemu/osdep.h"
-#include "psp/generations.h"
+
 #include "exec/memory.h"
 #include "hw/sysbus.h"
+
+#include "psp/generations.h"
 
 #define TYPE_PSP_IRQ "amd_psp.irq"
 #define PSP_IRQ(obj) OBJECT_CHECK(PSPIrqState, (obj), TYPE_PSP_IRQ)
