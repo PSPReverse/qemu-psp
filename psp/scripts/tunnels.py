@@ -10,7 +10,7 @@ import shlex
 import signal
 
 
-BUILD_DIR = Path(__file__).parents[2] / "build" / "manual"
+BUILD_DIR = Path(__file__).parents[2] / "build"  # / "manual"
 LOG_PATH = BUILD_DIR / "qemu.log"
 
 dependent_bps = []
@@ -183,16 +183,16 @@ def apply_config(config_path: Path) -> Setup:
     for tunnel in config["tunnels"]:
         action = tunnel["action"]
         if action == "Jump":
-            jump.invoke(f"{tunnel["source"]} {tunnel["target"]}", False)
+            jump.invoke(f"{tunnel['source']} {tunnel['target']}", False)
         elif action == "SetConstant":
-            bp = gdb.Breakpoint(f"*{tunnel["addr"]}")
+            bp = gdb.Breakpoint(f"*{tunnel['addr']}")
             bp.commands = (
-                f"set ${tunnel["target"].lower()}={tunnel["value"]} \n continue \n end"
+                f"set ${tunnel['target'].lower()}={tunnel['value']} \n continue \n end"
             )
             bp.silent = True
         elif action == "LogRegister":
             print(f"Logging register {tunnel['target']} at 0x{tunnel['addr']:x}")
-            LoggingBreakpoint(tunnel["addr"], tunnel["target"])
+            LoggingBreakpoint(tunnel['addr'], tunnel['target'])
     ApplyInputCommand(config)
     if config.get("harness", None):
         LoggingBreakpoint(config["harness"]["start"], "pc", "Start of fuzzing. Run apply_input <path>", True)
