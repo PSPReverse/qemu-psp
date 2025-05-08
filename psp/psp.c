@@ -84,6 +84,8 @@ static void amd_psp_init(Object* obj)
 
     object_initialize_child(obj, "base_mem", &s->base_mem, TYPE_PSP_MISC);
 
+    object_initialize_child(obj, "irq", &s->irq, TYPE_PSP_IRQ);
+
     object_initialize_child(obj, "timer1", &s->timer1, TYPE_PSP_TIMER);
 
     object_initialize_child(obj, "timer2", &s->timer2, TYPE_PSP_TIMER);
