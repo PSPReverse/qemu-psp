@@ -23,9 +23,6 @@
 [submodule "roms/QemuMacDrivers"]
 	path = roms/QemuMacDrivers
 	url = https://gitlab.com/qemu-project/QemuMacDrivers.git
-[submodule "roms/seabios-hppa"]
-	path = roms/seabios-hppa
-	url = https://gitlab.com/qemu-project/seabios-hppa.git
 [submodule "roms/u-boot-sam460ex"]
 	path = roms/u-boot-sam460ex
         # upstream is https://github.com/zbalaton/u-boot-sam460ex
@@ -42,6 +39,3 @@
 [submodule "roms/vbootrom"]
 	path = roms/vbootrom
 	url = https://gitlab.com/qemu-project/vbootrom.git
-[submodule "tests/lcitool/libvirt-ci"]
-	path = tests/lcitool/libvirt-ci
-	url = https://gitlab.com/libvirt/libvirt-ci.git
