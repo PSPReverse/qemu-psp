@@ -21,56 +21,63 @@
 #ifndef AMD_CCP_V5_ZLIB_H
 #define AMD_CCP_V5_ZLIB_H
 
-#include <zlib.h>
 #include <string.h>
+#include <zlib.h>
+
 #include "exec/hwaddr.h"
 
 #define CCP_ZLIB_CHUNK_SIZE 4096
 typedef z_stream CcpV5ZlibState;
 
 typedef enum ccp_zlib_status {
-    CCP_ZLIB_SUCCESS = 0x10, // we start with a high number to avoid collisions with ZLIB return values
+    CCP_ZLIB_SUCCESS = 0x10, // we start with a high number to avoid collisions
+                             // with ZLIB return values
     CCP_ZLIB_ERROR,
     CCP_ZLIB_MORE_DATA_PENDING,
     CCP_ZLIB_BAD_ARGUMENT,
 } ccp_zlib_status;
 
-inline static int ccp_zlib_init(CcpV5ZlibState *s) {
-  if( s != NULL) {
-    memset(s, 0, sizeof(CcpV5ZlibState));
-    if (inflateInit2(s, MAX_WBITS) != Z_OK)
-      return -1;
-  }
-  return 0;
+inline static int ccp_zlib_init(CcpV5ZlibState* s)
+{
+    if (s != NULL) {
+        memset(s, 0, sizeof(CcpV5ZlibState));
+        if (inflateInit2(s, MAX_WBITS) != Z_OK)
+            return -1;
+    }
+    return 0;
 }
 
-
-inline static int ccp_zlib_end(CcpV5ZlibState *s) {
-  if (s != NULL) {
-    if (inflateEnd(s) != Z_OK)
-      return -1;
-  }
-  return 0;
+inline static int ccp_zlib_end(CcpV5ZlibState* s)
+{
+    if (s != NULL) {
+        if (inflateEnd(s) != Z_OK)
+            return -1;
+    }
+    return 0;
 }
 
-inline static ccp_zlib_status ccp_zlib_inflate(CcpV5ZlibState *s, hwaddr in, hwaddr out, void* dst, void* src) {
-  if (s != NULL) {
+inline static ccp_zlib_status ccp_zlib_inflate(CcpV5ZlibState* s, hwaddr in,
+                                               hwaddr out, void* dst, void* src)
+{
+    if (s != NULL) {
 
-    s->avail_in = in;
-    s->next_in = src;
-    s->avail_out = out;
-    s->next_out = dst;
+        s->avail_in = in;
+        s->next_in = src;
+        s->avail_out = out;
+        s->next_out = dst;
 
-    if (inflate(s, Z_NO_FLUSH) < Z_OK)
-      return CCP_ZLIB_ERROR;
+        if (inflate(s, Z_NO_FLUSH) < Z_OK)
+            return CCP_ZLIB_ERROR;
 
-    if (s->avail_out == 0)
-        return CCP_ZLIB_MORE_DATA_PENDING;
-  }
-  return CCP_ZLIB_SUCCESS;
+        if (s->avail_out == 0)
+            return CCP_ZLIB_MORE_DATA_PENDING;
+    }
+    return CCP_ZLIB_SUCCESS;
 }
 
-inline static ccp_zlib_status ccp_zlib_continue_inflate(CcpV5ZlibState *s, hwaddr out, void* dst) {
+inline static ccp_zlib_status ccp_zlib_continue_inflate(CcpV5ZlibState* s,
+                                                        hwaddr out, void* dst)
+{
     if (s != NULL) {
         s->next_out = dst;
         s->avail_out = out;

@@ -28,7 +28,8 @@ typedef enum PspGeneration {
     PSP_GENERATION_MAX,
 } PspGeneration;
 
-_Static_assert(sizeof(PspGeneration) == sizeof(uint32_t), "PspGeneration should be uint32_t");
+_Static_assert(sizeof(PspGeneration) == sizeof(uint32_t),
+               "PspGeneration should be uint32_t");
 
 const char* PspGenToName(PspGeneration gen);
 PspGeneration PspNameToGen(const char* name);

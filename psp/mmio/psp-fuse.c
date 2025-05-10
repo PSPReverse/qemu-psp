@@ -7,20 +7,20 @@
  */
 
 #include "qemu/osdep.h"
-#include "qemu/log.h"
-#include "qapi/error.h"
-#include "hw/sysbus.h"
-#include "hw/qdev-properties.h"
-
 
 #include "psp/mmio/psp-fuse.h"
+
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
+#include "qemu/log.h"
 #include "trace.h"
 
-
-static uint64_t psp_fuse_read(void *opaque, hwaddr offset, unsigned int size) {
-    PSPFuseState * fuse = PSP_FUSE(opaque);
+static uint64_t psp_fuse_read(void* opaque, hwaddr offset, unsigned int size)
+{
+    PSPFuseState* fuse = PSP_FUSE(opaque);
     uint64_t r = 0;
-    switch(offset) {
+    switch (offset) {
     case 0x0:
         r = 0x1a060900 | (fuse->dbg_mode ? (1 << 10) : 0);
         break;
@@ -41,11 +41,12 @@ static const MemoryRegionOps timer_mem_ops = {
     .impl.max_access_size = 4,
 };
 
-static void psp_fuse_realize(DeviceState *dev, Error **errp)
+static void psp_fuse_realize(DeviceState* dev, Error** errp)
 {
-    PSPFuseState *s = PSP_FUSE(dev);
+    PSPFuseState* s = PSP_FUSE(dev);
 
-    memory_region_init_io(&s->iomem, OBJECT(dev), &timer_mem_ops, s, TYPE_PSP_FUSE, PSP_FUSE_SIZE);
+    memory_region_init_io(&s->iomem, OBJECT(dev), &timer_mem_ops, s,
+                          TYPE_PSP_FUSE, PSP_FUSE_SIZE);
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
 }
 
@@ -53,21 +54,20 @@ static Property psp_fuse_properties[] = {
     DEFINE_PROP_BOOL("dbg_mode", PSPFuseState, dbg_mode, false),
 };
 
-static void psp_fuse_class_init(ObjectClass *klass, void * data)
+static void psp_fuse_class_init(ObjectClass* klass, void* data)
 {
-    DeviceClass *dc = DEVICE_CLASS(klass);
+    DeviceClass* dc = DEVICE_CLASS(klass);
     dc->realize = psp_fuse_realize;
     device_class_set_props(dc, psp_fuse_properties);
 }
 
-static const TypeInfo psp_fuse_info = {
-    .name = TYPE_PSP_FUSE,
-    .parent = TYPE_SYS_BUS_DEVICE,
-    .instance_size =  sizeof(PSPFuseState),
-    .class_init = psp_fuse_class_init
-};
+static const TypeInfo psp_fuse_info = {.name = TYPE_PSP_FUSE,
+                                       .parent = TYPE_SYS_BUS_DEVICE,
+                                       .instance_size = sizeof(PSPFuseState),
+                                       .class_init = psp_fuse_class_init};
 
-static void psp_fuse_register_types(void) {
+static void psp_fuse_register_types(void)
+{
     type_register_static(&psp_fuse_info);
 }
 

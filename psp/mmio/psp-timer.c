@@ -17,21 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "psp/psp.h"
-#include "qemu/log.h"
-
 
 #include "psp/mmio/psp-timer.h"
+
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
+#include "qemu/log.h"
+#include "qemu/module.h"
+#include "system/system.h"
 #include "trace.h"
+
+#include "psp/psp.h"
 
 static char ident[] = "PSP Timer";
 
@@ -42,8 +42,9 @@ uint64_t aspfuzz_timer_count_1 = 0;
 uint64_t aspfuzz_timer_control_1 = 0;
 //// +++ End ASPFuzz code +++
 
-static uint64_t psp_timer_read(void *opaque, hwaddr offset, unsigned int size) {
-    PSPTimerState *s = PSP_TIMER(opaque);
+static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
+{
+    PSPTimerState* s = PSP_TIMER(opaque);
     uint64_t val;
     hwaddr phys_base = s->psp_timer_iomem.addr;
 
@@ -66,27 +67,28 @@ static uint64_t psp_timer_read(void *opaque, hwaddr offset, unsigned int size) {
     //// +++ End ASPFuzz code +++
 
     if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_UNIMP,
-                      "%s: Error. Unsupported read size at offset 0x%" \
-                      HWADDR_PRIx "\n", ident, phys_base + offset);
+        qemu_log_mask(
+            LOG_UNIMP,
+            "%s: Error. Unsupported read size at offset 0x%" HWADDR_PRIx "\n",
+            ident, phys_base + offset);
         return 0;
     }
 
     // TODO do this properly instead of counting up
     switch (offset) {
-        case 0:
-            val = s->psp_timer_control;
-            trace_psp_timer_control_read(offset, val);
-            break;
-        case 0x20:
-            val = s->psp_timer_count;
-            trace_psp_timer_counter_read(val);
-            if (s->psp_timer_control & 0x1)
-                s->psp_timer_count++;
-            break;
-        default:
-            val = 0;
-            break;
+    case 0:
+        val = s->psp_timer_control;
+        trace_psp_timer_control_read(offset, val);
+        break;
+    case 0x20:
+        val = s->psp_timer_count;
+        trace_psp_timer_counter_read(val);
+        if (s->psp_timer_control & 0x1)
+            s->psp_timer_count++;
+        break;
+    default:
+        val = 0;
+        break;
     }
 
     //// +++ Begin ASPFuzz code +++
@@ -102,9 +104,10 @@ static uint64_t psp_timer_read(void *opaque, hwaddr offset, unsigned int size) {
     return val;
 }
 
-static void psp_timer_write(void *opaque, hwaddr offset, uint64_t val,
-                            unsigned int size) {
-    PSPTimerState *s = PSP_TIMER(opaque);
+static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
+                            unsigned int size)
+{
+    PSPTimerState* s = PSP_TIMER(opaque);
     hwaddr phys = s->psp_timer_iomem.addr;
     phys += offset;
 
@@ -128,29 +131,31 @@ static void psp_timer_write(void *opaque, hwaddr offset, uint64_t val,
 
     if (size != sizeof(uint32_t) && size != sizeof(uint8_t)) {
         qemu_log_mask(LOG_UNIMP,
-                      "PSP Timer: Error. Unsupported write size (%d) at offset 0x%" \
-                      HWADDR_PRIx " with val 0x%lx\n", size, phys, val);
+                      "PSP Timer: Error. Unsupported write size (%d) at offset "
+                      "0x%" HWADDR_PRIx " with val 0x%lx\n",
+                      size, phys, val);
         return;
     }
     switch (offset) {
-        case 0x0:
-            s->psp_timer_control = val;
-            trace_psp_timer_control_write(offset, val);
-            break;
-        case 0x1:
-            /* XXX For single byte access by the on chip bl... */
-            s->psp_timer_control |= val << 8;
-            trace_psp_timer_control_write(offset, val);
-            break;
-        case 0x20:
-            s->psp_timer_count = val;
-            trace_psp_timer_counter_write(val);
-            break;
-        default:
-            qemu_log_mask(LOG_UNIMP, "PSP Timer. Error: Unsupported MMIO access. " \
-                          "offset=0x%" HWADDR_PRIx " value=0x%lx\n", offset,
-                          val);
-            break;
+    case 0x0:
+        s->psp_timer_control = val;
+        trace_psp_timer_control_write(offset, val);
+        break;
+    case 0x1:
+        /* XXX For single byte access by the on chip bl... */
+        s->psp_timer_control |= val << 8;
+        trace_psp_timer_control_write(offset, val);
+        break;
+    case 0x20:
+        s->psp_timer_count = val;
+        trace_psp_timer_counter_write(val);
+        break;
+    default:
+        qemu_log_mask(LOG_UNIMP,
+                      "PSP Timer. Error: Unsupported MMIO access. "
+                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n",
+                      offset, val);
+        break;
     }
 
     //// +++ Begin ASPFuzz code +++
@@ -162,9 +167,7 @@ static void psp_timer_write(void *opaque, hwaddr offset, uint64_t val,
         aspfuzz_timer_control_1 = s->psp_timer_control;
     }
     //// +++ End ASPFuzz code +++
-
 }
-
 
 static const MemoryRegionOps timer_mem_ops = {
     .read = psp_timer_read,
@@ -174,9 +177,10 @@ static const MemoryRegionOps timer_mem_ops = {
     .impl.max_access_size = 4,
 };
 
-static void psp_timer_init(Object *obj) {
-    PSPTimerState *s = PSP_TIMER(obj);
-    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+static void psp_timer_init(Object* obj)
+{
+    PSPTimerState* s = PSP_TIMER(obj);
+    SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
     s->psp_timer_control = 0;
     s->psp_timer_count = 0;
 
@@ -192,8 +196,8 @@ static const TypeInfo psp_timer_info = {
     .instance_size = sizeof(PSPTimerState),
 };
 
-static void psp_timer_register_types(void) {
+static void psp_timer_register_types(void)
+{
     type_register_static(&psp_timer_info);
-
 }
 type_init(psp_timer_register_types);
