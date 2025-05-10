@@ -17,34 +17,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "qemu/log.h"
 
 #include "psp/smn/psp-smn-smu.h"
+
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
+#include "qemu/log.h"
+#include "qemu/module.h"
+#include "system/system.h"
 #include "trace.h"
 
-
-static uint64_t psp_smn_smu_read(void *opaque, hwaddr offset, unsigned size) {
-    PSPSmnSmuState *s = PSP_SMN_SMU(opaque);
+static uint64_t psp_smn_smu_read(void* opaque, hwaddr offset, unsigned size)
+{
+    PSPSmnSmuState* s = PSP_SMN_SMU(opaque);
 
     if (size != sizeof(uint8_t)) {
-        qemu_log_mask(LOG_UNIMP,
-                      "PSP SMN SMU: Error. Unsupported read size\n");
+        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Unsupported read size\n");
         return 0;
     }
 
     if (offset >= PSP_SMN_SMU_FW_SIZE) {
-        qemu_log_mask(LOG_UNIMP,
-                      "PSP SMN SMU: Error. Offset %#lx too large.\n",
+        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Offset %#lx too large.\n",
                       offset);
         return 0;
     }
@@ -52,18 +49,18 @@ static uint64_t psp_smn_smu_read(void *opaque, hwaddr offset, unsigned size) {
     return s->fw_buf[offset];
 }
 
-static void psp_smn_smu_write(void *opaque, hwaddr offset, uint64_t val, unsigned size) {
-    PSPSmnSmuState *s = PSP_SMN_SMU(opaque);
+static void psp_smn_smu_write(void* opaque, hwaddr offset, uint64_t val,
+                              unsigned size)
+{
+    PSPSmnSmuState* s = PSP_SMN_SMU(opaque);
 
     if (size != sizeof(uint8_t)) {
-        qemu_log_mask(LOG_UNIMP,
-                      "PSP SMN SMU: Error. Unsupported read size\n");
+        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Unsupported read size\n");
         return;
     }
 
     if (offset >= PSP_SMN_SMU_FW_SIZE) {
-        qemu_log_mask(LOG_UNIMP,
-                      "PSP SMN SMU: Error. Offset %#lx too large.\n",
+        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Offset %#lx too large.\n",
                       offset);
         return;
     }
@@ -79,13 +76,13 @@ static const MemoryRegionOps psp_smn_smu_mem_ops = {
     .impl.max_access_size = 1,
 };
 
-static void psp_smn_smu_init(Object *obj)
+static void psp_smn_smu_init(Object* obj)
 {
-    PSPSmnSmuState *s = PSP_SMN_SMU(obj);
-    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+    PSPSmnSmuState* s = PSP_SMN_SMU(obj);
+    SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
 
     memory_region_init_io(&s->psp_smn_smu, obj, &psp_smn_smu_mem_ops, s,
-                           TYPE_PSP_SMN_SMU, PSP_SMN_SMU_FW_SIZE);
+                          TYPE_PSP_SMN_SMU, PSP_SMN_SMU_FW_SIZE);
     sysbus_init_mmio(sbd, &s->psp_smn_smu);
 }
 
@@ -96,7 +93,8 @@ static const TypeInfo psp_smn_smu_info = {
     .instance_size = sizeof(PSPSmnSmuState),
 };
 
-static void psp_smn_register_types(void) {
+static void psp_smn_register_types(void)
+{
     type_register_static(&psp_smn_smu_info);
 }
 type_init(psp_smn_register_types);

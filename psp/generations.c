@@ -1,5 +1,7 @@
-#include "psp/generations.h"
 #include "qemu/osdep.h"
+
+#include "psp/generations.h"
+
 #include "qemu/log.h"
 
 const char* amd_psp_gen_ident[] = {
@@ -22,11 +24,11 @@ PspGeneration PspNameToGen(const char* name)
     exit(1);
 }
 
-const char* PspGenToName(PspGeneration gen) {
+const char* PspGenToName(PspGeneration gen)
+{
     if (gen >= 0 && gen < PSP_GENERATION_MAX) {
         return amd_psp_gen_ident[gen];
     }
     qemu_log_mask(LOG_GUEST_ERROR, "Invalid PspGenToName\n");
     exit(1);
 }
-

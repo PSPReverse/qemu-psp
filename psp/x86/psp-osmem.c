@@ -17,21 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "qemu/log.h"
-
 
 #include "psp/x86/psp-osmem.h"
-#include "trace.h"
 
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
+#include "qemu/log.h"
+#include "qemu/module.h"
+#include "system/system.h"
+#include "trace.h"
 
 static char ident[] = "PSP OSMem";
 /*
@@ -45,15 +43,17 @@ static uint64_t psp_uart_read(PSPOSMemAddr offset, unsigned int size) {
 }
 */
 
-static uint64_t psp_osmem_read(void *opaque, hwaddr offset, unsigned int size) {
-    PSPOSMemState *s = PSP_OSMEM(opaque);
+static uint64_t psp_osmem_read(void* opaque, hwaddr offset, unsigned int size)
+{
+    PSPOSMemState* s = PSP_OSMEM(opaque);
     uint64_t val;
     hwaddr phys_base = s->psp_osmem_iomem.addr;
 
     if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_UNIMP,
-                      "%s: Error. Unsupported read size at offset 0x%" \
-                      HWADDR_PRIx "\n", ident, phys_base + offset);
+        qemu_log_mask(
+            LOG_UNIMP,
+            "%s: Error. Unsupported read size at offset 0x%" HWADDR_PRIx "\n",
+            ident, phys_base + offset);
         return 0xdeeeeead;
     }
 
@@ -70,16 +70,18 @@ static uint64_t psp_osmem_read(void *opaque, hwaddr offset, unsigned int size) {
     return val;
 }
 
-static void psp_osmem_write(void *opaque, hwaddr offset, uint64_t val,
-                            unsigned int size) {
-    PSPOSMemState *s = PSP_OSMEM(opaque);
+static void psp_osmem_write(void* opaque, hwaddr offset, uint64_t val,
+                            unsigned int size)
+{
+    PSPOSMemState* s = PSP_OSMEM(opaque);
     hwaddr phys = s->psp_osmem_iomem.addr;
     phys += offset;
 
     if (size != sizeof(uint32_t)) {
         qemu_log_mask(LOG_UNIMP,
-                      "PSP OSMem: Error. Unsupported write size (%d) at offset 0x%" \
-                      HWADDR_PRIx " with val 0x%lx\n", size, phys, val);
+                      "PSP OSMem: Error. Unsupported write size (%d) at offset "
+                      "0x%" HWADDR_PRIx " with val 0x%lx\n",
+                      size, phys, val);
         return;
     }
 
@@ -87,9 +89,10 @@ static void psp_osmem_write(void *opaque, hwaddr offset, uint64_t val,
     unsigned reg = offset % PSP_OSMEM_CTL_SLOT_SIZE;
 
     if (slot >= PSP_OSMEM_NUM_SLOTS || reg != 0) {
-        qemu_log_mask(LOG_UNIMP, "PSP OSMem. Error: Unsupported MMIO access. " \
-                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n", offset,
-                      val);
+        qemu_log_mask(LOG_UNIMP,
+                      "PSP OSMem. Error: Unsupported MMIO access. "
+                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n",
+                      offset, val);
         return;
     }
 
@@ -97,15 +100,18 @@ static void psp_osmem_write(void *opaque, hwaddr offset, uint64_t val,
     trace_psp_osmem_control_write(offset, val);
 }
 
-static uint64_t psp_osmem_container_read(void *opaque, hwaddr offset, unsigned int size) {
-    PSPOSMemState *s = PSP_OSMEM(opaque);
+static uint64_t psp_osmem_container_read(void* opaque, hwaddr offset,
+                                         unsigned int size)
+{
+    PSPOSMemState* s = PSP_OSMEM(opaque);
     uint64_t val;
     hwaddr phys_base = s->psp_osmem_iomem.addr;
 
     if (size != sizeof(uint8_t)) {
-        qemu_log_mask(LOG_UNIMP,
-                      "%s: Error. Unsupported read size at offset 0x%" \
-                      HWADDR_PRIx "\n", ident, phys_base + offset);
+        qemu_log_mask(
+            LOG_UNIMP,
+            "%s: Error. Unsupported read size at offset 0x%" HWADDR_PRIx "\n",
+            ident, phys_base + offset);
         return 0;
     }
 
@@ -116,16 +122,17 @@ static uint64_t psp_osmem_container_read(void *opaque, hwaddr offset, unsigned i
 
     if (slot >= PSP_OSMEM_NUM_SLOTS) {
         qemu_log_mask(LOG_UNIMP,
-                      "%s: Error. Unsupported read at offset 0x%" \
-                      HWADDR_PRIx "\n", ident, phys_base + offset);
+                      "%s: Error. Unsupported read at offset 0x%" HWADDR_PRIx
+                      "\n",
+                      ident, phys_base + offset);
         val = 0x42;
     }
 
     val = s->psp_osmem_container_ram[addr];
 
-    switch(slot) {
+    switch (slot) {
     case 8:
-        switch(addr) {
+        switch (addr) {
         // uart
         case 0x3f8:
             val = 0x1;
@@ -152,16 +159,18 @@ static uint64_t psp_osmem_container_read(void *opaque, hwaddr offset, unsigned i
     return val;
 }
 
-static void psp_osmem_container_write(void *opaque, hwaddr offset, uint64_t val,
-                                      unsigned int size) {
-    PSPOSMemState *s = PSP_OSMEM(opaque);
+static void psp_osmem_container_write(void* opaque, hwaddr offset, uint64_t val,
+                                      unsigned int size)
+{
+    PSPOSMemState* s = PSP_OSMEM(opaque);
     hwaddr phys = s->psp_osmem_iomem.addr;
     phys += offset;
 
     if (size != sizeof(uint8_t)) {
         qemu_log_mask(LOG_UNIMP,
-                      "PSP OSMem: Error. Unsupported write size (%d) at offset 0x%" \
-                      HWADDR_PRIx " with val 0x%lx\n", size, phys, val);
+                      "PSP OSMem: Error. Unsupported write size (%d) at offset "
+                      "0x%" HWADDR_PRIx " with val 0x%lx\n",
+                      size, phys, val);
         return;
     }
 
@@ -169,9 +178,10 @@ static void psp_osmem_container_write(void *opaque, hwaddr offset, uint64_t val,
     unsigned addr = offset % 0x04000000;
 
     if (slot >= PSP_OSMEM_NUM_SLOTS) {
-        qemu_log_mask(LOG_UNIMP, "PSP OSMem. Error: Unsupported MMIO access. " \
-                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n", offset,
-                      val);
+        qemu_log_mask(LOG_UNIMP,
+                      "PSP OSMem. Error: Unsupported MMIO access. "
+                      "offset=0x%" HWADDR_PRIx " value=0x%lx\n",
+                      offset, val);
         return;
     }
 
@@ -207,9 +217,10 @@ static const MemoryRegionOps osmem_container_mem_ops = {
     .impl.max_access_size = 1,
 };
 
-static void psp_osmem_init(Object *obj) {
-    PSPOSMemState *s = PSP_OSMEM(obj);
-    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+static void psp_osmem_init(Object* obj)
+{
+    PSPOSMemState* s = PSP_OSMEM(obj);
+    SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
 
     for (int i = 0; i < PSP_OSMEM_NUM_SLOTS; i++)
         s->psp_osmem_control[i] = 0;
@@ -221,8 +232,9 @@ static void psp_osmem_init(Object *obj) {
                           TYPE_PSP_OSMEM, PSP_OSMEM_CTL_SIZE);
     sysbus_init_mmio(sbd, &s->psp_osmem_iomem);
 
-    memory_region_init_io(&s->psp_osmem_containers_iomem, obj, &osmem_container_mem_ops, s,
-                          TYPE_PSP_OSMEM, PSP_OSMEM_CONTAINER_SIZE);
+    memory_region_init_io(&s->psp_osmem_containers_iomem, obj,
+                          &osmem_container_mem_ops, s, TYPE_PSP_OSMEM,
+                          PSP_OSMEM_CONTAINER_SIZE);
     sysbus_init_mmio(sbd, &s->psp_osmem_containers_iomem);
 }
 
@@ -233,7 +245,8 @@ static const TypeInfo psp_osmem_info = {
     .instance_size = sizeof(PSPOSMemState),
 };
 
-static void psp_osmem_register_types(void) {
+static void psp_osmem_register_types(void)
+{
     type_register_static(&psp_osmem_info);
 }
 

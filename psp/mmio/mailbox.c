@@ -17,25 +17,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "psp/psp.h"
-#include "qemu/log.h"
-#include "trace.h"
+
 #include "psp/mmio/mailbox.h"
 
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
+#include "qemu/log.h"
+#include "qemu/module.h"
+#include "system/system.h"
+#include "trace.h"
 
-static const char * index_to_name(int index) {
-    switch (index)
-    {
+#include "psp/psp.h"
+
+static const char* index_to_name(int index)
+{
+    switch (index) {
     case 0:
         return "content";
     case 1:
@@ -47,8 +47,9 @@ static const char * index_to_name(int index) {
         exit(1);
     }
 }
-static uint64_t mailbox_read(void *opaque, hwaddr offset, unsigned int size) {
-    MailboxState *s = MAILBOX(opaque);
+static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
+{
+    MailboxState* s = MAILBOX(opaque);
     hwaddr index = offset / 4;
     assert(index < 3);
     trace_psp_mailbox_read(index_to_name(index), s->values[index]);
@@ -56,15 +57,15 @@ static uint64_t mailbox_read(void *opaque, hwaddr offset, unsigned int size) {
     return s->values[index];
 }
 
-static void mailbox_write(void *opaque, hwaddr offset,
-                       uint64_t value, unsigned int size) {
-    MailboxState *s = MAILBOX(opaque);
+static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
+                          unsigned int size)
+{
+    MailboxState* s = MAILBOX(opaque);
 
     hwaddr index = offset / 4;
     assert(index < 3);
     s->values[index] = value;
     trace_psp_mailbox_write(index_to_name(index), s->values[index]);
-
 }
 
 static const MemoryRegionOps mailbox_mem_ops = {
@@ -75,18 +76,18 @@ static const MemoryRegionOps mailbox_mem_ops = {
     .valid.max_access_size = 4,
 };
 
-static void mailbox_init(Object *obj) {
-    MailboxState *s = MAILBOX(obj);
-    SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
+static void mailbox_init(Object* obj)
+{
+    MailboxState* s = MAILBOX(obj);
+    SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
 
     s->values[0] = 0;
     s->values[1] = 0;
     s->values[2] = 0;
-    memory_region_init_io(&s->iomem, obj, &mailbox_mem_ops, s,
-            TYPE_MAILBOX, 4*3);
+    memory_region_init_io(&s->iomem, obj, &mailbox_mem_ops, s, TYPE_MAILBOX,
+                          4 * 3);
 
     sysbus_init_mmio(sbd, &s->iomem);
-
 }
 
 static const TypeInfo psp_sts_info = {
@@ -97,8 +98,8 @@ static const TypeInfo psp_sts_info = {
 
 };
 
-static void mailbox_register_types(void) {
+static void mailbox_register_types(void)
+{
     type_register_static(&psp_sts_info);
-
 }
 type_init(mailbox_register_types);
