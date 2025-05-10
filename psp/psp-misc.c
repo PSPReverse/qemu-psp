@@ -19,22 +19,21 @@
  * Special PSP device that covers various unknown MMIO regs.
  */
 #include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "psp/psp.h"
-#include "qemu/log.h"
-
 
 #include "psp/psp-misc.h"
+
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
+#include "qemu/log.h"
+#include "qemu/module.h"
+#include "system/system.h"
 #include "trace.h"
+
+#include "psp/psp.h"
 
 /* TODO make values offset based only starting from mmio base */
 /* TODO needs desperate rework. Rework to different classes or move into
@@ -47,173 +46,215 @@
  * @return If a value was found
  * TODO pass PSPMisc ref for ZEN version dependent values
  */
-static int psp_misc_load_value(hwaddr addr, uint64_t * val)
+static int psp_misc_load_value(hwaddr addr, uint64_t* val)
 {
-    switch (addr){
-    
-    
+    switch (addr) {
+
     case 0x100ac: /* Checked in zen 2 off-chip bl at 00002abc*/
         *val = 0x1;
         break;
 
     case 0x5b304:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0xffffffff; break;
+        *val = 0xffffffff;
+        break;
 
     case 0x5bb04:
         /* Read by the on chip bootloader and acted upon. TODO verify */
-        *val = 0xffffffff; break;
+        *val = 0xffffffff;
+        break;
 
     case 0x5e000:
         /* The on chip bootloader waits for bit 0 to go 1 */
-        *val = 0x1; break;
+        *val = 0x1;
+        break;
 
     case 0x5d0cc:
-        /* The off chip bootloader wants bit 5 to be one, otherwise it returns an error
-         * dubbed PSPSTATUS_CCX_SEC_BISI_EN_NOT_SET_IN_FUSE_RAM. */
-        *val = BIT(5); break;
+        /* The off chip bootloader wants bit 5 to be one, otherwise it returns
+         * an error dubbed PSPSTATUS_CCX_SEC_BISI_EN_NOT_SET_IN_FUSE_RAM. */
+        *val = BIT(5);
+        break;
 
     case 0x01025034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e113; break;
+        *val = 0x1e113;
+        break;
 
     case 0x01003034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e112; break;
+        *val = 0x1e112;
+        break;
 
     case 0x01004034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e112; break;
+        *val = 0x1e112;
+        break;
         /* Read by the on chip bootloader and acted upon. */
     case 0x0102e034:
-        *val = 0x1e312; break;
+        *val = 0x1e312;
+        break;
 
     case 0x01046034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e103; break;
+        *val = 0x1e103;
+        break;
 
     case 0x01047034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e103; break;
+        *val = 0x1e103;
+        break;
 
     case 0x01030034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e312; break;
+        *val = 0x1e312;
+        break;
 
     case 0x01018034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e113; break;
+        *val = 0x1e113;
+        break;
 
     case 0x0106c034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e113; break;
+        *val = 0x1e113;
+        break;
 
     case 0x0106d034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e113; break;
+        *val = 0x1e113;
+        break;
 
     case 0x0106e034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e312; break;
+        *val = 0x1e312;
+        break;
 
     case 0x01080034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e113; break;
+        *val = 0x1e113;
+        break;
 
     case 0x01081034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e113; break;
+        *val = 0x1e113;
+        break;
 
     case 0x01096034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e313; break;
+        *val = 0x1e313;
+        break;
 
     case 0x01097034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e313; break;
+        *val = 0x1e313;
+        break;
 
     case 0x010a8034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e313; break;
+        *val = 0x1e313;
+        break;
 
     case 0x010d8034:
         /* Read by the on chip bootloader and acted upon. */
-        *val = 0x1e313; break;
+        *val = 0x1e313;
+        break;
 
     case 0x5a088:
         /* The on chip bootloader waits for bit 0 to go 1. */
-        *val = 0x1; break;
+        *val = 0x1;
+        break;
 
     case 0x3b10034:
-        /* Some SMU ready/online bit the off chip bootloader waits for after the firmware was loaded. */
+        /* Some SMU ready/online bit the off chip bootloader waits for after the
+         * firmware was loaded. */
         /* TODO: Move SMU related stuff into separate device */
-        *val = 0x1; break;
+        *val = 0x1;
+        break;
 
     case 0x3b10704:
-        /* Some SMU ready/online bit the off chip bootloader waits for after the firmware was loaded. */
+        /* Some SMU ready/online bit the off chip bootloader waits for after the
+         * firmware was loaded. */
         /* TODO: Move SMU related stuff into separate device */
-        *val = 0x1; break;
+        *val = 0x1;
+        break;
 
     case 0x18080064:
         /* The on chip bootloader waits for bit 9 and 10 to become set. */
-        *val = BIT(10) | BIT(9); break;
+        *val = BIT(10) | BIT(9);
+        break;
 
     case 0x18480064:
         /* The on chip bootloader waits for bit 9 and 10 to become set. */
-        *val = BIT(10) | BIT(9); break;
+        *val = BIT(10) | BIT(9);
+        break;
 
     case 0x5A078:
-        *val = 0x10; break;
+        *val = 0x10;
+        break;
 
     case 0x5A870:
-        *val = 0x1; break;
+        *val = 0x1;
+        break;
 
     // Zen and Zen+
     case 0x0320004c:
-        *val = 0xbc090071; break;
+        *val = 0xbc090071;
+        break;
 
     // Zen2
     case 0x03200048:
-        *val = 0xbc0b0552; break;
+        *val = 0xbc0b0552;
+        break;
 
     // Zen2
     case 0x03200050:
-        *val = 0x300; break;
+        *val = 0x300;
+        break;
 
     // TODO this should depend on dbg flag:
     // https://github.com/PSPReverse/PSPEmu/blob/78e4be24e882ae67867063c894fbfb2ecbe50f3f/psp-dev-mmio-unknown.c#L67
     case 0x030101c0:
-        *val = 0x80102; break;
+        *val = 0x80102;
+        break;
 
-    // added by me
+        // added by me
 
     case 0x51808:
-        *val = 0x15; break;
+        *val = 0x15;
+        break;
 
     case 0x51d00:
-        *val = 0xd474ca10; break;
+        *val = 0xd474ca10;
+        break;
 
     case 0x51d04:
-        *val = 0x9d274bf4; break;
+        *val = 0x9d274bf4;
+        break;
 
     case 0x51d08:
-        *val = 0xdbfeff86; break;
+        *val = 0xdbfeff86;
+        break;
 
     case 0x51d0c:
-        *val = 0xbd111061; break;
+        *val = 0xbd111061;
+        break;
 
     case 0x51ef0:
-        *val = 0xb5; break;
+        *val = 0xb5;
+        break;
 
     case 0x240003fd:
-        *val = 0x60; break;
+        *val = 0x60;
+        break;
 
     case 0x26d81e77:
-        *val = 0x7; break;
+        *val = 0x7;
+        break;
 
     // Zen2 ABL0: needs to be at least two
     case 0x4fd53:
-        *val = 0x2; break;
+        *val = 0x2;
+        break;
 
     default:
         /* No value found */
@@ -223,25 +264,24 @@ static int psp_misc_load_value(hwaddr addr, uint64_t * val)
     return 0;
 }
 
-static void psp_misc_write(void *opaque, hwaddr offset, uint64_t value,
+static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
                            unsigned int size)
 {
-    //PSPMiscState *misc = PSP_MISC(opaque);
-    //hwaddr phys_base = misc->iomem.addr;
-    //hwaddr phys_abs;
-    //phys_abs = phys_base + offset;
+    // PSPMiscState *misc = PSP_MISC(opaque);
+    // hwaddr phys_base = misc->iomem.addr;
+    // hwaddr phys_abs;
+    // phys_abs = phys_base + offset;
 
     /* TODO: Allow write to specific registers */
-
 
     trace_psp_misc_write_unimplemented(offset, value, size);
 }
 
-static uint64_t psp_misc_read(void *opaque, hwaddr offset, unsigned int size)
+static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
 {
-    PSPMiscState *misc = PSP_MISC(opaque);
+    PSPMiscState* misc = PSP_MISC(opaque);
     hwaddr phys_abs;
-    //int i;
+    // int i;
     hwaddr phys_base;
     uint64_t value;
 
@@ -249,7 +289,7 @@ static uint64_t psp_misc_read(void *opaque, hwaddr offset, unsigned int size)
     phys_abs = phys_base + offset;
     value = 0;
 
-    if(psp_misc_load_value(phys_abs, &value)) {
+    if (psp_misc_load_value(phys_abs, &value)) {
         trace_psp_misc_read_unimplemented(offset, size);
     } else {
         trace_psp_misc_read(offset, value, size);
@@ -266,16 +306,15 @@ static const MemoryRegionOps misc_mem_ops = {
     .impl.max_access_size = 4,
 };
 
-
-static void psp_misc_init(Object *obj)
+static void psp_misc_init(Object* obj)
 {
-    PSPMiscState *s = PSP_MISC(obj);
+    PSPMiscState* s = PSP_MISC(obj);
     s->ident = NULL;
 }
 
-static void psp_misc_realize(DeviceState *dev, Error **errp)
+static void psp_misc_realize(DeviceState* dev, Error** errp)
 {
-    PSPMiscState *s = PSP_MISC(dev);
+    PSPMiscState* s = PSP_MISC(dev);
 
     if (s->mmio_size == 0) {
         error_setg(errp, "property 'mmio_size' not specified or zero");
@@ -286,7 +325,7 @@ static void psp_misc_realize(DeviceState *dev, Error **errp)
         error_setg(errp, "property 'ident' not specified");
         return;
     }
-    if(s->generation == ZENTESLA + 1) {
+    if (s->generation == ZENTESLA + 1) {
         error_setg(errp, "property 'psp_misc_generation' not specified");
         return;
     }
@@ -296,24 +335,22 @@ static void psp_misc_realize(DeviceState *dev, Error **errp)
         return;
     }
 
-
-    memory_region_init_io(&s->iomem, OBJECT(dev), &misc_mem_ops, s,
-                          s->ident, 0x44000000);
+    memory_region_init_io(&s->iomem, OBJECT(dev), &misc_mem_ops, s, s->ident,
+                          0x44000000);
 
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
-
 }
 
 static Property properties[] = {
     DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
     DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
-    DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation, ZENTESLA + 1),
+    DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation,
+                       ZENTESLA + 1),
 };
 
-
-static void psp_misc_class_init(ObjectClass *oc, void *data)
+static void psp_misc_class_init(ObjectClass* oc, void* data)
 {
-    DeviceClass *dc = DEVICE_CLASS(oc);
+    DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_misc_realize;
     device_class_set_props(dc, properties);
 }

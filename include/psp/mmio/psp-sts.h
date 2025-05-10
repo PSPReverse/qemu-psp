@@ -19,6 +19,8 @@
 #ifndef AMD_PSP_STS_H
 #define AMD_PSP_STS_H
 
+#include "hw/sysbus.h"
+
 #define TYPE_PSP_STS "amd_psp.sts"
 #define PSP_STS(obj) OBJECT_CHECK(PSPStsState, (obj), TYPE_PSP_STS)
 
@@ -33,6 +35,5 @@ typedef struct PSPStsState {
     uint32_t psp_sts_val;
 
 } PSPStsState;
-
 
 #endif

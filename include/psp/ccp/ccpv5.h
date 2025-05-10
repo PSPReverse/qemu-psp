@@ -18,8 +18,8 @@
  */
 #ifndef AMD_CCP_V5_H
 #define AMD_CCP_V5_H
-#include "hw/sysbus.h"
 #include "exec/memory.h"
+#include "hw/sysbus.h"
 #include "qemu/timer.h"
 
 #include "psp/ccp/ccpv5-nettle.h"
@@ -37,7 +37,7 @@
 /* Local storage block sizes */
 #define CCP_LSB_COUNT 128 /* Per queue local storage block count */
 #define CCP_LSB_SIZE 32   /* Single LSB size */
-#define CCP_LSB_TOTAL_SIZE CCP_LSB_Q_SIZE *CCP_LSB_Q_COUNT
+#define CCP_LSB_TOTAL_SIZE CCP_LSB_Q_SIZE* CCP_LSB_Q_COUNT
 
 /* Global offsets */
 #define CCP_CTRL_OFFSET 0x0      /* Offset of the general control region */
@@ -55,7 +55,8 @@
 #define CCP_G_Q_PRIO_OFFSET 0x4
 
 /* Queue registers */
-/* The HALT bit, which indicates whether the queue is currently processing requests. */
+/* The HALT bit, which indicates whether the queue is currently processing
+ * requests. */
 #define CCP_Q_CTRL_HALT BIT(1)
 
 /* Status register success indicator. */
@@ -69,7 +70,7 @@
 #define CCP_Q_STATUS_ERROR 1
 
 /* Total size of the CCP MMIO region */
-#define CCP_MMIO_SIZE CCP_Q_COUNT *CCP_Q_SIZE + CCP_CTRL_SIZE + CCP_CONFIG_SIZE
+#define CCP_MMIO_SIZE CCP_Q_COUNT* CCP_Q_SIZE + CCP_CTRL_SIZE + CCP_CONFIG_SIZE
 
 /* The global local storage block */
 typedef struct CcpV5Lsb {

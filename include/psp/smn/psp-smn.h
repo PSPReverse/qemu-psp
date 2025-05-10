@@ -19,18 +19,17 @@
 #ifndef AMD_PSP_SMN_H
 #define AMD_PSP_SMN_H
 
-#include "hw/sysbus.h"
 #include "exec/memory.h"
+#include "hw/sysbus.h"
 
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-smu.h"
 
-
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */
 #define PSP_SMN_SLOT_COUNT 32
-#define PSP_SMN_SLOT_NAME_LEN  20
+#define PSP_SMN_SLOT_NAME_LEN 20
 #define PSP_SMN_SLOT_NAME "smn-slot_"
 
 #define TYPE_PSP_SMN "amd_psp.smn"
@@ -40,7 +39,6 @@
 #define TYPE_PSP_SMN_ZEN3 "amd_psp.smn.zen3"
 #define TYPE_PSP_SMN_ZENTESLA "amd_psp.smn.zentesla"
 #define PSP_SMN(obj) OBJECT_CHECK(PSPSmnState, (obj), TYPE_PSP_SMN)
-
 
 typedef uint32_t PSPSmnAddr;
 
@@ -57,7 +55,7 @@ typedef struct PSPSmnState {
     MemoryRegion psp_smn_space;
 
     /* PSP Misc device that covers the whole SMN address space */
-    //PSPMiscState psp_smn_misc;
+    // PSPMiscState psp_smn_misc;
     PSPSmnMiscState psp_smn_misc;
 
     /* Base address of the smn range. */

@@ -4,6 +4,20 @@ UseTab: Never
 BreakBeforeBraces: Linux
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
-SortIncludes: Never
-IncludeBlocks: Preserve
+SortIncludes: CaseInsensitive
+IncludeBlocks: Regroup
 PointerAlignment: Left
+
+IncludeCategories:
+  - Regex:           'qemu/osdep.h'
+    Priority:        -2
+    SortPriority:    -2
+  - Regex:           '^<.*\.(h|hpp)>'
+    Priority:        -1
+    SortPriority:    -1
+  - Regex:           'psp'
+    Priority:        2
+    SortPriority:    2
+  - Regex:           '.*'
+    Priority:        1
+    SortPriority:    0

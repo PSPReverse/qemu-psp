@@ -20,29 +20,28 @@
 #define AMD_PSP_H
 
 #include "hw/arm/boot.h"
-#include "hw/sysbus.h"
 #include "hw/misc/unimp.h"
+#include "hw/sysbus.h"
 #include "target/arm/cpu.h"
 
-#include "psp/generations.h"
-#include "psp/psp-misc.h"
 #include "psp/ccp/ccpv5.h"
+#include "psp/generations.h"
 #include "psp/mmio/mailbox.h"
 #include "psp/mmio/psp-fuse.h"
-#include "psp/mmio/psp-timer.h"
 #include "psp/mmio/psp-sts.h"
+#include "psp/mmio/psp-timer.h"
+#include "psp/psp-misc.h"
 #include "psp/smn/psp-smn.h"
-#include "psp/x86/psp-x86.h"
 #include "psp/x86/psp-osmem.h"
-
+#include "psp/x86/psp-x86.h"
 
 #define TYPE_AMD_PSP "amd-psp"
 #define AMD_PSP(obj) OBJECT_CHECK(AmdPspState, (obj), TYPE_AMD_PSP)
 
 #define PSP_SMN_CTRL_BASE 0x03220000
-//#define PSP_X86_CTRL1_BASE 0x03230000
-//#define PSP_X86_CTRL2_BASE 0x032303e0
-//#define PSP_X86_CTRL3_BASE 0x032304d8
+// #define PSP_X86_CTRL1_BASE 0x03230000
+// #define PSP_X86_CTRL2_BASE 0x032303e0
+// #define PSP_X86_CTRL3_BASE 0x032304d8
 
 #define PSP_OSMEM_CTL_BASE 0x03230000
 #define PSP_OSMEM_CONTAINERS_BASE 0x04000000
@@ -60,67 +59,68 @@
 #define PSP_MMIO_BASE 0x03000000
 #define PSP_MMIO_NAME "PSP MMIO"
 
-//#define PSP_X86_BASE 0x04000000
-//#define PSP_X86_NAME "PSP X86"
+// #define PSP_X86_BASE 0x04000000
+// #define PSP_X86_NAME "PSP X86"
 
 #define PSP_MAILBOX_BASE 0x03010570
 
 #define PSP_FUSE_BASE 0x03010104
 #define PSP_FUSE_NAME "PSP Fuse"
 
-#define PSP_UNKNOWN_BASE  0xfc000000
+#define PSP_UNKNOWN_BASE 0xfc000000
 #define PSP_UNKNOWN_NAME "PSP UNKNOWN"
 
-#define PSP_ROM_BASE  0xffff0000
+#define PSP_ROM_BASE 0xffff0000
 #define PSP_ROM_NAME "PSP ROM"
 
-
 typedef struct AmdPspState {
-  /*< private >*/
-  DeviceState parent_obj;
-  /*< public >*/
+    /*< private >*/
+    DeviceState parent_obj;
+    /*< public >*/
 
-  MemoryRegion sram;
-  MemoryRegion rom;
+    MemoryRegion sram;
+    MemoryRegion rom;
 
-  char const * gen_ident;
-  PspGeneration gen;
+    char const* gen_ident;
+    PspGeneration gen;
 
-  bool dbg_mode;
-  ARMCPU cpu;
+    bool dbg_mode;
+    ARMCPU cpu;
 
-  /* This device covers every MMIO address we have not covered somewhere else */
-  PSPMiscState base_mem;
+    /* This device covers every MMIO address we have not covered somewhere else
+     */
+    PSPMiscState base_mem;
 
-  /* This device represents the SMN address space including control registers */
-  PSPSmnState smn;
+    /* This device represents the SMN address space including control registers
+     */
+    PSPSmnState smn;
 
-  /* This device represents the x86 address space */
-  PSPX86State x86;
+    /* This device represents the x86 address space */
+    PSPX86State x86;
 
-  /* PSP OSMem at 0x03230000 */
-  PSPOSMemState osmem;
+    /* PSP OSMem at 0x03230000 */
+    PSPOSMemState osmem;
 
-  /* PSP Timer 1 at 0x03010400*/
-  PSPTimerState timer1;
+    /* PSP Timer 1 at 0x03010400*/
+    PSPTimerState timer1;
 
-  /* PSP Timer 2 at 0x03010424*/
-  PSPTimerState timer2;
+    /* PSP Timer 2 at 0x03010424*/
+    PSPTimerState timer2;
 
-  /* PSP Status port */
-  PSPStsState sts;
+    /* PSP Status port */
+    PSPStsState sts;
 
-  /* CCP */
-  CcpV5State ccp;
+    /* CCP */
+    CcpV5State ccp;
 
-  /* Fuse */
-  PSPFuseState fuse;
+    /* Fuse */
+    PSPFuseState fuse;
 
-  /* Mailbox */
-  MailboxState mailbox;
+    /* Mailbox */
+    MailboxState mailbox;
 
-  /* General unimplemented devices */
-  UnimplementedDeviceState unimp;
+    /* General unimplemented devices */
+    UnimplementedDeviceState unimp;
 
 } AmdPspState;
 

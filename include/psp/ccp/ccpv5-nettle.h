@@ -21,9 +21,9 @@
 
 #ifndef AMD_CCP_V5_NETTLE_H
 #define AMD_CCP_V5_NETTLE_H
-#include <nettle/sha2.h>
-#include <nettle/rsa.h>
 #include <glib.h>
+#include <nettle/rsa.h>
+#include <nettle/sha2.h>
 
 /* TODO: Should this be in a dedicated c file? */
 
@@ -34,8 +34,8 @@
  * The contexts here are "nettle" specific.
  */
 typedef union {
-    struct sha256_ctx *ctx_256;
-    struct sha384_ctx *ctx_384;
+    struct sha256_ctx* ctx_256;
+    struct sha384_ctx* ctx_384;
     void* raw;
 } CcpV5ShaCtx;
 
@@ -47,63 +47,72 @@ typedef struct CcpV5RsaPubKey {
 
 /* typedef struct rsa_public_key CcpV5RsaPubKey; */
 
-static inline void ccp_init_sha256_ctx(CcpV5ShaCtx *ctx) {
-    if(ctx != NULL) {
+static inline void ccp_init_sha256_ctx(CcpV5ShaCtx* ctx)
+{
+    if (ctx != NULL) {
         ctx->ctx_256 = (struct sha256_ctx*)g_malloc(sizeof(struct sha256_ctx));
         nettle_sha256_init(ctx->ctx_256);
     }
 }
 
-static inline void ccp_init_sha384_ctx(CcpV5ShaCtx *ctx) {
-    if(ctx != NULL) {
+static inline void ccp_init_sha384_ctx(CcpV5ShaCtx* ctx)
+{
+    if (ctx != NULL) {
         ctx->ctx_384 = (struct sha384_ctx*)g_malloc(sizeof(struct sha384_ctx));
         nettle_sha384_init(ctx->ctx_384);
     }
 }
 
-static inline void ccp_update_sha256(CcpV5ShaCtx *ctx, uint32_t len, void *src) {
+static inline void ccp_update_sha256(CcpV5ShaCtx* ctx, uint32_t len, void* src)
+{
     nettle_sha256_update(ctx->ctx_256, len, src);
 }
 
-static inline void ccp_update_sha384(CcpV5ShaCtx *ctx, uint32_t len, void *src) {
+static inline void ccp_update_sha384(CcpV5ShaCtx* ctx, uint32_t len, void* src)
+{
     sha384_update(ctx->ctx_384, len, src);
 }
 
-static inline void ccp_clear_sha_ctx(CcpV5ShaCtx *ctx) {
-    if(ctx != NULL) {
+static inline void ccp_clear_sha_ctx(CcpV5ShaCtx* ctx)
+{
+    if (ctx != NULL) {
         g_free(ctx->raw);
         ctx->raw = NULL;
     }
 }
 
-static inline void ccp_digest_sha256(CcpV5ShaCtx *ctx, uint8_t* lsb_ctx) {
+static inline void ccp_digest_sha256(CcpV5ShaCtx* ctx, uint8_t* lsb_ctx)
+{
     nettle_sha256_digest(ctx->ctx_256, SHA256_DIGEST_SIZE, lsb_ctx);
     ccp_clear_sha_ctx(ctx);
 }
 
-static inline void ccp_digest_sha384(CcpV5ShaCtx *ctx, uint8_t* lsb_ctx) {
+static inline void ccp_digest_sha384(CcpV5ShaCtx* ctx, uint8_t* lsb_ctx)
+{
     nettle_sha384_digest(ctx->ctx_384, SHA384_DIGEST_SIZE, lsb_ctx);
     ccp_clear_sha_ctx(ctx);
 }
-static inline void ccp_rsa_init_key(CcpV5RsaPubKey *key, uint8_t *m, uint8_t *e) {
+static inline void ccp_rsa_init_key(CcpV5RsaPubKey* key, uint8_t* m, uint8_t* e)
+{
 
     mpz_init(key->exp);
     mpz_init(key->mod);
 
     mpz_import(key->exp, key->rsa_len, -1, 1, 0, 0, e);
     mpz_import(key->mod, key->rsa_len, -1, 1, 0, 0, m);
-
 }
 
-static inline void ccp_rsa_clear_key(CcpV5RsaPubKey *key) {
+static inline void ccp_rsa_clear_key(CcpV5RsaPubKey* key)
+{
     mpz_clear(key->exp);
     mpz_clear(key->mod);
     key->rsa_len = 0;
-
 }
 
 /* TODO: Check for errors */
-static inline void ccp_rsa_encrypt(CcpV5RsaPubKey *key, uint8_t *m, uint8_t *res) {
+static inline void ccp_rsa_encrypt(CcpV5RsaPubKey* key, uint8_t* m,
+                                   uint8_t* res)
+{
     mpz_t result;
     mpz_t message;
 
@@ -117,6 +126,5 @@ static inline void ccp_rsa_encrypt(CcpV5RsaPubKey *key, uint8_t *m, uint8_t *res
 
     mpz_clear(result);
     mpz_clear(message);
-
 }
 #endif

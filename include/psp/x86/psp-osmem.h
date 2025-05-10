@@ -19,8 +19,8 @@
 #ifndef AMD_PSP_OSMEM_H
 #define AMD_PSP_OSMEM_H
 
-#include "hw/sysbus.h"
 #include "exec/memory.h"
+#include "hw/sysbus.h"
 
 #define TYPE_PSP_OSMEM "amd_psp.osmem"
 #define PSP_OSMEM(obj) OBJECT_CHECK(PSPOSMemState, (obj), TYPE_PSP_OSMEM)
@@ -28,11 +28,12 @@
 #define PSP_OSMEM_NUM_SLOTS 62
 
 /* PSP OSMem iomem size */
-#define PSP_OSMEM_CTL_SLOT_SIZE ((uint64_t) 0x10)
-#define PSP_OSMEM_CONTAINER_SLOT_SIZE ((uint64_t) 0x04000000)
+#define PSP_OSMEM_CTL_SLOT_SIZE ((uint64_t)0x10)
+#define PSP_OSMEM_CONTAINER_SLOT_SIZE ((uint64_t)0x04000000)
 
 #define PSP_OSMEM_CTL_SIZE (PSP_OSMEM_CTL_SLOT_SIZE * PSP_OSMEM_NUM_SLOTS)
-#define PSP_OSMEM_CONTAINER_SIZE (PSP_OSMEM_CONTAINER_SLOT_SIZE * PSP_OSMEM_NUM_SLOTS)
+#define PSP_OSMEM_CONTAINER_SIZE                                               \
+    (PSP_OSMEM_CONTAINER_SLOT_SIZE * PSP_OSMEM_NUM_SLOTS)
 
 typedef uint64_t PSPOSMemAddr;
 
@@ -42,7 +43,7 @@ typedef struct PSPOSMemUART {
 
 /**
  * @brief This is a worse version of psp-x86.h with a bunch of hardcoded values
- * 
+ *
  */
 typedef struct PSPOSMemState {
     SysBusDevice parent_obj;
@@ -58,7 +59,7 @@ typedef struct PSPOSMemState {
     PSPOSMemUART uart;
 
     /* OS address space */
-    //MemoryRegion psp_osmem_space;
+    // MemoryRegion psp_osmem_space;
 
     uint8_t psp_osmem_container_ram[PSP_OSMEM_CONTAINER_SLOT_SIZE];
 } PSPOSMemState;

@@ -17,20 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
-#include "qemu/log.h"
-#include "qapi/error.h"
-#include "qemu/module.h"
-#include "system/system.h"
+
+#include "psp/smn/psp-smn-flash.h"
+
 #include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qemu/osdep.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
-#include "psp/psp.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
+#include "qapi/error.h"
 #include "qemu/log.h"
-#include "psp/smn/psp-smn-flash.h"
+#include "qemu/module.h"
+#include "system/system.h"
+
+#include "psp/psp.h"
 
 /* static const MemoryRegionOps smn_flash_ops = { */
 /*     .read = psp_smn_flash_read, */
@@ -41,54 +41,53 @@
 /* }; */
 
 // +++ Begin ASPFuzz code +++
-MemoryRegion *asp_smn_mr = NULL;
+MemoryRegion* asp_smn_mr = NULL;
 void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr);
-void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr){
-    const uint8_t *buf = ptr;
+void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr)
+{
+    const uint8_t* buf = ptr;
     if (!asp_smn_mr) {
-        qemu_log_mask(LOG_GUEST_ERROR, "Memory region was not initialized prior to setting\n");
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "Memory region was not initialized prior to setting\n");
         return;
     }
-    uint8_t *ram_ptr = qemu_map_ram_ptr(asp_smn_mr->ram_block, addr);
+    uint8_t* ram_ptr = qemu_map_ram_ptr(asp_smn_mr->ram_block, addr);
     memcpy(ram_ptr, buf, len);
 }
 // +++ End ASPFuzz code +++
 
-static void psp_smn_flash_realize(DeviceState *dev, Error **errp)
+static void psp_smn_flash_realize(DeviceState* dev, Error** errp)
 {
-    PSPSmnFlashState *s = PSP_SMN_FLASH(dev);
-    Object *obj = OBJECT(dev);
+    PSPSmnFlashState* s = PSP_SMN_FLASH(dev);
+    Object* obj = OBJECT(dev);
 
     memory_region_init_ram(&s->psp_smn_flash, obj, "flash",
                            PSP_SMN_FLASH_SIZE_32, errp);
 
-    if(!s->flash_img) {
+    if (!s->flash_img) {
         qemu_log_mask(LOG_GUEST_ERROR, "No flash image provided for smn\n");
         exit(1);
     }
 
-    if(load_image_mr(s->flash_img, &s->psp_smn_flash) < 0 ) {
-        qemu_log_mask(LOG_GUEST_ERROR, "Could not load flash image provided for smn\n");
+    if (load_image_mr(s->flash_img, &s->psp_smn_flash) < 0) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "Could not load flash image provided for smn\n");
         exit(1);
     }
 
     // +++ Begin ASPFuzz code +++
     asp_smn_mr = &s->psp_smn_flash;
     // +++ End ASPFuzz code +++
-
 }
-static void psp_smn_flash_unrealize(DeviceState *dev)
-{
-    asp_smn_mr = NULL;
-}
+static void psp_smn_flash_unrealize(DeviceState* dev) { asp_smn_mr = NULL; }
 
 static Property psp_smn_flash_properties[] = {
     DEFINE_PROP_STRING("flash_img", PSPSmnFlashState, flash_img),
 };
 
-static void psp_smn_flash_class_init(ObjectClass *klass, void * data)
+static void psp_smn_flash_class_init(ObjectClass* klass, void* data)
 {
-    DeviceClass *dc = DEVICE_CLASS(klass);
+    DeviceClass* dc = DEVICE_CLASS(klass);
     dc->realize = psp_smn_flash_realize;
     dc->unrealize = psp_smn_flash_unrealize;
     device_class_set_props(dc, psp_smn_flash_properties);
@@ -101,8 +100,8 @@ static const TypeInfo psp_smn_flash_info = {
     .class_init = psp_smn_flash_class_init,
 };
 
-static void psp_smn_register_types(void) {
+static void psp_smn_register_types(void)
+{
     type_register_static(&psp_smn_flash_info);
-
 }
 type_init(psp_smn_register_types);

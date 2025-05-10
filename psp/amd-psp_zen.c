@@ -17,18 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qemu/osdep.h"
+
+#include "exec/address-spaces.h"
+#include "hw/boards.h"
+#include "hw/loader.h"
+#include "hw/qdev-properties.h"
+#include "hw/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
 #include "qemu/module.h"
-#include "system/system.h"
-#include "exec/address-spaces.h"
-#include "hw/sysbus.h"
-#include "qemu/osdep.h"
 #include "qemu/units.h"
-#include "qapi/error.h"
-#include "hw/qdev-properties.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
+#include "system/system.h"
+
 #include "psp/psp.h"
 
 /* Setup inspired from raspi.c */
@@ -46,11 +46,11 @@ typedef struct AmdPspMachineClass {
     PspGeneration gen;
 } AmdPspMachineClass;
 
-static const char * soc_versions[] = {
-    [ZEN]      = TYPE_AMD_PSP_ZEN,
+static const char* soc_versions[] = {
+    [ZEN] = TYPE_AMD_PSP_ZEN,
     [ZEN_PLUS] = TYPE_AMD_PSP_ZEN_PLUS,
-    [ZEN2]     = TYPE_AMD_PSP_ZEN_TWO,
-    [ZEN3]     = TYPE_AMD_PSP_ZEN_THREE,
+    [ZEN2] = TYPE_AMD_PSP_ZEN_TWO,
+    [ZEN3] = TYPE_AMD_PSP_ZEN_THREE,
     [ZENTESLA] = TYPE_AMD_PSP_ZEN_TESLA,
 };
 
@@ -58,13 +58,14 @@ static const char * soc_versions[] = {
 DECLARE_OBJ_CHECKERS(AmdPspMachineState, AmdPspMachineClass, AMD_PSP_MACHINE,
                      TYPE_AMD_PSP_MACHINE)
 
-
-static void zen_init_common(MachineState *machine) {
-    AmdPspMachineState *ms = AMD_PSP_MACHINE(machine);
-    AmdPspMachineClass *mc = AMD_PSP_MACHINE_GET_CLASS(machine);
+static void zen_init_common(MachineState* machine)
+{
+    AmdPspMachineState* ms = AMD_PSP_MACHINE(machine);
+    AmdPspMachineClass* mc = AMD_PSP_MACHINE_GET_CLASS(machine);
 
     /* Initialize Soc */
-    object_initialize_child(OBJECT(machine), "soc", &ms->soc, soc_versions[mc->gen]);
+    object_initialize_child(OBJECT(machine), "soc", &ms->soc,
+                            soc_versions[mc->gen]);
     qdev_realize(DEVICE(&ms->soc), NULL, &error_fatal);
 
     /* Set pc, Is there a more elegent way?
@@ -77,13 +78,14 @@ static void zen_init_common(MachineState *machine) {
     /* TODO consider emulating/skipping on-chip-bl if not set */
 }
 
-static void psp_zen_machine_common_init(MachineClass *mc) {
+static void psp_zen_machine_common_init(MachineClass* mc)
+{
     mc->desc = "AMD PSP";
     mc->init = zen_init_common;
     mc->block_default_type = IF_NONE;
     mc->min_cpus = mc->max_cpus = mc->default_cpus = 1;
     mc->default_cpu_type = ARM_CPU_TYPE_NAME("cortex-a9");
-    /* 
+    /*
      * hw/core/generic_loader.c     line 157
      * The PSP does not have ram, however the generic-loader device apparently
      * validates this value, so we set it here to an sufficiently large value
@@ -93,69 +95,78 @@ static void psp_zen_machine_common_init(MachineClass *mc) {
     mc->default_ram_id = "psp-ram";
 }
 
-static void psp_zen_machine_init(ObjectClass *oc, void *data) {
-    MachineClass *mc = MACHINE_CLASS(oc);
-    AmdPspMachineClass *apmc = AMD_PSP_MACHINE_CLASS(oc);
+static void psp_zen_machine_init(ObjectClass* oc, void* data)
+{
+    MachineClass* mc = MACHINE_CLASS(oc);
+    AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
     apmc->gen = ZEN;
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_plus_machine_init(ObjectClass *oc, void *data) {
-    MachineClass *mc = MACHINE_CLASS(oc);
-    AmdPspMachineClass *apmc = AMD_PSP_MACHINE_CLASS(oc);
+static void psp_zen_plus_machine_init(ObjectClass* oc, void* data)
+{
+    MachineClass* mc = MACHINE_CLASS(oc);
+    AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
     apmc->gen = ZEN_PLUS;
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_two_machine_init(ObjectClass *oc, void *data) {
-    MachineClass *mc = MACHINE_CLASS(oc);
-    AmdPspMachineClass *apmc = AMD_PSP_MACHINE_CLASS(oc);
+static void psp_zen_two_machine_init(ObjectClass* oc, void* data)
+{
+    MachineClass* mc = MACHINE_CLASS(oc);
+    AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
     apmc->gen = ZEN2;
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_three_machine_init(ObjectClass *oc, void *data) {
-    MachineClass *mc = MACHINE_CLASS(oc);
-    AmdPspMachineClass *apmc = AMD_PSP_MACHINE_CLASS(oc);
+static void psp_zen_three_machine_init(ObjectClass* oc, void* data)
+{
+    MachineClass* mc = MACHINE_CLASS(oc);
+    AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
     apmc->gen = ZEN3;
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_tesla_machine_init(ObjectClass *oc, void *data) {
-    MachineClass *mc = MACHINE_CLASS(oc);
-    AmdPspMachineClass *apmc = AMD_PSP_MACHINE_CLASS(oc);
+static void psp_zen_tesla_machine_init(ObjectClass* oc, void* data)
+{
+    MachineClass* mc = MACHINE_CLASS(oc);
+    AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
     apmc->gen = ZENTESLA;
     psp_zen_machine_common_init(mc);
 }
 
 static const TypeInfo amd_psp_machine_types[] = {
     {
-        .name           = MACHINE_TYPE_NAME("amd-psp-zen"),
-        .parent         = TYPE_AMD_PSP_MACHINE,
-        .class_init     = psp_zen_machine_init,
-    }, {
-        .name           = MACHINE_TYPE_NAME("amd-psp-zen-plus"),
-        .parent         = TYPE_AMD_PSP_MACHINE,
-        .class_init     = psp_zen_plus_machine_init,
-    }, {
-        .name           = MACHINE_TYPE_NAME("amd-psp-zen2"),
-        .parent         = TYPE_AMD_PSP_MACHINE,
-        .class_init     = psp_zen_two_machine_init,
-    }, {
-        .name           = MACHINE_TYPE_NAME("amd-psp-zen3"),
-        .parent         = TYPE_AMD_PSP_MACHINE,
-        .class_init     = psp_zen_three_machine_init,
-    }, {
-        .name           = MACHINE_TYPE_NAME("amd-psp-zentesla"),
-        .parent         = TYPE_AMD_PSP_MACHINE,
-        .class_init     = psp_zen_tesla_machine_init,
-    }, {
-        .name           = TYPE_AMD_PSP_MACHINE,
-        .parent         = TYPE_MACHINE,
-        .instance_size  = sizeof(AmdPspMachineState),
-        .class_size     = sizeof(AmdPspMachineClass),
-        .abstract       = true,
-    }
-};
+        .name = MACHINE_TYPE_NAME("amd-psp-zen"),
+        .parent = TYPE_AMD_PSP_MACHINE,
+        .class_init = psp_zen_machine_init,
+    },
+    {
+        .name = MACHINE_TYPE_NAME("amd-psp-zen-plus"),
+        .parent = TYPE_AMD_PSP_MACHINE,
+        .class_init = psp_zen_plus_machine_init,
+    },
+    {
+        .name = MACHINE_TYPE_NAME("amd-psp-zen2"),
+        .parent = TYPE_AMD_PSP_MACHINE,
+        .class_init = psp_zen_two_machine_init,
+    },
+    {
+        .name = MACHINE_TYPE_NAME("amd-psp-zen3"),
+        .parent = TYPE_AMD_PSP_MACHINE,
+        .class_init = psp_zen_three_machine_init,
+    },
+    {
+        .name = MACHINE_TYPE_NAME("amd-psp-zentesla"),
+        .parent = TYPE_AMD_PSP_MACHINE,
+        .class_init = psp_zen_tesla_machine_init,
+    },
+    {
+        .name = TYPE_AMD_PSP_MACHINE,
+        .parent = TYPE_MACHINE,
+        .instance_size = sizeof(AmdPspMachineState),
+        .class_size = sizeof(AmdPspMachineClass),
+        .abstract = true,
+    }};
 
 DEFINE_TYPES(amd_psp_machine_types);
