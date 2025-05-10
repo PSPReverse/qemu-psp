@@ -27,8 +27,6 @@
 #include "hw/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
 
 /* TODO: use mmio_map_overlap with memory_regions_dispatch_rw to log access to
  * SPI flash */
@@ -66,7 +64,6 @@ static void amd_psp_init(Object* obj)
     AmdPspState* s = AMD_PSP(obj);
     AmdPspClass* c = AMD_PSP_GET_CLASS(obj);
 
-    s->gen = PSP_GENERATION_MAX;
     object_initialize_child(obj, "cpu", &s->cpu,
                             ARM_CPU_TYPE_NAME("cortex-a9"));
 
@@ -108,12 +105,8 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     AmdPspState* s = AMD_PSP(dev);
     AmdPspClass* c = AMD_PSP_GET_CLASS(dev);
 
-    s->gen_ident = DEVICE_GET_CLASS(dev)->desc;
-    s->gen = PspNameToGen(s->gen_ident);
-    qemu_log("Generation: %s\n", s->gen_ident);
     qemu_log("Generation: %s\n", DEVICE_GET_CLASS(dev)->desc);
 
-    /* Enable the ARM TrustZone extensions */
     /* TODO: Enable the ARM TrustZone extensions. Needed? */
     // object_property_set_bool(OBJECT(&s->cpu), "has_el3", true,  &err);
 

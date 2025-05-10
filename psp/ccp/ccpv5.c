@@ -24,17 +24,8 @@
 
 #include "psp/ccp/ccpv5.h"
 
-#include "crypto/hash.h"
-#include "exec/address-spaces.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
 #include "qapi/error.h"
-#include "qemu/log-for-trace.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
 #include "trace.h"
 
 #include "psp/ccp/ccpv5-linux.h"

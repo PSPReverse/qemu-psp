@@ -6,18 +6,14 @@
  * @see PSPX86MapperState for a description of what this module does
  */
 
+#include "qemu/osdep.h"
+
 #include "psp/x86/psp-x86-mapper.h"
 
 #include "exec/address-spaces.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
 #include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "qom/object.h"
-#include "system/system.h"
 #include "trace.h"
 
 #include "psp/psp.h"

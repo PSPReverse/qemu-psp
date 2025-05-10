@@ -18,16 +18,12 @@
  */
 #include "qemu/osdep.h"
 
-#include "exec/address-spaces.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
-#include "qemu/module.h"
 #include "qemu/units.h"
-#include "system/system.h"
 
 #include "psp/psp.h"
 
