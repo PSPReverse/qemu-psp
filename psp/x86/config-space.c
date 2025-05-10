@@ -2,6 +2,7 @@
  * Copyright (C) 2024 Stefan Zabka <stefan@zabka.it>
  * SPDX-License-Identifier: GPL-2.0
  */
+#include "qemu/osdep.h"
 
 #include "psp/x86/config-space.h"
 

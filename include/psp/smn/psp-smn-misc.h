@@ -16,8 +16,6 @@
 #ifndef AMD_PSP_SMN_MISC_H
 #define AMD_PSP_SMN_MISC_H
 
-#include "qemu/osdep.h"
-
 #include "hw/sysbus.h"
 
 #include "psp/generations.h"

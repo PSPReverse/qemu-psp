@@ -76,9 +76,6 @@ typedef struct AmdPspState {
     MemoryRegion sram;
     MemoryRegion rom;
 
-    char const* gen_ident;
-    PspGeneration gen;
-
     bool dbg_mode;
     ARMCPU cpu;
 

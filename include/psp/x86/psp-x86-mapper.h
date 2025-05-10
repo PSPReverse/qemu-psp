@@ -6,10 +6,6 @@
 
 #ifndef PSP_X86_ACCESS_H
 #define PSP_X86_ACCESS_H
-#include "qemu/osdep.h"
-
-#include "exec/memory.h"
-#include "hw/sysbus.h"
 
 #include "psp/generations.h"
 #include "psp/psp-misc.h"

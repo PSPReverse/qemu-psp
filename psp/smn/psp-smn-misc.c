@@ -4,7 +4,6 @@
 
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
-#include "qemu/module.h"
 #include "trace.h"
 
 #define PSP_SMN_MISC_LOG "[PSP SMN MISC]"
