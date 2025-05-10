@@ -20,17 +20,9 @@
 
 #include "psp/smn/psp-smn-flash.h"
 
-#include "exec/address-spaces.h"
-#include "hw/boards.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
-#include "qapi/error.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
-
-#include "psp/psp.h"
 
 /* static const MemoryRegionOps smn_flash_ops = { */
 /*     .read = psp_smn_flash_read, */

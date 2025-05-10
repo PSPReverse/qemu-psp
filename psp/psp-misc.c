@@ -22,18 +22,9 @@
 
 #include "psp/psp-misc.h"
 
-#include "exec/address-spaces.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
 #include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
 #include "qapi/error.h"
-#include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
 #include "trace.h"
-
-#include "psp/psp.h"
 
 /* TODO make values offset based only starting from mmio base */
 /* TODO needs desperate rework. Rework to different classes or move into
@@ -327,11 +318,6 @@ static void psp_misc_realize(DeviceState* dev, Error** errp)
         return;
     }
     if (s->generation == PSP_GENERATION_MAX) {
-        error_setg(errp, "property 'psp_misc_generation' not specified");
-        return;
-    }
-
-    if (s->generation == ZENTESLA + 1) {
         error_setg(errp, "property 'psp_misc_generation' not specified");
         return;
     }

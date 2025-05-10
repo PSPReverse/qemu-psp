@@ -7,8 +7,6 @@
 #ifndef X86_MISC_H
 #define X86_MISC_H
 
-#include "qemu/osdep.h"
-
 #include "exec/memory.h"
 #include "hw/sysbus.h"
 

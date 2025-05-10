@@ -24,15 +24,8 @@
 
 #include "psp/x86/psp-osmem.h"
 
-#include "exec/address-spaces.h"
-#include "hw/boards.h"
-#include "hw/loader.h"
-#include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
-#include "qemu/module.h"
-#include "system/system.h"
 #include "trace.h"
 
 static char ident[] = "PSP OSMem";

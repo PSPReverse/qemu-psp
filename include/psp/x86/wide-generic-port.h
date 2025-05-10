@@ -6,8 +6,6 @@
 #ifndef PSP_X86_WIDE_GENERIC_PORT_H
 #define PSP_X86_WIDE_GENERIC_PORT_H
 
-#include "qemu/osdep.h"
-
 #include "exec/memory.h"
 #include "hw/sysbus.h"
 

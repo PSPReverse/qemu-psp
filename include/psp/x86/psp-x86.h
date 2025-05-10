@@ -18,10 +18,6 @@
  */
 #ifndef AMD_PSP_X86_H
 #define AMD_PSP_X86_H
-#include "qemu/osdep.h"
-
-#include "exec/memory.h"
-#include "hw/sysbus.h"
 
 #include "psp/generations.h"
 #include "psp/mmio/psp-sts.h"
