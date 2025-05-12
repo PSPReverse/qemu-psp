@@ -443,6 +443,123 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     return err;
 }
 
+/* TODO: Check all map/unmap for whether the mapping actually succeeded */
+static void ccp_copy_to_host(CcpV5State* s, void* hdst, hwaddr src,
+                             ccp_memtype stype, size_t len)
+{
+    void* hsrc = NULL;
+    hwaddr plen = len;
+
+    if (stype == CCP_MEMTYPE_LOCAL) {
+        hsrc = cpu_physical_memory_map(src, &plen, false);
+        assert(plen == len);
+        memcpy(hdst, hsrc, len);
+        cpu_physical_memory_unmap(hsrc, len, false, plen);
+    } else if (stype == CCP_MEMTYPE_SB) {
+        hsrc = s->lsb.u.lsb + src;
+        memcpy(hdst, hsrc, len);
+    }
+}
+
+static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
+                              ccp_memtype dtype, size_t len)
+{
+    void* hdst = NULL;
+    hwaddr plen = len;
+
+    if (dtype == CCP_MEMTYPE_LOCAL) {
+        /* TODO: Check for error */
+        hdst = cpu_physical_memory_map(dst, &plen, true);
+        assert(plen == len);
+        memcpy(hdst, hsrc, plen);
+        cpu_physical_memory_unmap(hdst, plen, true, plen);
+    } else if (dtype == CCP_MEMTYPE_SB) {
+        hdst = s->lsb.u.lsb + dst;
+        memcpy(hdst, hsrc, len);
+    }
+}
+
+static void ccp_aes_log_func(ccp_function func) {
+    const char * mode;
+    switch (func.aes.mode) {
+        case CCP_AES_MODE_ECB:    mode = "ecb"; break;
+        case CCP_AES_MODE_CBC:    mode = "cbc"; break;
+        case CCP_AES_MODE_OFB:    mode = "ofb"; break;
+        case CCP_AES_MODE_CFB:    mode = "cfb"; break;
+        case CCP_AES_MODE_CTR:    mode = "ctr"; break;
+        case CCP_AES_MODE_CMAC:   mode = "cmac"; break;
+        case CCP_AES_MODE_GHASH:  mode = "ghash"; break;
+        case CCP_AES_MODE_GCTR:   mode = "gctr"; break;
+        case CCP_AES_MODE_GCM:    mode = "gcm"; break;
+        case CCP_AES_MODE_GMAC:   mode = "gmac"; break;
+        default:                  mode = "unknown";
+    }
+    const char * type;
+    switch (func.aes.type) {
+        case CCP_AES_TYPE_128: type = "aes128"; break;
+        case CCP_AES_TYPE_192: type = "aes193"; break;
+        case CCP_AES_TYPE_256: type = "aes256"; break;
+        default:               type = "unknown";
+    }
+    qemu_log_mask(
+        LOG_TRACE, "CCP AES Request: engine=AES mode=%s type=%s encrypt=%s\n",
+        mode, type, func.aes.encrypt ? "true" : "false"
+    );
+}
+
+static void ccp_aes(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+{
+    ccp_function func;
+    //bool init;
+    //bool eom;
+    uint8_t key_local[32];
+    ccp_memtype key_mtype, src_mtype, dst_mtype;
+    hwaddr key_addr, src_addr, dst_addr;
+    uint32_t len;
+
+    func.raw = CCP5_CMD_FUNCTION(desc);
+    //init = CCP5_CMD_INIT(desc);
+    //eom = CCP5_CMD_EOM(desc);
+    len = CCP5_CMD_LEN(desc);
+
+    uint8_t * src_buf = malloc(len);
+    uint8_t * dst_buf = malloc(len);
+
+    ccp_aes_log_func(func);
+
+    key_mtype = CCP5_CMD_KEY_MEM(desc);
+    src_mtype = CCP5_CMD_SRC_MEM(desc);
+    dst_mtype = CCP5_CMD_SRC_MEM(desc);
+    key_addr = CCP5_CMD_KEY_LO(desc) | ((hwaddr)(CCP5_CMD_KEY_HI(desc)) << 32);
+    src_addr = CCP5_CMD_SRC_LO(desc) | ((hwaddr)(CCP5_CMD_SRC_HI(desc)) << 32);
+    dst_addr = CCP5_CMD_DST_LO(desc) | ((hwaddr)(CCP5_CMD_DST_LO(desc)) << 32);
+
+    switch (func.aes.mode) {
+
+        case CCP_AES_MODE_ECB:
+            switch (func.aes.type) {
+                case CCP_AES_TYPE_128:
+                    ccp_copy_to_host(s, key_local, key_addr, key_mtype, 16);
+                    ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len);
+
+                    ccp_aes128ecb(dst_buf, src_buf, len, key_local, func.aes.encrypt);
+
+                    ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
+                    break;
+
+                default:
+                    qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES TYPE %d\n", func.aes.type);
+            }
+            break;
+
+        default:
+            qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES MODE %d\n", func.aes.mode);
+    }
+
+    free(src_buf);
+    free(dst_buf);
+}
+
 static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
     ccp_function func;
@@ -482,41 +599,6 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     }
 }
 
-/* TODO: Check all map/unmap for whether the mapping actually succeeded */
-static void ccp_copy_to_host(CcpV5State* s, void* hdst, hwaddr src,
-                             ccp_memtype stype, size_t len)
-{
-    void* hsrc = NULL;
-    hwaddr plen = len;
-
-    if (stype == CCP_MEMTYPE_LOCAL) {
-        hsrc = cpu_physical_memory_map(src, &plen, false);
-        assert(plen == len);
-        memcpy(hdst, hsrc, len);
-        cpu_physical_memory_unmap(hsrc, len, false, plen);
-    } else if (stype == CCP_MEMTYPE_SB) {
-        hsrc = s->lsb.u.lsb + src;
-        memcpy(hdst, hsrc, len);
-    }
-}
-
-static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
-                              ccp_memtype dtype, size_t len)
-{
-    void* hdst = NULL;
-    hwaddr plen = len;
-
-    if (dtype == CCP_MEMTYPE_LOCAL) {
-        /* TODO: Check for error */
-        hdst = cpu_physical_memory_map(dst, &plen, true);
-        assert(plen == len);
-        memcpy(hdst, hsrc, plen);
-        cpu_physical_memory_unmap(hdst, plen, true, plen);
-    } else if (dtype == CCP_MEMTYPE_SB) {
-        hdst = s->lsb.u.lsb + dst;
-        memcpy(hdst, hsrc, len);
-    }
-}
 static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
     uint16_t rsa_size;
@@ -594,7 +676,7 @@ static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
     switch (engine) {
     case CCP_ENGINE_AES:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (AES)\n");
+        ccp_aes(s, id, desc);
         break;
     case CCP_ENGINE_XTS_AES_128:
         qemu_log_mask(LOG_UNIMP,
