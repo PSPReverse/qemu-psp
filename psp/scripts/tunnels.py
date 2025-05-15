@@ -49,7 +49,7 @@ class Setup(gdb.Command):
             # best effort killing
             print(e)
         cmd = (
-            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_passthrough,trace:ccp_rsa,trace:ccp_sha*" -gdb tcp::{self.gdb_port} -S '
+            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_passthrough,trace:ccp_rsa,trace:ccp_sha*,trace:ccp*" -gdb tcp::{self.gdb_port} -S '
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
             f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl} "
             f"-chardev socket,id=mon0,host=127.0.0.1,port={self.monitor_port},server=on,wait=off "

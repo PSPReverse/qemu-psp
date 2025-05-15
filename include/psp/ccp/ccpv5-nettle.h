@@ -64,6 +64,19 @@ static inline void ccp_aes128ecb(uint8_t* dst, const uint8_t* src,
         aes128_decrypt(&ctx, length, dst, src);
 }
 
+static inline void ccp_aes256ecb(uint8_t * dst, const uint8_t * src, size_t length, const uint8_t * key, bool encrypt) {
+    struct aes256_ctx ctx;
+    if (encrypt)
+        aes256_set_encrypt_key(&ctx, key);
+    else
+        aes256_set_decrypt_key(&ctx, key);
+
+    if (encrypt)
+        aes256_encrypt(&ctx, length, dst, src);
+    else
+        aes256_decrypt(&ctx, length, dst, src);
+}
+
 static inline void ccp_init_sha256_ctx(CcpV5ShaCtx* ctx)
 {
     if (ctx != NULL) {
