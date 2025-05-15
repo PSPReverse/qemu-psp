@@ -48,17 +48,20 @@ typedef struct CcpV5RsaPubKey {
 
 /* typedef struct rsa_public_key CcpV5RsaPubKey; */
 
-static inline void ccp_aes128ecb(uint8_t * dst, const uint8_t * src, size_t length, const uint8_t * key, bool encrypt) {
+static inline void ccp_aes128ecb(uint8_t* dst, const uint8_t* src,
+                                 size_t length, const uint8_t* key,
+                                 bool encrypt)
+{
     struct aes128_ctx ctx;
     if (encrypt)
-      aes128_set_encrypt_key(&ctx, key);
+        aes128_set_encrypt_key(&ctx, key);
     else
-      aes128_set_decrypt_key(&ctx, key);
+        aes128_set_decrypt_key(&ctx, key);
 
     if (encrypt)
-      aes128_encrypt(&ctx, length, dst, src);
+        aes128_encrypt(&ctx, length, dst, src);
     else
-      aes128_decrypt(&ctx, length, dst, src);
+        aes128_decrypt(&ctx, length, dst, src);
 }
 
 static inline void ccp_init_sha256_ctx(CcpV5ShaCtx* ctx)
