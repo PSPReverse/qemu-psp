@@ -574,13 +574,19 @@ static void ccp_aes(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
             ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
             break;
+        case CCP_AES_TYPE_256:
+            ccp_copy_to_host(s, key_local, key_addr, key_mtype, 32);
+            ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len);
 
+            ccp_aes256ecb(dst_buf, src_buf, len, key_local, func.aes.encrypt);
+
+            ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
+            break;
         default:
             qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES TYPE %d\n",
                           func.aes.type);
         }
         break;
-
     default:
         qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES MODE %d\n",
                       func.aes.mode);
