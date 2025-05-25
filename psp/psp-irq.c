@@ -31,17 +31,9 @@
 #include "qemu/log.h"
 #include "trace.h"
 
-static void psp_irq_write(void* opaque, hwaddr offset, uint64_t value,
-                          unsigned int size)
-{
-    PSPIrqState* irq = PSP_IRQ(opaque);
-    unsigned int old_val = irq->bitfield[offset >> 2];
 
-    if (offset >= 0x10) {
-        trace_psp_irq_write_unimplemented(offset, value, size);
-
-        return;
-    }
+static void psp_irq_write_ccp_queue(PSPIrqState* irq, hwaddr offset, uint64_t value) {
+    unsigned int old_val = irq->ccp_queue_bitfield[offset >> 2];
     if (old_val == value)
         return;
 
@@ -55,8 +47,65 @@ static void psp_irq_write(void* opaque, hwaddr offset, uint64_t value,
         // bit was set
         trace_psp_irq_set_bit(offset * 8 + idx);
     }
+
     // trace_psp_irq_write_bitfield(offset, value, size);
-    irq->bitfield[offset >> 2] = value;
+    irq->ccp_queue_bitfield[offset >> 2] = value;
+    return;
+}
+
+static void psp_irq_write_fiq(PSPIrqState* irq, hwaddr offset, uint64_t value, unsigned int size) {
+    switch (offset) {
+        case FIQ_HANDLED_BITFIELD_OFFSET:
+            irq->irq_buffer[0] &= ~value;
+            trace_psp_irq_clear_bit(__builtin_ctz(value));
+            break;
+        case FIQ_HANDLED_BITFIELD_OFFSET+4:
+            irq->irq_buffer[1] &= ~value;
+            trace_psp_irq_clear_bit(32+__builtin_ctz(value));
+            break;
+        case FIQ_HANDLED_BITFIELD_OFFSET+8:
+            irq->irq_buffer[2] &= ~value;
+            trace_psp_irq_clear_bit(64+__builtin_ctz(value));
+            break;
+        case FIQ_HANDLED_BITFIELD_OFFSET+12:
+            irq->irq_buffer[3] &= ~value;
+            trace_psp_irq_clear_bit(96+__builtin_ctz(value));
+            break;
+        default:
+            trace_psp_irq_write_unimplemented(offset, value, size);
+            break;
+    }
+
+}
+
+static void psp_irq_write(void* opaque, hwaddr offset, uint64_t value,
+                          unsigned int size)
+{
+    PSPIrqState* irq = PSP_IRQ(opaque);
+
+    if (offset < 0x10) {
+        psp_irq_write_ccp_queue(irq, offset, value);
+    } else if (offset >= 0xb0 && offset < 0xc8) {
+        //TODO: maybe needs setting some irq line
+        psp_irq_write_fiq(irq, offset, value, size);
+    } else {
+        trace_psp_irq_write_unimplemented(offset, value, size);
+    }
+}
+static uint32_t psp_irq_read_fiq(PSPIrqState* irq, hwaddr offset, unsigned int size) {
+    switch (offset) {
+        case FIQ_ALL_PROCESSED_OFFSET:
+            //TODO: pull irq line down maybe here if returning 1 --> all cleared
+            return irq->irq_buffer[0] == 0 && irq->irq_buffer[1] == 0 && irq->irq_buffer[2] == 0 && irq->irq_buffer[3] == 0;
+        case FIQ_NEXT_OFFSET:
+            for (int i = 0; i < 4; i++)
+                if (irq->irq_buffer[i] > 0)
+                    return 32*i + __builtin_ctz(irq->irq_buffer[i]);
+            __builtin_unreachable();
+        default:
+            trace_psp_irq_read_unimplemented(offset, size);
+            return 0;
+    }
 }
 
 static uint64_t psp_irq_read(void* opaque, hwaddr offset, unsigned int size)
@@ -68,8 +117,11 @@ static uint64_t psp_irq_read(void* opaque, hwaddr offset, unsigned int size)
 
     if (offset < 0x10) {
         // we are inside the interrupt_bitfield
-        value = irq->bitfield[offset >> 2];
+        value = irq->ccp_queue_bitfield[offset >> 2];
         trace_psp_irq_read_bitfield(offset, value, size);
+    } else if (offset >= 0xb0 && offset < 0xc8) {
+        //TODO: reset fiq line somewhere
+        value =  psp_irq_read_fiq(irq, offset, size);
     } else {
         trace_psp_irq_read_unimplemented(offset, size);
     }
@@ -97,7 +149,7 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
     PSPIrqState* s = PSP_IRQ(dev);
 
     // clear the bitfield
-    memset(&s->bitfield, 0, sizeof(s->bitfield));
+    memset(&s->ccp_queue_bitfield, 0, sizeof(s->ccp_queue_bitfield));
 
     if (s->ident == NULL) {
         error_setg(errp, "property 'ident' not specified");
