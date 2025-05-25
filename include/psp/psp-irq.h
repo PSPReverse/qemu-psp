@@ -24,6 +24,11 @@
 
 #include "psp/generations.h"
 
+#define FIQ_HANDLED_BITFIELD_OFFSET 0xb0
+#define FIQ_ALL_PROCESSED_OFFSET 0xc0
+#define FIQ_NEXT_OFFSET 0xc4
+
+
 #define TYPE_PSP_IRQ "amd_psp.irq"
 #define PSP_IRQ(obj) OBJECT_CHECK(PSPIrqState, (obj), TYPE_PSP_IRQ)
 
@@ -32,7 +37,20 @@ typedef struct PSPIrqState {
     MemoryRegion iomem;
 
     /* Bitfield */
-    uint32_t bitfield[4];
+    uint32_t ccp_queue_bitfield[4];
+
+    struct {
+        /* FIQ mark handled bitfield */
+        uint32_t handled_bitfield[4];
+
+        /* FIQ next */
+        uint32_t next;
+
+        /* FIQ still some left to process */
+        uint32_t all_processed;
+    } fiq;
+
+    uint32_t irq_buffer[4];
 
     /* Identifier of this instance */
     char* ident;
