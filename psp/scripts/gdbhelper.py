@@ -7,7 +7,7 @@ from subprocess import Popen
 from pathlib import Path
 
 sys.path.append(os.path.dirname(__file__))
-from tunnels import apply_config, LoggingBreakpoint, dependent_bps, log_message
+from tunnels import apply_config, LoggingBreakpoint, dependent_bps, log_message, ProcessArray
 
 bp_defs = []
 for bp_def in bp_defs:
@@ -18,6 +18,7 @@ for bp_def in bp_defs:
 
 gdb.execute("set pagination off")
 setup = apply_config(Path(os.environ["FUZZER_CONFIG"]))
+procs = ProcessArray()
 
 class Bisect(gdb.Command):
     def __init__(self):
@@ -79,6 +80,13 @@ dependent_bps.extend(
         LoggingBreakpoint(0xEB8, "R0", "Already in UNDEF", should_stop=True),
         LoggingBreakpoint(0x200120, "R0", "Known good location"),
         LoggingBreakpoint(0x2000e0, "R0", "Start of memcpy"),
+
+        LoggingBreakpoint(0x202860, "R0", "Process 0x1 started", should_stop=True),
+        LoggingBreakpoint(0x20301c, "R0", "Process 0x9 started", should_stop=True),
+        LoggingBreakpoint(0x202e10, "R0", "Process 0xa started", should_stop=True),
+        LoggingBreakpoint(0x203104, "R0", "Process 0xb started", should_stop=True),
+        LoggingBreakpoint(0x203004, "R0", "Process 0xc started", should_stop=True),
+        LoggingBreakpoint(0x200e48, "R0", "Process 0xd started", should_stop=True),
     ]
 )
 
