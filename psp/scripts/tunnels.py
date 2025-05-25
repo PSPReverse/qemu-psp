@@ -8,6 +8,8 @@ import time
 import os
 import shlex
 import signal
+import struct
+
 
 
 BUILD_DIR = Path(__file__).parents[2] / "build"  # / "manual"
@@ -81,14 +83,14 @@ class JumpTo(gdb.Command):
     def __init__(self):
         super(JumpTo, self).__init__("jump_to", gdb.COMMAND_USER)
 
-    def invoke(self, args, _from_tty):
+    def invoke(self, args, _from_tty, temporary=True):
         argv = gdb.string_to_argv(args)
         assert len(argv) == 2
         overwrite_location = int(argv[0], 0)  # Parse hex string
         target = int(argv[1], 0)  # Parse hex string
         diff = target - overwrite_location
         assert diff > 0
-        bp = gdb.Breakpoint(f"*{argv[0]}", temporary=True)
+        bp = gdb.Breakpoint(f"*{argv[0]}", temporary=temporary)
         bp.commands = f"jump *{argv[1]}\n end"  # Jump to target
 
 
@@ -111,7 +113,66 @@ class LoggingBreakpoint(gdb.Breakpoint):
         log_message(msg)
         return self.should_stop
 
+class LoggingMemoryBreakpoint(gdb.Breakpoint):
+    def __init__(self, addr: int, address: str, ctype:str, msg: str = None, should_stop=False):
+        super(LoggingMemoryBreakpoint, self).__init__(f"*{addr}")
+        self.addr = addr
+        self.address = address
+        self.ctype = ctype
+        self.msg = msg
+        self.should_stop = should_stop
 
+    def stop(self) -> bool:
+        reg_value = int(gdb.parse_and_eval(f"*({self.ctype}*) {self.address}"))
+        msg = f"{hex(self.addr)}: {self.ctype} at {self.address:#x} = {hex(reg_value)}" + (
+            f" msg = {self.msg}" if self.msg else ""
+        )
+        log_message(msg)
+        return self.should_stop
+
+class ProcessArray(gdb.Command):
+
+    __tos_proc_format = ">68sBxBxBBBBBxBxQ4xI4xI8xIH10x"
+    __proc_size = struct.calcsize(__tos_proc_format)
+    assert __proc_size == 128
+    __proc_field_names = ["regs", "next_pid", "prev_pid", "init_q", "current_q", "active", "m_m_idx", "pid", "unschedule_count", "alarm", "2_thr_ctx", "3_thr_ctx", "domain", "next_pid?"]
+    __base_addr = 0x6c00
+    def __init__(self):
+        super().__init__("procs", gdb.COMMAND_USER)
+
+    def invoke(self, args, from_tty):
+        argv = gdb.string_to_argv(args)
+        if len(argv) == 1:
+            start = int(argv[0], 0)
+            end = int(argv[0], 0) + 1
+        elif len(argv) != 2:
+            raise gdb.GdbError("need at least one param")
+        else:
+            start = int(argv[0], 0)
+            end = int(argv[1], 0)
+
+        if start < 0 or end <= start:
+            raise gdb.GdbError("range invalid")
+
+        header = "idx | " + " | ".join(f"{name:^16}" for name in self.__proc_field_names)
+        sep = "-" * len(header)
+        print(header)
+        print(sep)
+
+        inf = gdb.inferiors()[0]
+        for i in range(start, end):
+            addr = self.__base_addr + i * self.__proc_size
+            mem = inf.read_memory(addr, self.__proc_size).tobytes()
+            vals = struct.unpack(self.__tos_proc_format, mem)
+
+            # format each field
+            out = []
+            for name, val in zip(self.__proc_field_names, vals):
+                if name == "regs":
+                    out.append(str(hex(list(val)[0])))
+                else:
+                    out.append(str(hex(val)))
+            print(f"{str(hex(i)):^3} | " + " | ".join(f"{v:^16}" for v in out))
 class ApplyInputCommand(gdb.Command):
     """Apply the binary input specified at the target the same way the fuzzer would
 
@@ -184,6 +245,8 @@ def apply_config(config_path: Path) -> Setup:
         action = tunnel["action"]
         if action == "Jump":
             jump.invoke(f"{tunnel['source']} {tunnel['target']}", False)
+        elif action == "PermaJump":
+            jump.invoke(f"{tunnel['source']} {tunnel['target']}", False, temporary=False)
         elif action == "SetConstant":
             bp = gdb.Breakpoint(f"*{tunnel['addr']}")
             bp.commands = (
