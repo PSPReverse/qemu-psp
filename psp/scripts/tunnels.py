@@ -113,6 +113,7 @@ class LoggingBreakpoint(gdb.Breakpoint):
         log_message(msg)
         return self.should_stop
 
+
 class LoggingMemoryBreakpoint(gdb.Breakpoint):
     def __init__(self, addr: int, address: str, ctype:str, msg: str = None, should_stop=False):
         super(LoggingMemoryBreakpoint, self).__init__(f"*{addr}")
@@ -129,6 +130,7 @@ class LoggingMemoryBreakpoint(gdb.Breakpoint):
         )
         log_message(msg)
         return self.should_stop
+
 
 class ProcessArray(gdb.Command):
 
@@ -173,6 +175,8 @@ class ProcessArray(gdb.Command):
                 else:
                     out.append(str(hex(val)))
             print(f"{str(hex(i)):^3} | " + " | ".join(f"{v:^16}" for v in out))
+
+
 class ApplyInputCommand(gdb.Command):
     """Apply the binary input specified at the target the same way the fuzzer would
 
@@ -223,6 +227,7 @@ class ApplyInputCommand(gdb.Command):
                 print(f"Mailbox write {hex(addr)} to {value}")
                 gdb.execute(f"set *{addr} = {hex(value)}")
 
+
 def apply_config(config_path: Path) -> Setup:
     """Central entrypoint for applying the config to the gdb session"""
     with open(config_path, "r") as f:
@@ -250,9 +255,23 @@ def apply_config(config_path: Path) -> Setup:
         elif action == "SetConstant":
             bp = gdb.Breakpoint(f"*{tunnel['addr']}")
             bp.commands = (
-                f"set ${tunnel['target'].lower()}={tunnel['value']} \n continue \n end"
+                f"set ${str(tunnel['target']).lower()}={tunnel['value']} \n continue \n end"
             )
             bp.silent = True
+        elif action == "SetMemory":
+            # TODO: do not use this for fuzzing, this is not implemented in rust as of now
+            bp = gdb.Breakpoint(f"*{tunnel['addr']}")
+            if tunnel['target'][0] == '*' and len(tunnel['target']) == 3:
+                # assume dereferenced register
+                bp.commands = (
+                    f"set *${str(tunnel['target'])[1:].lower()}={tunnel['value']} \n continue \n end"
+                )
+            else:
+                bp.commands = (
+                    f"set {{unsigned int}}{str(tunnel['target']).lower()}={tunnel['value']} \n continue \n end"
+                )
+            bp.silent = True
+
         elif action == "LogRegister":
             print(f"Logging register {tunnel['target']} at 0x{tunnel['addr']:x}")
             LoggingBreakpoint(tunnel['addr'], tunnel['target'])
