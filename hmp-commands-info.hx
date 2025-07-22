@@ -211,7 +211,7 @@ SRST
     Show virtual to physical memory mappings.
 ERST
 
-#if defined(TARGET_I386) || defined(TARGET_RISCV)
+#if defined(TARGET_I386) || defined(TARGET_RISCV) || defined(TARGET_ARM)
     {
         .name       = "mem",
         .args_type  = "",

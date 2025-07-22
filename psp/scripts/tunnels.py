@@ -51,11 +51,13 @@ class Setup(gdb.Command):
             # best effort killing
             print(e)
         cmd = (
-            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_passthrough,trace:ccp_rsa,trace:ccp_sha*,trace:ccp*" -gdb tcp::{self.gdb_port} -S '
+            # f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*,trace:ccp_passthrough,trace:ccp_rsa,trace:ccp_sha*" -gdb tcp::{self.gdb_port} -S '
+            f'{BUILD_DIR}/qemu-system-arm -d "guest_errors,unimp,trace:psp_*unimplemented" -gdb tcp::{self.gdb_port} -S '
             f"--machine {self.generation} -device loader,file={self.on_chip_bl},addr=0xffff0000,force-raw=on "
             f"-global driver=amd_psp.smnflash,property=flash_img,value={self.off_chip_bl} "
             f"-chardev socket,id=mon0,host=127.0.0.1,port={self.monitor_port},server=on,wait=off "
-            "-monitor chardev:mon0"
+            "-monitor chardev:mon0 "
+            "-plugin build/contrib/plugins/libdrcov.so,filename=/tmp/trace.drcov"
         )
         print(f"Starting QEMU with command: {cmd}")
         # yes this leaks the FD until the gc collects the cmd, but I can't figure out a better way rn
@@ -258,10 +260,10 @@ def apply_config(config_path: Path) -> Setup:
                 f"set ${str(tunnel['target']).lower()}={tunnel['value']} \n continue \n end"
             )
             bp.silent = True
-        elif action == "SetMemory":
+        elif action == "SetMemoryByte":
             # TODO: do not use this for fuzzing, this is not implemented in rust as of now
             bp = gdb.Breakpoint(f"*{tunnel['addr']}")
-            if tunnel['target'][0] == '*' and len(tunnel['target']) == 3:
+            if str(tunnel['target'])[0] == '*' and len(str(tunnel['target'])) == 3:
                 # assume dereferenced register
                 bp.commands = (
                     f"set *${str(tunnel['target'])[1:].lower()}={tunnel['value']} \n continue \n end"
@@ -270,6 +272,20 @@ def apply_config(config_path: Path) -> Setup:
                 bp.commands = (
                     f"set {{unsigned int}}{str(tunnel['target']).lower()}={tunnel['value']} \n continue \n end"
                 )
+            bp.silent = True
+        elif action == "SetMemory":
+            bp = gdb.Breakpoint(f"*{tunnel['addr']}")
+            base = str(tunnel['target']).lower()
+            base = f"${base[1:]}" if str(tunnel['target'])[0] == '*' and len(str(tunnel['target'])) == 3 else base
+
+            int_val = int(str(tunnel['value']),0)
+            byte_values = int_val.to_bytes(max((int_val.bit_length()+7)//8, 1), 'little')
+            cmds = []
+            for offset, byte in enumerate(byte_values):
+                cmds.append(f"set {{unsigned char}}({base}+{offset}) = {byte}\n")
+            cmds.append("continue \n end")
+            bp.commands = "".join(cmds)
+            print(f"Executing\n{cmds}")
             bp.silent = True
 
         elif action == "LogRegister":
