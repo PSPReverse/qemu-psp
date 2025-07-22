@@ -24,6 +24,9 @@
 #include "qemu/target-info.h"
 #include "hw/boards.h"
 #include "kvm_arm.h"
+#include "monitor/monitor.h"
+#include "monitor/hmp-target.h"
+#include "monitor/hmp.h"
 #include "qapi/error.h"
 #include "qapi/visitor.h"
 #include "qapi/qobject-input-visitor.h"
@@ -32,6 +35,7 @@
 #include "qobject/qdict.h"
 #include "qom/qom-qobject.h"
 #include "cpu.h"
+#include "target/arm/internals.h"
 
 static GICCapability *gic_cap_new(int version)
 {
@@ -247,4 +251,146 @@ CpuDefinitionInfoList *qmp_query_cpu_definitions(Error **errp)
     g_slist_free(list);
 
     return cpu_list;
+}
+
+typedef struct Mapping {
+    hwaddr addr;
+    bool k_exec;
+    bool k_read;
+    bool k_write;
+
+    bool u_exec;
+    bool u_read;
+    bool u_write;
+} Mapping;
+
+static uint8_t get_mapping(CPUARMState *env, vaddr addr, Mapping *mapping)
+{
+    // set default mapping
+    *mapping = (Mapping){0};
+    uint8_t lg_page_size = 12; // 1 << 12 = 4KB
+
+#define UPDATE_PART(MEMOP, MMUIDX, FIELD_NAME)                                   \
+    do {                                                                       \
+      GetPhysAddrResult result = {0};                                          \
+      ARMMMUFaultInfo fi = {0};                                                \
+      bool failed = get_phys_addr_for_at(                                      \
+          env, addr, 1 << MEMOP, MMUIDX, ARMSS_Secure, &result, &fi);   \
+      if (!failed) {                                                           \
+        mapping->FIELD_NAME = true;                                            \
+        mapping->addr = result.f.phys_addr;                                    \
+        lg_page_size = result.f.lg_page_size;                                  \
+      }                                                                        \
+    } while (false)
+
+    UPDATE_PART(MMU_DATA_STORE, ARMMMUIdx_E3, k_write);
+    UPDATE_PART(MMU_DATA_LOAD, ARMMMUIdx_E3, k_read);
+    UPDATE_PART(MMU_INST_FETCH, ARMMMUIdx_E3, k_exec);
+   
+    UPDATE_PART(MMU_DATA_STORE, ARMMMUIdx_E30_0, u_write);
+    UPDATE_PART(MMU_DATA_LOAD, ARMMMUIdx_E30_0, u_read);
+    UPDATE_PART(MMU_INST_FETCH, ARMMMUIdx_E30_0, u_exec);
+
+    return lg_page_size;
+}
+
+static void get_permissions_str(Mapping *mapping, char (*str)[8]){
+    (*str)[0] = mapping->k_read ? 'r' : '_';
+    (*str)[1] = mapping->k_write ? 'w' : '_';
+    (*str)[2] = mapping->k_exec ? 'x' : '_';
+    
+    (*str)[3] = ' ';
+
+    (*str)[4] = mapping->u_read ? 'r' : '_';
+    (*str)[5] = mapping->u_write ? 'w' : '_';
+    (*str)[6] = mapping->u_exec ? 'x' : '_';
+
+    (*str)[7] = '\0';
+}
+
+static bool mapping_is_invalid(Mapping *m) {
+    return m->addr == 0 && !m->k_read && !m->k_write && !m->k_exec &&
+           !m->u_read && !m->u_write && !m->u_exec;
+}
+
+static bool mapping_is_in_seqence(Mapping *prev, Mapping *curr, hwaddr step){
+    if (mapping_is_invalid(prev) && mapping_is_invalid(curr)) {
+      return true;
+    }
+
+    if(prev->addr + step != curr->addr) {
+        return false;
+    }
+
+#define HAS_TO_BE_SAME(NAME)                                                   \
+    if (prev->NAME != curr->NAME) {                                            \
+      return false;                                                            \
+    }
+
+    HAS_TO_BE_SAME(k_read)
+    HAS_TO_BE_SAME(k_write)
+    HAS_TO_BE_SAME(k_exec)
+    HAS_TO_BE_SAME(u_read)
+    HAS_TO_BE_SAME(u_write)
+    HAS_TO_BE_SAME(u_exec)
+
+    return true;
+}
+
+static vaddr max_vaddr = (1024ul * 1024ul * 1024ul * 4ul) - 1;
+
+void hmp_info_mem(Monitor *mon, const QDict *qdict)
+{
+    CPUARMState *env;
+
+    env = mon_get_cpu_env(mon);
+    if (!env) {
+        monitor_printf(mon, "No CPU available\n");
+        return;
+    }
+
+    monitor_printf(mon, "Virtual Address Range      Physical   Kernel User\n");
+
+    vaddr addr = 0;
+
+    struct Mapping mapping;
+    char perms_str[8];
+
+    struct Mapping prev_mapping;
+    
+    monitor_printf(mon, "0x%08"VADDR_PRIx" - ", addr);
+
+    addr += 1 << get_mapping(env, addr, &prev_mapping);
+    hwaddr prev_mapping_target = prev_mapping.addr; 
+
+    while(true) {
+        hwaddr addr_step = 1 << get_mapping(env, addr, &mapping);
+        hwaddr next_addr = addr + addr_step;
+
+        if(!mapping_is_in_seqence(&prev_mapping, &mapping, addr_step) || next_addr >= max_vaddr) {
+            if(next_addr > max_vaddr) {
+                next_addr = max_vaddr;
+            }
+            monitor_printf(mon, "0x%08" VADDR_PRIx " -> ", next_addr);
+
+            if(mapping_is_invalid(&prev_mapping)) {
+                monitor_printf(mon, "n/a\n");    
+            } else {
+                get_permissions_str(&prev_mapping, &perms_str);
+                monitor_printf(mon, "0x%08" HWADDR_PRIX " %s\n", prev_mapping_target, perms_str);
+            }
+
+            if(next_addr >= max_vaddr) {
+                break;
+            }
+
+            monitor_printf(mon, "0x%08" VADDR_PRIx " - ", next_addr + addr);
+
+            prev_mapping_target = mapping.addr;
+            
+        }
+
+        prev_mapping = mapping;
+        addr = next_addr;
+    }
 }
