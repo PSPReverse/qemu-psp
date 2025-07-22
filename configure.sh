@@ -110,4 +110,5 @@ $DIR/configure \
     --disable-xkbcommon\
     --disable-zstd\
     --disable-tests\
-    --enable-debug
+    --enable-debug\
+    --enable-plugins
