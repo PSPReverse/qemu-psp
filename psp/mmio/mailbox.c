@@ -45,7 +45,7 @@ static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
     hwaddr index = offset / 4;
     assert(index < 3);
     trace_psp_mailbox_read(index_to_name(index), s->values[index]);
-
+    trace_psp_mailbox_read("blub", 5);
     return s->values[index];
 }
 
