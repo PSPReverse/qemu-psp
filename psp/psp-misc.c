@@ -328,7 +328,7 @@ static void psp_misc_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
     DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
     DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation,
