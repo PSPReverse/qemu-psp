@@ -139,7 +139,7 @@ static void instance_init(Object* obj)
     s->size = 0;
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", WriteCatcherState, generation,
                        PSP_GENERATION_MAX),
 };

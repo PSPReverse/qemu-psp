@@ -39,7 +39,7 @@ static void psp_x86_misc_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
-static Property psp_x86_misc_properties[] = {
+static const Property psp_x86_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MiscState, generation,
                        PSP_GENERATION_MAX),
     DEFINE_PROP_LINK("owning-device", MMIODeviceState, owning_device,

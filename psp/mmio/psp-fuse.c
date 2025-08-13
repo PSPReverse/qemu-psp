@@ -50,7 +50,7 @@ static void psp_fuse_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
 }
 
-static Property psp_fuse_properties[] = {
+static const Property psp_fuse_properties[] = {
     DEFINE_PROP_BOOL("dbg_mode", PSPFuseState, dbg_mode, false),
 };
 

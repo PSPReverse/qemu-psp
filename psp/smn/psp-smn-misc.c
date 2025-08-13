@@ -236,7 +236,7 @@ static void psp_smn_misc_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
-static Property psp_smn_misc_properties[] = {
+static const Property psp_smn_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_smn_misc_generation", PSPSmnMiscState, generation,
                        PSP_GENERATION_MAX),
 };

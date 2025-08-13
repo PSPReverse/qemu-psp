@@ -308,7 +308,7 @@ static void mapper_init(Object* obj)
                             TYPE_PSP_X86);
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MapperState, generation,
                        PSP_GENERATION_MAX),
     /* This only gets used when fuzzing with ASPFuzz, as it makes some of the
