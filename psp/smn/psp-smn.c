@@ -302,7 +302,7 @@ static void psp_smn_class_init(ObjectClass* oc, void* data)
     dc->realize = psp_smn_realize;
 }
 
-static Property psp_smn_properties[] = {
+static const Property psp_smn_properties[] = {
     DEFINE_PROP_UINT64("smn-container-base", PSPSmnState, psp_smn_base, 0),
 };
 

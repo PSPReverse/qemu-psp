@@ -69,7 +69,7 @@ static void psp_sts_init(Object* obj)
     sysbus_init_mmio(sbd, &s->iomem);
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_BOOL("in_x86_space", PSPStsState, in_x86_space, false),
 };
 

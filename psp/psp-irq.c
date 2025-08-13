@@ -166,7 +166,7 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_STRING("psp_irq_ident", PSPIrqState, ident),
     DEFINE_PROP_UINT32("psp_irq_generation", PSPIrqState, generation,
                        PSP_GENERATION_MAX),

@@ -130,7 +130,7 @@ static void instance_init(Object* obj)
     s->size = 0;
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_LINK("x86_memory", AccessObserverState, x86_memory,
                      TYPE_PSP_X86, PSPX86State*),
 };

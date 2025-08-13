@@ -226,7 +226,7 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
 }
 
 /* User-configurable options with "-global amd-psp.<property>=<value> */
-static Property amd_psp_properties[] = {
+static const Property amd_psp_properties[] = {
     DEFINE_PROP_BOOL("dbg_mode", AmdPspState, dbg_mode, false),
 };
 

@@ -140,7 +140,7 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     memory_region_add_subregion_overlap(&s->mr, 0x0, mr_x86_misc, -1000);
 }
 
-static Property properties[] = {
+static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86State, generation,
                        PSP_GENERATION_MAX),
 };

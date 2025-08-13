@@ -75,7 +75,7 @@ static void psp_smn_flash_realize(DeviceState* dev, Error** errp)
 }
 static void psp_smn_flash_unrealize(DeviceState* dev) { asp_smn_mr = NULL; }
 
-static Property psp_smn_flash_properties[] = {
+static const Property psp_smn_flash_properties[] = {
     DEFINE_PROP_STRING("flash_img", PSPSmnFlashState, flash_img),
 };
 
