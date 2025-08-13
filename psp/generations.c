@@ -26,7 +26,7 @@ PspGeneration PspNameToGen(const char* name)
 
 const char* PspGenToName(PspGeneration gen)
 {
-    if (gen >= 0 && gen < PSP_GENERATION_MAX) {
+    if (gen < PSP_GENERATION_MAX) {
         return amd_psp_gen_ident[gen];
     }
     qemu_log_mask(LOG_GUEST_ERROR, "Invalid PspGenToName\n");
