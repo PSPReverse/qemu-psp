@@ -66,11 +66,11 @@ class EnableDependentsBreakpoint(gdb.Breakpoint):
 #SecOS breakpoints
 dependent_bps.extend(
     [
-        LoggingBreakpoint(0x238, "SP", "Got SVC call (Current process pointer)"),
-        LoggingBreakpoint(0x270, "R0", "Got SVC call (SVC Number)"),
-        LoggingBreakpoint(0x270, "LR", "Got SVC call (Caller)"),
-        LoggingBreakpoint(0x298, "SP", "Returning from SVC call (New process pointer)"),
-        LoggingBreakpoint(0x298, "LR", "Returning from SVC call (Execution resumption)"),
+        # LoggingBreakpoint(0x238, "SP", "Got SVC call (Current process pointer)"),
+        # LoggingBreakpoint(0x270, "R0", "Got SVC call (SVC Number)"),
+        # LoggingBreakpoint(0x270, "LR", "Got SVC call (Caller)"),
+        # LoggingBreakpoint(0x298, "SP", "Returning from SVC call (New process pointer)"),
+        # LoggingBreakpoint(0x298, "LR", "Returning from SVC call (Execution resumption)"),
         LoggingBreakpoint(0x2C8, "R0", "Returning from UNDEF call"),
         LoggingBreakpoint(0x2C8, "LR", "Returning from UNDEF call"),
         LoggingBreakpoint(0x710, "R0", "Switch to Context"),
