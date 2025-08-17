@@ -91,7 +91,7 @@ class JumpTo(gdb.Command):
         overwrite_location = int(argv[0], 0)  # Parse hex string
         target = int(argv[1], 0)  # Parse hex string
         diff = target - overwrite_location
-        assert diff > 0
+        # assert diff > 0
         bp = gdb.Breakpoint(f"*{argv[0]}", temporary=temporary)
         bp.commands = f"jump *{argv[1]}\n end"  # Jump to target
 
