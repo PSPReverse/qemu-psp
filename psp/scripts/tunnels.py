@@ -260,29 +260,31 @@ def apply_config(config_path: Path) -> Setup:
                 f"set ${str(tunnel['target']).lower()}={tunnel['value']} \n continue \n end"
             )
             bp.silent = True
-        elif action == "SetMemoryByte":
-            # TODO: do not use this for fuzzing, this is not implemented in rust as of now
-            bp = gdb.Breakpoint(f"*{tunnel['addr']}")
-            if str(tunnel['target'])[0] == '*' and len(str(tunnel['target'])) == 3:
-                # assume dereferenced register
-                bp.commands = (
-                    f"set *${str(tunnel['target'])[1:].lower()}={tunnel['value']} \n continue \n end"
-                )
-            else:
-                bp.commands = (
-                    f"set {{unsigned int}}{str(tunnel['target']).lower()}={tunnel['value']} \n continue \n end"
-                )
-            bp.silent = True
-        elif action == "SetMemory":
+        elif action == "WriteMemory":
+
             bp = gdb.Breakpoint(f"*{tunnel['addr']}")
             base = str(tunnel['target']).lower()
             base = f"${base[1:]}" if str(tunnel['target'])[0] == '*' and len(str(tunnel['target'])) == 3 else base
 
             int_val = int(str(tunnel['value']),0)
-            byte_values = int_val.to_bytes(max((int_val.bit_length()+7)//8, 1), 'little')
+            if type(tunnel['value']) == str:
+                num_bytes = (len(tunnel['value'])-2)//2
+            else:
+                # assume no leading zeros, round up, then make divisible by 4
+                num_bytes = max(((int_val.bit_length() + 7) // 8 + 3) // 4 * 4, 4)
+
+            # TODO: done quiet uncleanly, so probably might break otherwise
+            assert num_bytes % 4 == 0
+
+            byte_values = int_val.to_bytes(num_bytes, 'big')
             cmds = []
-            for offset, byte in enumerate(byte_values):
-                cmds.append(f"set {{unsigned char}}({base}+{offset}) = {byte}\n")
+            print(int_val, byte_values, len(byte_values))
+            for i in range(0, len(byte_values), 4):
+                chunk = byte_values[i: i+4]
+                if len(chunk) < 4:
+                    chunk = chunk.ljust(4, b'\x00')
+                byte = int.from_bytes(chunk, byteorder='little')
+                cmds.append(f"set {{unsigned int}}({base}+{i}) = {byte}\n")
             cmds.append("continue \n end")
             bp.commands = "".join(cmds)
             print(f"Executing\n{cmds}")
