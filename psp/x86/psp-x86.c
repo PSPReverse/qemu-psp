@@ -29,6 +29,7 @@
 #include "qapi/error.h"
 #include "qemu/log.h"
 #include "system/system.h"
+#include "trace.h"
 
 #include "psp/x86/psp-x86-mapper.h"
 
@@ -38,11 +39,14 @@ static PSPX86State* global_x86_state = NULL;
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size);
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
 {
+	trace_psp_x86_misc_write(addr, 0, "test", 0);
     if (global_x86_state == NULL) {
         return -1;
     }
-    return address_space_write_rom(&(global_x86_state->as), addr,
+    int32_t rc = address_space_write_rom(&(global_x86_state->as), addr,
                                    MEMTXATTRS_UNSPECIFIED, buf, size);
+	trace_psp_x86_misc_write(addr, rc, "write result", 0);
+	return rc;
 }
 int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size);
 int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size)
