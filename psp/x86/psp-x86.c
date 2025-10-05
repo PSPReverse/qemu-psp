@@ -43,7 +43,7 @@ int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
     if (global_x86_state == NULL) {
         return -1;
     }
-    int32_t rc = address_space_write_rom(&(global_x86_state->as), addr,
+    int32_t rc = address_space_write(&(global_x86_state->as), addr,
                                    MEMTXATTRS_UNSPECIFIED, buf, size);
 	trace_psp_x86_misc_write(addr, rc, "write result", 0);
 	return rc;
@@ -68,7 +68,7 @@ static void psp_x86_init(Object* obj)
     object_initialize_child(obj, "psp-x86-sts", &s->sts, TYPE_PSP_STS);
 }
 /* 3.25GiB*/
-#define REGULAR_DRAM_SIZE (0xD0000000)
+#define REGULAR_DRAM_SIZE (0x40000000)
 #define REGULAR_DRAM_BASE 0x0
 
 #define PROTECTED_REGION_BASE 0xfffd00000000UL
