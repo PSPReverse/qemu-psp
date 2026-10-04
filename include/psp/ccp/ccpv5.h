@@ -18,7 +18,7 @@
  */
 #ifndef AMD_CCP_V5_H
 #define AMD_CCP_V5_H
-#include "exec/memory.h"
+#include "system/memory.h"
 #include "hw/sysbus.h"
 #include "qemu/timer.h"
 

@@ -8,7 +8,7 @@
 #ifndef PSP_FUSE_H
 #define PSP_FUSE_H
 
-#include "exec/memory.h"
+#include "system/memory.h"
 #include "hw/sysbus.h"
 
 #define TYPE_PSP_FUSE "amd_psp.fuse"

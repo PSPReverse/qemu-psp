@@ -88,7 +88,7 @@ static void realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(sbd, &s->iomem);
 }
 
-static void class_init(ObjectClass* oc, void* data)
+static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = realize;

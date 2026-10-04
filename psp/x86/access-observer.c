@@ -135,7 +135,7 @@ static const Property properties[] = {
                      TYPE_PSP_X86, PSPX86State*),
 };
 
-static void class_init(ObjectClass* oc, void* data)
+static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = realize;

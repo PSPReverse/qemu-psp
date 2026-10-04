@@ -144,7 +144,7 @@ static const Property properties[] = {
                        PSP_GENERATION_MAX),
 };
 
-static void class_init(ObjectClass* oc, void* data)
+static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = realize;

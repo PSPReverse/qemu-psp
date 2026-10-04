@@ -10,7 +10,7 @@
 
 #include "psp/x86/psp-x86-mapper.h"
 
-#include "exec/address-spaces.h"
+#include "system/address-spaces.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
@@ -317,7 +317,7 @@ static const Property properties[] = {
                      use_access_observer, false),
 };
 
-static void mapper_class_init(ObjectClass* oc, void* data)
+static void mapper_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = mapper_realize;

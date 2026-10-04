@@ -54,7 +54,7 @@ static const Property psp_fuse_properties[] = {
     DEFINE_PROP_BOOL("dbg_mode", PSPFuseState, dbg_mode, false),
 };
 
-static void psp_fuse_class_init(ObjectClass* klass, void* data)
+static void psp_fuse_class_init(ObjectClass* klass, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(klass);
     dc->realize = psp_fuse_realize;

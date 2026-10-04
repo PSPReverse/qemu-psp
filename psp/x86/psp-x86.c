@@ -21,7 +21,7 @@
 
 #include "psp/x86/psp-x86.h"
 
-#include "exec/address-spaces.h"
+#include "system/address-spaces.h"
 #include "hw/boards.h"
 #include "hw/char/serial-mm.h"
 #include "hw/loader.h"
@@ -149,7 +149,7 @@ static const Property properties[] = {
                        PSP_GENERATION_MAX),
 };
 
-static void psp_x86_class_init(ObjectClass* oc, void* data)
+static void psp_x86_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_x86_realize;
