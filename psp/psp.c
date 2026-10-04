@@ -20,7 +20,7 @@
 
 #include "psp/psp.h"
 
-#include "exec/address-spaces.h"
+#include "system/address-spaces.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
@@ -230,7 +230,7 @@ static const Property amd_psp_properties[] = {
     DEFINE_PROP_BOOL("dbg_mode", AmdPspState, dbg_mode, false),
 };
 
-static void amd_psp_class_init(ObjectClass* oc, void* data)
+static void amd_psp_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     device_class_set_props(dc, amd_psp_properties);
@@ -239,7 +239,7 @@ static void amd_psp_class_init(ObjectClass* oc, void* data)
     dc->user_creatable = false;
 }
 
-static void amd_psp_zen_class_init(ObjectClass* oc, void* data)
+static void amd_psp_zen_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     AmdPspClass* pspc = AMD_PSP_CLASS(oc);
@@ -259,7 +259,7 @@ static void amd_psp_zen_class_init(ObjectClass* oc, void* data)
     pspc->sts_base = 0x032000e8;
 }
 
-static void amd_psp_zen_plus_class_init(ObjectClass* oc, void* data)
+static void amd_psp_zen_plus_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     /* Zen Plus barely differs from orig Zen. Overwrite differences afterwards
@@ -268,7 +268,7 @@ static void amd_psp_zen_plus_class_init(ObjectClass* oc, void* data)
     dc->desc = PspGenToName(ZEN_PLUS);
 }
 
-static void amd_psp_zen_two_class_init(ObjectClass* oc, void* data)
+static void amd_psp_zen_two_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     AmdPspClass* pspc = AMD_PSP_CLASS(oc);
@@ -288,7 +288,7 @@ static void amd_psp_zen_two_class_init(ObjectClass* oc, void* data)
     pspc->sts_base = 0x032000d8;
 }
 
-static void amd_psp_zen_three_class_init(ObjectClass* oc, void* data)
+static void amd_psp_zen_three_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     AmdPspClass* pspc = AMD_PSP_CLASS(oc);
@@ -308,7 +308,7 @@ static void amd_psp_zen_three_class_init(ObjectClass* oc, void* data)
     pspc->sts_base = 0x032000d8;
 }
 
-static void amd_psp_zen_tesla_class_init(ObjectClass* oc, void* data)
+static void amd_psp_zen_tesla_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     AmdPspClass* pspc = AMD_PSP_CLASS(oc);

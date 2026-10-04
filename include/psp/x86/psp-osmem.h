@@ -20,7 +20,7 @@
 #ifndef AMD_PSP_OSMEM_H
 #define AMD_PSP_OSMEM_H
 
-#include "exec/memory.h"
+#include "system/memory.h"
 #include "hw/sysbus.h"
 
 #define TYPE_PSP_OSMEM "amd_psp.osmem"

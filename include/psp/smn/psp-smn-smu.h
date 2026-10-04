@@ -19,7 +19,7 @@
 #ifndef AMD_PSP_SMN_SMU_H
 #define AMD_PSP_SMN_SMU_H
 
-#include "exec/memory.h"
+#include "system/memory.h"
 #include "hw/sysbus.h"
 
 #define PSP_SMN_SMU_FW_SIZE 256 * 1024

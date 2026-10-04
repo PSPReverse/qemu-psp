@@ -73,7 +73,7 @@ static const Property properties[] = {
     DEFINE_PROP_BOOL("in_x86_space", PSPStsState, in_x86_space, false),
 };
 
-static void class_init(ObjectClass* oc, void* data)
+static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     device_class_set_props(dc, properties);

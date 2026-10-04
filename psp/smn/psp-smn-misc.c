@@ -241,7 +241,7 @@ static const Property psp_smn_misc_properties[] = {
                        PSP_GENERATION_MAX),
 };
 
-static void psp_smn_misc_class_init(ObjectClass* oc, void* data)
+static void psp_smn_misc_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_smn_misc_realize;

@@ -22,7 +22,7 @@
 
 #include "psp/psp-irq.h"
 
-#include "exec/address-spaces.h"
+#include "system/address-spaces.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
@@ -172,7 +172,7 @@ static const Property properties[] = {
                        PSP_GENERATION_MAX),
 };
 
-static void psp_irq_class_init(ObjectClass* oc, void* data)
+static void psp_irq_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_irq_realize;

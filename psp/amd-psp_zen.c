@@ -19,6 +19,7 @@
 #include "qemu/osdep.h"
 
 #include "hw/boards.h"
+#include "hw/arm/machines-qom.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
@@ -90,7 +91,7 @@ static void psp_zen_machine_common_init(MachineClass* mc)
     mc->default_ram_id = "psp-ram";
 }
 
-static void psp_zen_machine_init(ObjectClass* oc, void* data)
+static void psp_zen_machine_init(ObjectClass* oc, const void* data)
 {
     MachineClass* mc = MACHINE_CLASS(oc);
     AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
@@ -98,7 +99,7 @@ static void psp_zen_machine_init(ObjectClass* oc, void* data)
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_plus_machine_init(ObjectClass* oc, void* data)
+static void psp_zen_plus_machine_init(ObjectClass* oc, const void* data)
 {
     MachineClass* mc = MACHINE_CLASS(oc);
     AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
@@ -106,7 +107,7 @@ static void psp_zen_plus_machine_init(ObjectClass* oc, void* data)
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_two_machine_init(ObjectClass* oc, void* data)
+static void psp_zen_two_machine_init(ObjectClass* oc, const void* data)
 {
     MachineClass* mc = MACHINE_CLASS(oc);
     AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
@@ -114,7 +115,7 @@ static void psp_zen_two_machine_init(ObjectClass* oc, void* data)
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_three_machine_init(ObjectClass* oc, void* data)
+static void psp_zen_three_machine_init(ObjectClass* oc, const void* data)
 {
     MachineClass* mc = MACHINE_CLASS(oc);
     AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
@@ -122,7 +123,7 @@ static void psp_zen_three_machine_init(ObjectClass* oc, void* data)
     psp_zen_machine_common_init(mc);
 }
 
-static void psp_zen_tesla_machine_init(ObjectClass* oc, void* data)
+static void psp_zen_tesla_machine_init(ObjectClass* oc, const void* data)
 {
     MachineClass* mc = MACHINE_CLASS(oc);
     AmdPspMachineClass* apmc = AMD_PSP_MACHINE_CLASS(oc);
@@ -162,6 +163,7 @@ static const TypeInfo amd_psp_machine_types[] = {
         .instance_size = sizeof(AmdPspMachineState),
         .class_size = sizeof(AmdPspMachineClass),
         .abstract = true,
+        .interfaces = arm_machine_interfaces,
     }};
 
 DEFINE_TYPES(amd_psp_machine_types);

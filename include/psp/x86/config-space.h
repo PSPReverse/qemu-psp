@@ -6,7 +6,7 @@
 #ifndef PSP_X86_CONFIG_SPACE_H
 #define PSP_X86_CONFIG_SPACE_H
 
-#include "exec/memory.h"
+#include "system/memory.h"
 #include "hw/sysbus.h"
 
 #include "psp/generations.h"

@@ -152,7 +152,7 @@ static const Property properties[] = {
                        PSP_GENERATION_MAX),
 };
 
-static void psp_x86_misc_class_init(ObjectClass* oc, void* data)
+static void psp_x86_misc_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_x86_misc_realize;

@@ -7,7 +7,7 @@
 #ifndef X86_MISC_H
 #define X86_MISC_H
 
-#include "exec/memory.h"
+#include "system/memory.h"
 #include "hw/sysbus.h"
 
 #include "psp/generations.h"

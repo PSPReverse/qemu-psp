@@ -20,7 +20,7 @@
 
 #include "psp/smn/psp-smn.h"
 
-#include "exec/address-spaces.h"
+#include "system/address-spaces.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
@@ -296,7 +296,7 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
     psp_smn_realize_slots(s);
 }
 
-static void psp_smn_class_init(ObjectClass* oc, void* data)
+static void psp_smn_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_smn_realize;
@@ -318,27 +318,27 @@ static void psp_smn_common_class_init(ObjectClass* oc, enum PspGeneration gen)
     device_class_set_props(dc, psp_smn_properties);
 }
 
-static void psp_smn_zen_class_init(ObjectClass* oc, void* data)
+static void psp_smn_zen_class_init(ObjectClass* oc, const void* data)
 {
     psp_smn_common_class_init(oc, ZEN);
 }
 
-static void psp_smn_zenplus_class_init(ObjectClass* oc, void* data)
+static void psp_smn_zenplus_class_init(ObjectClass* oc, const void* data)
 {
     psp_smn_common_class_init(oc, ZEN_PLUS);
 }
 
-static void psp_smn_zentwo_class_init(ObjectClass* oc, void* data)
+static void psp_smn_zentwo_class_init(ObjectClass* oc, const void* data)
 {
     psp_smn_common_class_init(oc, ZEN2);
 }
 
-static void psp_smn_zenthree_class_init(ObjectClass* oc, void* data)
+static void psp_smn_zenthree_class_init(ObjectClass* oc, const void* data)
 {
     psp_smn_common_class_init(oc, ZEN3);
 }
 
-static void psp_smn_zentesla_class_init(ObjectClass* oc, void* data)
+static void psp_smn_zentesla_class_init(ObjectClass* oc, const void* data)
 {
     psp_smn_common_class_init(oc, ZENTESLA);
 }

@@ -79,7 +79,7 @@ static const Property psp_smn_flash_properties[] = {
     DEFINE_PROP_STRING("flash_img", PSPSmnFlashState, flash_img),
 };
 
-static void psp_smn_flash_class_init(ObjectClass* klass, void* data)
+static void psp_smn_flash_class_init(ObjectClass* klass, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(klass);
     dc->realize = psp_smn_flash_realize;
