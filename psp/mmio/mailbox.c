@@ -35,15 +35,19 @@ static const char* index_to_name(int index)
     case 2:
         return "ptr_high";
     default:
-        qemu_log_mask(LOG_GUEST_ERROR, "Invalid index_to_name\n");
-        exit(1);
+        return "invalid";
     }
 }
 static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
 {
     MailboxState* s = MAILBOX(opaque);
     hwaddr index = offset / 4;
-    assert(index < 3);
+    if (index >= 3) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "%s: out-of-range mailbox read @ offset 0x%" HWADDR_PRIx "\n",
+                      __func__, offset);
+        return 0;
+    }
     trace_psp_mailbox_read(index_to_name(index), s->values[index]);
     trace_psp_mailbox_read("blub", 5);
     return s->values[index];
@@ -55,7 +59,12 @@ static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
     MailboxState* s = MAILBOX(opaque);
 
     hwaddr index = offset / 4;
-    assert(index < 3);
+    if (index >= 3) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "%s: out-of-range mailbox write @ offset 0x%" HWADDR_PRIx "\n",
+                      __func__, offset);
+        return;
+    }
     s->values[index] = value;
     trace_psp_mailbox_write(index_to_name(index), s->values[index]);
 }
