@@ -27,6 +27,7 @@
 #include "hw/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
+#include "target/arm/cpu.h"
 
 /* TODO: use mmio_map_overlap with memory_regions_dispatch_rw to log access to
  * SPI flash */
@@ -139,7 +140,13 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->irq), errp)) {
         return;
     }
-    sysbus_mmio_map(SYS_BUS_DEVICE(&s->irq), 0, PSP_IRQ_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->irq), 0,
+                    PspNameToGen(DEVICE_GET_CLASS(dev)->desc) == ZEN ?
+                        PSP_IRQ_BASE_ZEN : PSP_IRQ_BASE);
+
+    /* Deliver PSP interrupts to the ARM core. */
+    sysbus_connect_irq(SYS_BUS_DEVICE(&s->irq), 0,
+                       qdev_get_gpio_in(DEVICE(&s->cpu), ARM_CPU_IRQ));
 
     /* Init SRAM */
     memory_region_init_ram(&s->sram, OBJECT(dev), "sram", c->sram_size,
