@@ -252,7 +252,10 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     sysbus_mmio_map_overlap(SYS_BUS_DEVICE(&s->unimp), 0, 0, -1000);
 }
 
-/* User-configurable options with "-global amd-psp.<property>=<value> */
+/*
+ * User-configurable options, e.g.
+ * -global driver=amd-psp,property=dbg_mode,value=on
+ */
 static const Property amd_psp_properties[] = {
     DEFINE_PROP_BOOL("dbg_mode", AmdPspState, dbg_mode, false),
 };

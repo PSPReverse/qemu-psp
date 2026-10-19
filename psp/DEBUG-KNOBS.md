@@ -22,8 +22,6 @@ also covers `amd-psp-zen*`.
 | `use_access_observer` | `amd_psp.x86.mapper` | false | Routes the x86 slot memory regions through the access observer instead of the x86 memory. Read at realize. | `-global driver=amd_psp.x86.mapper,property=use_access_observer,value=on` | `psp-x86-mapper.c:316-317`, `:235-236` |
 
 Notes:
-- `psp.c:256` comments the `dbg_mode` syntax as `-global amd-psp.<property>=<value>`. That is
-  not the QEMU syntax; use `driver=amd-psp,property=dbg_mode,value=...` as above. (read)
 - The `expiry_irq_id` value 0x60 is a guess taken from the code comments (`psp-irq.c:275`
   says "suspected tick"; `psp-timer.c` comment says "SecOS expects (guess)"). Unverified.
 
@@ -65,7 +63,7 @@ caller must hold the big QEMU lock (not checked for all of them).
 
 | Symbol | Signature | Location | Preconditions | Return |
 |---|---|---|---|---|
-| `aspfuzz_irq_inject` | `int32_t (uint32_t id)` | `psp-irq.c:207` | Takes BQL itself (`:209`). Global set at realize (`:266`), cleared at unrealize (`:228`). | `-1` if no IC realized or `id >= 128`; else `0`. |
+| `aspfuzz_irq_inject` | `int32_t (uint32_t id)` | `psp-irq.c:207` | Takes BQL only if the caller does not hold it (`bql_locked()`, `:211-213`). Global set at realize (`:266`), cleared at unrealize (`:228`). | `-1` if no IC realized or `id >= 128`; else `0`. |
 | `aspfuzz_smn_update_slot` | `void (uint32_t idx)` | `psp-smn.c:39` | Needs `aspfuzz_smn_state` set (`:132`, by a guest slot write). No bounds check on `idx` (array of 32, `:35`). Otherwise NULL dereference at `:42`. BQL: unverified. | none |
 | `aspfuzz_smn_write` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:49` | `global_smn_as` set at realize (`:273`), never cleared. Uses `address_space_write_rom`. BQL: unverified. | `-1` if unset; else the `address_space_write_rom` result (unverified convention). |
 | `aspfuzz_smn_read` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:58` | Same as above, `address_space_read`. | `-1` if unset; else the `address_space_read` result (unverified convention). |
@@ -100,12 +98,8 @@ the code (unverified whether the harness serialises them).
   this was not tested; decimal equivalents are used where it matters.
 - The `-global` examples assume the default machine path and driver names as listed. The
   live `/machine/soc/irq` path was not checked with `info qom-tree`.
-- `psp-irq.c:200-201` says the BQL is "taken if the caller does not hold it". The code
-  (`:209`, `BQL_LOCK_GUARD()`) takes it unconditionally (`include/qemu/main-loop.h:410`).
-  Calling `aspfuzz_irq_inject` while holding the BQL is therefore a deadlock or assertion
-  risk. Whether QEMU asserts or deadlocks was not verified.
-- `psp-irq.c:270-277` comment: "group3 bits 16..20 (ids 0x70..0x73)". Bits 16..20 of group 3
-  are ids 0x70..0x74, so the range in the comment is one short. Not changed here.
+- `aspfuzz_irq_inject` takes the BQL only when `bql_locked()` is false, so it is safe from
+  both a BQL-holding and a non-holding caller. It releases only the lock it took.
 - Timer tick id 0x60 (source 96) is a guess (see section 1).
 - The write-catcher device has no instantiation in this tree. Whether `-device
   amd_psp.x86.write_catcher` would realize cleanly was not tested.
