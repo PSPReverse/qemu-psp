@@ -23,6 +23,7 @@
 #include "hw/core/cpu.h"
 #include "hw/irq.h"
 #include "hw/qdev-properties.h"
+#include "migration/vmstate.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -147,6 +148,16 @@ static void realize(DeviceState* dev, Error** errp)
     sysbus_init_irq(sbd, &s->doorbell_irq);
 }
 
+static const VMStateDescription mailbox_vmstate = {
+    .name = TYPE_MAILBOX,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32(int_enable, MailboxState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const Property mailbox_properties[] = {
     DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, 0x3c),
 };
@@ -156,6 +167,7 @@ static void class_init(ObjectClass* oc, const void* data)
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = realize;
     device_class_set_props(dc, mailbox_properties);
+    dc->vmsd = &mailbox_vmstate;
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
