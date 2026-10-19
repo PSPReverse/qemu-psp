@@ -168,13 +168,16 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T23:34:53.513195023Z",
-      "updated_at": "2026-10-19T23:34:53.513195023Z"
+      "updated_at": "2026-10-19T23:34:58.961902546Z",
+      "labels": [
+        "kaizen"
+      ]
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:34:53.513195023Z",
+    "timestamp": "2026-10-19T23:34:58.961902546Z",
     "agent_id": "U0Ke",
-    "agent_seq": 16
+    "agent_seq": 17
   }
 }
