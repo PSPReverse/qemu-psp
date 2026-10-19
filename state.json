@@ -1,6 +1,6 @@
 {
   "next_display_id": 11,
-  "next_comment_id": 6,
+  "next_comment_id": 7,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -29,10 +29,21 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T23:35:04.575159257Z",
-      "updated_at": "2026-10-19T23:35:15.085655815Z",
+      "updated_at": "2026-10-19T23:40:01.904719226Z",
       "labels": [
         "kaizen"
-      ]
+      ],
+      "comments": {
+        "12b244e7-a4e5-4fcc-9f9a-9861facde09a": {
+          "display_id": 6,
+          "author": "U0Ke",
+          "content": "Add: aspfuzz_irq_inject uses BQL_LOCK_GUARD which asserts if caller already holds the BQL (system/cpus.c:577) while its comment says 'taken if not held' -> make it conditional (bql_locked()). Found by DEBUG-KNOBS doc (claude/psp-knobs-doc 548faa5d). Also comment fixes: psp.c:256 dbg_mode -global syntax, psp-irq.c group-3 bits 16..20 = ids 0x70..0x74 (5 ids).",
+          "created_at": "2026-10-19T23:40:01.897886474Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAO3S0iCVn70bJz1asQos9W6AFzr98CrWvXDJGx6LTYzQUsI0VJ2pWDoaocfccAMSD341hL7afJBsb+ObBd9t1Bg=="
+        }
+      }
     },
     "25e08e72-0466-4f5b-bd22-eac066255084": {
       "uuid": "25e08e72-0466-4f5b-bd22-eac066255084",
@@ -191,8 +202,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:35:15.085655815Z",
+    "timestamp": "2026-10-19T23:40:01.904719226Z",
     "agent_id": "U0Ke",
-    "agent_seq": 19
+    "agent_seq": 20
   }
 }
