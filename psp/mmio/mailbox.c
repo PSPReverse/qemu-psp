@@ -77,9 +77,11 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
      * harness injects word 0 from a host thread (no vCPU context); the
      * firmware's own response writes run inside the vCPU and must not
      * re-raise the source. Memory attrs cannot tell them apart (both look
-     * like secure CPU accesses), so use the execution context.
+     * like secure CPU accesses) and current_cpu is not reliable under the
+     * fuzzing bridge, so test whether the vCPU is inside guest execution.
      */
-    if (index == 0 && s->doorbell_irq_id >= 0 && current_cpu == NULL) {
+    if (index == 0 && s->doorbell_irq_id >= 0 &&
+        !(first_cpu && first_cpu->running)) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
     return MEMTX_OK;
