@@ -1,6 +1,6 @@
 {
   "next_display_id": 8,
-  "next_comment_id": 2,
+  "next_comment_id": 3,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
@@ -69,7 +69,18 @@
       "priority": "high",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:07:35.269767140Z",
-      "updated_at": "2026-10-19T18:07:35.269767140Z"
+      "updated_at": "2026-10-19T20:47:52.054548959Z",
+      "comments": {
+        "22f1b739-fa6e-4af0-802f-f57932889c3b": {
+          "display_id": 2,
+          "author": "U0Ke",
+          "content": "Trace-equivalence check (Zen3): flash16.bin = tail -c 16777216 of psp-etl :8830 /roms/814b2392...916f.rom; run qemu-system-arm -machine amd-psp-zen3 -nographic -display none -serial null -monitor none -device loader,file=scratch/fw/onchip.bin,addr=0xffff0000,force-raw=on -global driver=amd_psp.smnflash,property=flash_img,value=flash16.bin -bios flash16.bin -d trace:psp_* -D log (25 s); compare sed -E 's/0x[0-9a-f]+/N/g'|sort|uniq -c vs 6e3dfe27 baseline. 2026-10-19: 0a787d01 identical (5704 lines, ends sts 0x107). Open: round-2 review fixes (dup-key rejection, generator tests); scratch/HATER-regs.md has review.",
+          "created_at": "2026-10-19T20:47:52.036520280Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABADQTPPC+ZJKoIw1nD2bAkGOAi2YVCh14jxIHarXOoJJTm9O8fJR6dqApydBTNmtrAtJqFAsTd7DgRFxTQn8ITAg=="
+        }
+      }
     },
     "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": {
       "uuid": "bfaabe7d-0bf2-406c-ae44-1db47b835fcf",
@@ -106,8 +117,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T20:47:44.702223163Z",
+    "timestamp": "2026-10-19T20:47:52.054548959Z",
     "agent_id": "U0Ke",
-    "agent_seq": 9
+    "agent_seq": 10
   }
 }
