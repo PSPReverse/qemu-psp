@@ -59,7 +59,8 @@ static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
     hwaddr phys_base = s->psp_timer_iomem.addr;
 
 
-    if (size != sizeof(uint32_t)) {
+    if (size != sizeof(uint32_t) && size != sizeof(uint16_t) &&
+        size != sizeof(uint8_t)) {
         qemu_log_mask(
             LOG_UNIMP,
             "%s: Error. Unsupported read size at offset 0x%" HWADDR_PRIx "\n",
@@ -67,21 +68,38 @@ static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
         return 0;
     }
 
+    /* Sub-word reads return the byte lanes of the containing 32-bit register */
+    hwaddr reg = offset & ~3ULL;
+    unsigned lane = (offset & 3) * 8;
+
     // TODO do this properly instead of counting up
-    switch (offset) {
+    switch (reg) {
     case 0:
         val = s->psp_timer_control;
         trace_psp_timer_control_read(offset, val);
         break;
+    case 0x4:
+    case 0x8:
+    case 0xc:
+        val = s->psp_timer_misc[(reg - 4) >> 2];
+        break;
+    case 0x10:
+        val = s->psp_timer_period;
+        break;
     case 0x20:
         val = s->psp_timer_count;
         trace_psp_timer_counter_read(val);
-        if (s->psp_timer_control & 0x1)
+        if ((s->psp_timer_control & 0x1) && lane == 0) {
             s->psp_timer_count++;
+        }
         break;
     default:
         val = 0;
         break;
+    }
+    val >>= lane;
+    if (size < sizeof(uint32_t)) {
+        val &= (1ULL << (size * 8)) - 1;
     }
 
 
@@ -113,6 +131,7 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
     case 0x8:
     case 0xc:
         /* Written by the off-chip BL timer start; meaning not modelled */
+        s->psp_timer_misc[(offset - 4) >> 2] = val;
         break;
     case 0x10:
         s->psp_timer_period = val;

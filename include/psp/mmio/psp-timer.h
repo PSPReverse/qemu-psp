@@ -41,6 +41,9 @@ typedef struct PSPTimerState {
     /* Reload value written at +0x10 (100 MHz counts) */
     uint32_t psp_timer_period;
 
+    /* Read-back for the registers at +0x4/+0x8/+0xc (meaning not modelled) */
+    uint32_t psp_timer_misc[4];
+
     /*
      * Opt-in expiry interrupt: IC source raised every period while enabled.
      * -1 = off.
