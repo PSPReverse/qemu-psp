@@ -141,7 +141,7 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->irq), 0,
-                    PspNameToGen(DEVICE_GET_CLASS(dev)->desc) == ZEN ?
+                    PspNameToGen(DEVICE_GET_CLASS(dev)->desc) <= ZEN_PLUS ?
                         PSP_IRQ_BASE_ZEN : PSP_IRQ_BASE);
 
     /* Deliver PSP interrupts to the ARM core. */

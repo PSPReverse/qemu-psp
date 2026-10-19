@@ -54,7 +54,7 @@
 #define PSP_MMIO_NAME "PSP MMIO"
 
 #define PSP_IRQ_BASE 0x03010200
-/* Zen1 firmware (and PSPEmu) place the ACK/PEN/ID block at 0x030103b0 */
+/* Zen1/Zen+ firmware (and PSPEmu) place the ACK/PEN/ID block at 0x030103b0 */
 #define PSP_IRQ_BASE_ZEN 0x03010300
 #define PSP_IRQ_NAME "PSP IRQ"
 
