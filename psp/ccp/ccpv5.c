@@ -619,6 +619,12 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     src = CCP5_CMD_SRC_LO(desc) | ((hwaddr)(CCP5_CMD_SRC_HI(desc)) << 32);
     sha_len = CCP5_CMD_SHA_LO(desc) | ((uint64_t)(CCP5_CMD_SHA_HI(desc)) << 32);
     ctx_id = CCP5_CMD_LSB_ID(desc);
+    if (ctx_id >= CCP_LSB_COUNT) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "CCP Error SHA: LSB context id %u out of range\n",
+                      ctx_id);
+        return;
+    }
 
     ctx = s->lsb.u.slots[ctx_id].data;
 
@@ -629,6 +635,14 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
         break;
     case CCP_SHA_TYPE_384:
+        /* The 48-byte digest is written from the context slot onwards. */
+        if (ctx_id * CCP_LSB_SIZE + 48 > sizeof(s->lsb.u.lsb)) {
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error SHA384: LSB context id %u too close to "
+                          "the end of the LSB\n",
+                          ctx_id);
+            break;
+        }
         trace_ccp_sha(src, len, sha_len, init, eom, ctx_id);
         ccp_perform_sha_384(s, src, len, eom, init, ctx);
 
