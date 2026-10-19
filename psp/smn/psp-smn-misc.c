@@ -15,6 +15,15 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
 {
     PSPSmnMiscState* s = opaque;
     uint64_t val;
+
+    /* Placeholder, see psp_smn_misc_write(). Not measured. */
+    if ((offset & ~(hwaddr)3) == 0x2d01380) {
+        val = (s->placeholder_2d01380 >> ((offset & 3) * 8)) &
+              MAKE_64BIT_MASK(0, size * 8);
+        trace_psp_smn_misc_read(offset, val);
+        return val;
+    }
+
     switch (offset) {
     case 0x51050:
         val = 0xb1aab1aa;
@@ -217,11 +226,6 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
         val = 0x600;
         break;
 
-    case 0x2d01380:
-        /* Placeholder, see psp_smn_misc_write(). Not measured. */
-        val = s->placeholder_2d01380;
-        break;
-
     default:
         /* Zen3 off-chip BL reads this bank. Not modelled: placeholder 0. */
         if (s->generation == ZEN3 && offset >= 0x5d138 && offset <= 0x5d154) {
@@ -242,8 +246,12 @@ static void psp_smn_misc_write(void* opaque, hwaddr offset, uint64_t value,
     PSPSmnMiscState *s = opaque;
 
     /* Placeholder: the value is stored unmodelled and read back. */
-    if (offset == 0x2d01380) {
-        s->placeholder_2d01380 = value;
+    if ((offset & ~(hwaddr)3) == 0x2d01380) {
+        uint32_t shift = (offset & 3) * 8;
+        uint32_t mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
+
+        s->placeholder_2d01380 = (s->placeholder_2d01380 & ~mask) |
+                                 (((uint32_t)value << shift) & mask);
         trace_psp_smn_misc_write(offset, value);
         return;
     }

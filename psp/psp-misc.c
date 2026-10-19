@@ -288,7 +288,7 @@ _Static_assert(ARRAY_SIZE(psp_misc_placeholder_addr) ==
                    PSP_MISC_PLACEHOLDER_COUNT,
                "placeholder table and state size must match");
 
-/* @return storage for a placeholder register, or NULL if addr is not one */
+/* @return storage for the placeholder word at addr (4-byte aligned), or NULL */
 static uint32_t *psp_misc_placeholder_slot(PSPMiscState *misc, hwaddr addr)
 {
     if (misc->generation == ZEN3) {
@@ -312,12 +312,12 @@ static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
 {
     PSPMiscState* misc = PSP_MISC(opaque);
     hwaddr phys_abs = misc->iomem.addr + offset;
-    uint32_t *slot = psp_misc_placeholder_slot(misc, phys_abs);
-
-    /* TODO: Allow write to specific registers */
+    uint32_t *slot = psp_misc_placeholder_slot(misc, phys_abs & ~(hwaddr)3);
+    unsigned shift = (phys_abs & 3) * 8;
+    uint32_t mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
 
     if (slot) {
-        *slot = value;
+        *slot = (*slot & ~mask) | (((uint32_t)value << shift) & mask);
         trace_psp_misc_write(offset, value, size);
     } else {
         trace_psp_misc_write_unimplemented(offset, value, size);
@@ -336,11 +336,11 @@ static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
     phys_abs = phys_base + offset;
     value = 0;
 
-    slot = psp_misc_placeholder_slot(misc, phys_abs);
+    slot = psp_misc_placeholder_slot(misc, phys_abs & ~(hwaddr)3);
     if (!psp_misc_load_value(phys_abs, &value)) {
         trace_psp_misc_read(offset, value, size);
     } else if (slot) {
-        value = *slot;
+        value = (*slot >> ((phys_abs & 3) * 8)) & MAKE_64BIT_MASK(0, size * 8);
         trace_psp_misc_read(offset, value, size);
     } else {
         trace_psp_misc_read_unimplemented(offset, size);
