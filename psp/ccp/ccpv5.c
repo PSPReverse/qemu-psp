@@ -1029,12 +1029,36 @@ static void ccp_init(Object* obj)
     s->zlib_bytes_written = 0;
 }
 
+static const VMStateDescription ccp_q_vmstate = {
+    .name = "amd.ccpV5/q_state",
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32(ccp_q_control, CcpV5QState),
+        VMSTATE_UINT32(ccp_q_tail, CcpV5QState),
+        VMSTATE_UINT32(ccp_q_head, CcpV5QState),
+        VMSTATE_UINT32(ccp_q_status, CcpV5QState),
+        VMSTATE_UINT32(ccp_q_id, CcpV5QState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
+/*
+ * Not migrated: sha_ctx (raw pointer to a lazily allocated nettle context),
+ * zlib_state (z_stream with internal pointers) and dma_timer/dma_timer_qid
+ * (QEMUTimer, currently unused). They need custom save/load hooks.
+ */
 static const VMStateDescription ccp_vmstate = {
     .name = TYPE_CCP_V5,
     .version_id = 1,
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(int_status, CcpV5State),
+        VMSTATE_STRUCT_ARRAY(q_states, CcpV5State, CCP_Q_COUNT, 1,
+                             ccp_q_vmstate, CcpV5QState),
+        VMSTATE_UINT8_ARRAY(lsb.u.lsb, CcpV5State,
+                            CCP_LSB_SIZE * CCP_LSB_COUNT),
+        VMSTATE_UINT32(zlib_bytes_written, CcpV5State),
         VMSTATE_END_OF_LIST()
     }
 };
