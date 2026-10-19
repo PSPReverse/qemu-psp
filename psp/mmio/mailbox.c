@@ -92,6 +92,7 @@ static uint64_t mailbox_ctrl_read(void* opaque, hwaddr offset,
 {
     MailboxState* s = MAILBOX(opaque);
 
+    trace_psp_mailbox_ctrl_read(s->int_enable);
     return s->int_enable;
 }
 
@@ -100,6 +101,7 @@ static void mailbox_ctrl_write(void* opaque, hwaddr offset, uint64_t value,
 {
     MailboxState* s = MAILBOX(opaque);
 
+    trace_psp_mailbox_ctrl_write(value);
     s->int_enable = value;
 }
 
