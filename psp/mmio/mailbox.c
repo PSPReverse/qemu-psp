@@ -20,6 +20,7 @@
 
 #include "psp/mmio/mailbox.h"
 
+#include "hw/core/cpu.h"
 #include "hw/irq.h"
 #include "hw/qdev-properties.h"
 #include "qemu/log.h"
@@ -72,11 +73,13 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
     trace_psp_mailbox_write_attrs(index, value, attrs.unspecified, attrs.secure,
                                   attrs.requester_id);
     /*
-     * Debug doorbell: only for writes NOT issued by the PSP core (x86-side /
-     * harness injected accesses carry unspecified attrs); the firmware's own
-     * response writes come from the CPU and must not re-raise the source.
+     * Debug doorbell: only for writes NOT issued by the PSP core. The fuzz
+     * harness injects word 0 from a host thread (no vCPU context); the
+     * firmware's own response writes run inside the vCPU and must not
+     * re-raise the source. Memory attrs cannot tell them apart (both look
+     * like secure CPU accesses), so use the execution context.
      */
-    if (index == 0 && s->doorbell_irq_id >= 0 && attrs.unspecified) {
+    if (index == 0 && s->doorbell_irq_id >= 0 && current_cpu == NULL) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
     return MEMTX_OK;
