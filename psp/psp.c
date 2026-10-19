@@ -184,6 +184,12 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->timer1), 0, PSP_TIMER1_BASE);
+    /* Opt-in (-global driver=amd_psp.timer,property=expiry_irq_id,value=N) */
+    if (s->timer1.expiry_irq_id >= 0 && s->timer1.expiry_irq_id < 128) {
+        sysbus_connect_irq(SYS_BUS_DEVICE(&s->timer1), 0,
+                           qdev_get_gpio_in(DEVICE(&s->irq),
+                                            s->timer1.expiry_irq_id));
+    }
 
     /* Map timer 2 */
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->timer2), errp)) {

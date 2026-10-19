@@ -21,6 +21,7 @@
 
 #include "system/memory.h"
 #include "hw/sysbus.h"
+#include "qemu/timer.h"
 
 #define TYPE_PSP_TIMER "amd_psp.timer"
 #define PSP_TIMER(obj) OBJECT_CHECK(PSPTimerState, (obj), TYPE_PSP_TIMER)
@@ -36,6 +37,15 @@ typedef struct PSPTimerState {
 
     uint32_t psp_timer_control;
     uint32_t psp_timer_count;
+
+    /* Reload value written at +0x10 (100 MHz counts) */
+    uint32_t psp_timer_period;
+
+    /* Opt-in expiry interrupt: IC source raised every period while enabled;
+     * -1 = off (keeps snapshots free of host-clock timers). */
+    int32_t expiry_irq_id;
+    qemu_irq expiry_irq;
+    QEMUTimer expiry_timer;
 
 } PSPTimerState;
 #endif
