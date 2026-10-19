@@ -197,14 +197,17 @@ static void psp_irq_set_inject(Object *obj, Visitor *v, const char *name,
 
 /*
  * Fuzzer hook, same pattern as the aspfuzz_smn_* externs: raise source id
- * (group * 32 + bit) without a QOM lookup. Call it between runs, with the
- * vCPU stopped.
+ * (group * 32 + bit) without a QOM lookup. The BQL is taken if the caller does
+ * not hold it, because raising a line can reach cpu_interrupt(), which asserts
+ * it. Returns -1 if no IC device is realized or id is out of range.
  */
 static PSPIrqState* aspfuzz_irq_state;
 
 int32_t aspfuzz_irq_inject(uint32_t id);
 int32_t aspfuzz_irq_inject(uint32_t id)
 {
+    BQL_LOCK_GUARD();
+
     if (aspfuzz_irq_state == NULL || id >= 4 * 32) {
         return -1;
     }
@@ -220,12 +223,17 @@ static void psp_irq_init(Object* obj)
                         NULL, NULL);
 }
 
+static void psp_irq_unrealize(DeviceState *dev)
+{
+    if (aspfuzz_irq_state == PSP_IRQ(dev)) {
+        aspfuzz_irq_state = NULL;
+    }
+}
+
 static void psp_irq_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
     PSPIrqState* s = PSP_IRQ(dev);
-
-    aspfuzz_irq_state = s;
 
     // clear the bitfields
     memset(&s->ccp_queue_bitfield, 0, sizeof(s->ccp_queue_bitfield));
@@ -254,6 +262,8 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
     /* Off-chip BL services IRQ, SecOS services FIQ; each stage masks the
      * other, so both lines follow the same pending state. */
     sysbus_init_irq(SYS_BUS_DEVICE(s), &s->parent_fiq);
+
+    aspfuzz_irq_state = s;
 }
 
 /*
@@ -310,6 +320,7 @@ static void psp_irq_class_init(ObjectClass* oc, const void* data)
     DeviceClass* dc = DEVICE_CLASS(oc);
     ResettableClass* rc = RESETTABLE_CLASS(oc);
     dc->realize = psp_irq_realize;
+    dc->unrealize = psp_irq_unrealize;
     dc->vmsd = &psp_irq_vmstate;
     rc->phases.hold = psp_irq_reset_hold;
     device_class_set_props(dc, properties);
