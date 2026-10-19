@@ -706,7 +706,11 @@ static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     }
 }
 
-/* @return true if the request could not be executed */
+/*
+ * @return true if the request used an unimplemented engine (XTS-AES, DES3 or
+ * ECC) and was not executed. Unknown engines are logged and return false, so
+ * the queue reports them as successful.
+ */
 static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
 
