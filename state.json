@@ -1,6 +1,6 @@
 {
   "next_display_id": 8,
-  "next_comment_id": 3,
+  "next_comment_id": 4,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
@@ -112,13 +112,24 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:08:08.697638444Z",
-      "updated_at": "2026-10-19T18:08:08.697638444Z"
+      "updated_at": "2026-10-19T21:04:47.632906522Z",
+      "comments": {
+        "cb60a8c2-15e4-4021-baac-d3835dcfc4aa": {
+          "display_id": 3,
+          "author": "U0Ke",
+          "content": "2026-10-19 claude/psp-fidelity f9b561cf (local, on 6e3dfe27): CCP+mailbox vmstate for int_status/int_enable (f77815a2); Zen3 placeholder regs, unimpl lines 2656->2464, still ends sts 0x107 (ad1cdf0d); CCP XTS/DES3/ECC queues end with CCP_Q_STATUS_ERROR on all gens (f9b561cf, guest-visible, needs lockstep/Zen2 check). Timer IC 0x60 already wired via expiry_irq_id. Unverified: save/restore round trip, Zen2 boot identity.",
+          "created_at": "2026-10-19T21:04:47.545249993Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAgG74M/AW0X6LHLcc6u5U9cyt81zpkGKoUopGKozlpsbwBqxg8YASOncn17y6B13q/d+/eHlU2VWpqDWt/+fOAg=="
+        }
+      }
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T20:47:52.054548959Z",
+    "timestamp": "2026-10-19T21:04:47.632906522Z",
     "agent_id": "U0Ke",
-    "agent_seq": 10
+    "agent_seq": 11
   }
 }
