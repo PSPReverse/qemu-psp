@@ -270,11 +270,12 @@ _Static_assert(ARRAY_SIZE(psp_misc_zen3_placeholder_addr) ==
                "zen3 placeholder table and state size must match");
 
 /*
- * Placeholders on every generation. 0x3210044 bit (id - 0x70) is set by the
- * firmware's 0x70..0x73 interrupt handler; the bit meanings are not measured.
+ * Placeholders on every generation. 0x3210044 is not in this table: it holds
+ * a pointer, and the firmware's 0x70..0x73 interrupt handler stores
+ * 1 << (id - 0x70) at the address it points to. That target is not modelled.
  */
 static const hwaddr psp_misc_placeholder_addr[] = {
-    0x3200a00, 0x3200a04, 0x3200a08, 0x3210044,
+    0x3200a00, 0x3200a04, 0x3200a08,
     0x30109f0, 0x30109f4, 0x30109f8,
 };
 

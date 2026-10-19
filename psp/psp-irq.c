@@ -262,8 +262,9 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
  * Bit n of force_groupN is source N * 32 + n, e.g.:
  *   force_group0=0x20000000  raises id 0x1d (group0 bit 29)
  *   force_group1=0x04000000  raises id 0x3a (group1 bit 26)
- *   force_group3=0x00000001  raises id 0x60 (group3 bit 0, tick)
- *   force_group3=0x001f0000  raises ids 0x70..0x74 (group3 bits 16..20)
+ *   force_group3=0x00000001  raises id 0x60 (group3 bit 0, suspected tick)
+ * Do not use group3 bits 16..20 (ids 0x70..0x73): their firmware handler
+ * writes through the pointer at PSP 0x3210044, which is not modelled.
  */
 static void psp_irq_reset_hold(Object* obj, ResetType type)
 {
