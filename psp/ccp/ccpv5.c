@@ -470,6 +470,11 @@ static void ccp_copy_to_host(CcpV5State* s, void* hdst, hwaddr src,
         memcpy(hdst, hsrc, len);
         cpu_physical_memory_unmap(hsrc, len, false, plen);
     } else if (stype == CCP_MEMTYPE_SB) {
+        if (!ccp_lsb_range_ok(s, src, len)) {
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error: Access exceeds LSB size\n");
+            return;
+        }
         hsrc = s->lsb.u.lsb + src;
         memcpy(hdst, hsrc, len);
     }
@@ -488,6 +493,11 @@ static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
         memcpy(hdst, hsrc, plen);
         cpu_physical_memory_unmap(hdst, plen, true, plen);
     } else if (dtype == CCP_MEMTYPE_SB) {
+        if (!ccp_lsb_range_ok(s, dst, len)) {
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error: Access exceeds LSB size\n");
+            return;
+        }
         hdst = s->lsb.u.lsb + dst;
         memcpy(hdst, hsrc, len);
     }
