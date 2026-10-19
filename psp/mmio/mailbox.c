@@ -55,8 +55,8 @@ static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
     return s->values[index];
 }
 
-static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
-                          unsigned int size)
+static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
+                                 unsigned int size, MemTxAttrs attrs)
 {
     MailboxState* s = MAILBOX(opaque);
 
@@ -65,18 +65,26 @@ static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
         qemu_log_mask(LOG_GUEST_ERROR,
                       "%s: out-of-range mailbox write @ offset 0x%" HWADDR_PRIx "\n",
                       __func__, offset);
-        return;
+        return MEMTX_OK;
     }
     s->values[index] = value;
     trace_psp_mailbox_write(index_to_name(index), s->values[index]);
-    if (index == 0 && s->doorbell_irq_id >= 0) {
+    trace_psp_mailbox_write_attrs(index, value, attrs.unspecified, attrs.secure,
+                                  attrs.requester_id);
+    /*
+     * Debug doorbell: only for writes NOT issued by the PSP core (x86-side /
+     * harness injected accesses carry unspecified attrs); the firmware's own
+     * response writes come from the CPU and must not re-raise the source.
+     */
+    if (index == 0 && s->doorbell_irq_id >= 0 && attrs.unspecified) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
+    return MEMTX_OK;
 }
 
 static const MemoryRegionOps mailbox_mem_ops = {
     .read = mailbox_read,
-    .write = mailbox_write,
+    .write_with_attrs = mailbox_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
     .valid.min_access_size = 1,
     .valid.max_access_size = 4,

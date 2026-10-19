@@ -76,7 +76,11 @@ static void psp_irq_set_irq(void* opaque, int n, int level)
 static void psp_irq_write_enable(PSPIrqState* irq, hwaddr offset,
                                  uint64_t value)
 {
+    uint32_t old = irq->ccp_queue_bitfield[offset >> 2];
+
     trace_psp_irq_write_bitfield(offset, value, 4);
+    trace_psp_irq_enable_write(offset >> 2, old, value, value & ~old,
+                               old & ~value);
     irq->ccp_queue_bitfield[offset >> 2] = value;
     psp_irq_update(irq);
 }
