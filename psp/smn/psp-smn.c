@@ -48,7 +48,7 @@ AddressSpace* global_smn_as = NULL;
 int aspfuzz_smn_write(hwaddr addr, void* buf, int size);
 int aspfuzz_smn_write(hwaddr addr, void* buf, int size)
 {
-    if (global_smn_as == NULL) {
+    if (global_smn_as == NULL || buf == NULL || size <= 0) {
         return -1;
     }
     return address_space_write_rom(global_smn_as, addr, MEMTXATTRS_UNSPECIFIED,
@@ -57,7 +57,7 @@ int aspfuzz_smn_write(hwaddr addr, void* buf, int size)
 int aspfuzz_smn_read(hwaddr addr, void* buf, int size);
 int aspfuzz_smn_read(hwaddr addr, void* buf, int size)
 {
-    if (global_smn_as == NULL) {
+    if (global_smn_as == NULL || buf == NULL || size <= 0) {
         return -1;
     }
     return address_space_read(global_smn_as, addr, MEMTXATTRS_UNSPECIFIED, buf,

@@ -39,7 +39,8 @@ static PSPX86State* global_x86_state = NULL;
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size);
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
 {
-    if (global_x86_state == NULL) {
+    if (global_x86_state == NULL || buf == NULL || size == 0 ||
+        addr + size < addr) {
         return -1;
     }
     int32_t rc = address_space_write(&(global_x86_state->as), addr,
@@ -50,7 +51,8 @@ int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
 int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size);
 int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size)
 {
-    if (global_x86_state == NULL) {
+    if (global_x86_state == NULL || buf == NULL || size == 0 ||
+        addr + size < addr) {
         return -1;
     }
     return address_space_read(&(global_x86_state->as), addr,
