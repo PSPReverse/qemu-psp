@@ -1,9 +1,10 @@
 {
-  "next_display_id": 5,
+  "next_display_id": 6,
   "next_comment_id": 1,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
+    "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
     "bbea8178-d6fa-4271-80ec-68db95ee9157": 2,
     "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3
   },
@@ -35,6 +36,17 @@
       "created_at": "2026-10-19T18:07:55.239673150Z",
       "updated_at": "2026-10-19T18:07:55.239673150Z"
     },
+    "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": {
+      "uuid": "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0",
+      "display_id": 5,
+      "title": "Zen3 EPYC bring-up: PAUSED at off-chip BL status 0x107",
+      "description": "Stefan paused analysis of the 0x107 stop (#745). Do not work it. Plain emulator fidelity (register models, aliases, timers) stays open.",
+      "status": "open",
+      "priority": "low",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T18:08:02.959947684Z",
+      "updated_at": "2026-10-19T18:08:02.959947684Z"
+    },
     "bbea8178-d6fa-4271-80ec-68db95ee9157": {
       "uuid": "bbea8178-d6fa-4271-80ec-68db95ee9157",
       "display_id": 2,
@@ -60,8 +72,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T18:07:55.239673150Z",
+    "timestamp": "2026-10-19T18:08:02.959947684Z",
     "agent_id": "U0Ke",
-    "agent_seq": 5
+    "agent_seq": 6
   }
 }
