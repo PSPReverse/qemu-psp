@@ -41,8 +41,11 @@
  */
 static void psp_irq_update(PSPIrqState* irq)
 {
-    bool pending = irq->irq_buffer[0] | irq->irq_buffer[1] |
-                   irq->irq_buffer[2] | irq->irq_buffer[3];
+    /* ccp_queue_bitfield[] holds the per-group enable mask (+0x0..0xc). */
+    bool pending = false;
+    for (int i = 0; i < 4; i++) {
+        pending |= (irq->irq_buffer[i] & irq->ccp_queue_bitfield[i]) != 0;
+    }
     qemu_set_irq(irq->parent_irq, pending);
     qemu_set_irq(irq->parent_fiq, pending);
 }
@@ -87,7 +90,7 @@ static void psp_irq_write_ccp_queue(PSPIrqState* irq, hwaddr offset, uint64_t va
 
     // trace_psp_irq_write_bitfield(offset, value, size);
     irq->ccp_queue_bitfield[offset >> 2] = value;
-    return;
+    psp_irq_update(irq);
 }
 
 static void psp_irq_write_fiq(PSPIrqState* irq, hwaddr offset, uint64_t value, unsigned int size) {
