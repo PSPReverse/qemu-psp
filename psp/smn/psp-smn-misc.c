@@ -73,6 +73,13 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
         val = 0x100;
         break;
 
+    // Zen 3 off-chip BL fuse read (fn 0xc7c0 via 0xc5dc, bit offset 0x5100):
+    // words (1,0) select SoC class 2, which fn 0x134c8 needs (>=2) before it
+    // walks the FET. Value inferred from the code, not from hardware.
+    case 0x5da20:
+        val = 0x1;
+        break;
+
     // Zen Tesla
     case 0x5c310:
         val = 0xffffffff;
