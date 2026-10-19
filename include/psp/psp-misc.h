@@ -28,7 +28,7 @@
 
 /* Registers that are accessed but not modelled (psp-misc.c) */
 #define PSP_MISC_ZEN3_PLACEHOLDER_COUNT 10
-#define PSP_MISC_PLACEHOLDER_COUNT 7
+#define PSP_MISC_PLACEHOLDER_COUNT 6
 
 typedef struct PSPMiscReg {
     uint32_t addr;
