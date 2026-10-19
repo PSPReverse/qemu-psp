@@ -1,6 +1,6 @@
 {
   "next_display_id": 11,
-  "next_comment_id": 7,
+  "next_comment_id": 8,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -194,16 +194,27 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T23:34:53.513195023Z",
-      "updated_at": "2026-10-19T23:34:58.961902546Z",
+      "updated_at": "2026-10-19T23:40:39.354761742Z",
       "labels": [
         "kaizen"
-      ]
+      ],
+      "comments": {
+        "cd448f64-654b-4653-9ddc-a42c58cc1150": {
+          "display_id": 7,
+          "author": "U0Ke",
+          "content": "Static result (scratch/CCP-ENGINE-USE.md): inconclusive. No Zen2 image reachable (8840 down); Zen3 proxy BL has queue start 0x27e8 / wait 0x2c74 returning raw status, no engine-specific dword0 construction found; bl.bin cannot rule out engines 1/2/7. Cheaper dynamic route: run Zen2 boot + SecOS harness on e9d4673a with -d unimp and grep the XTS/DES3/ECC LOG_UNIMP lines.",
+          "created_at": "2026-10-19T23:40:39.350013815Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAYA53vlRH/z1xftmhJJ6VjUpFlv39W7qX3YQbFycFSFiJKpVw+T2mvdzb3mn8wDkH39kp9BVzFp4xqtmxGLNvCQ=="
+        }
+      }
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:40:01.904719226Z",
+    "timestamp": "2026-10-19T23:40:39.354761742Z",
     "agent_id": "U0Ke",
-    "agent_seq": 20
+    "agent_seq": 21
   }
 }
