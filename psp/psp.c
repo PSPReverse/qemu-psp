@@ -147,6 +147,8 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     /* Deliver PSP interrupts to the ARM core. */
     sysbus_connect_irq(SYS_BUS_DEVICE(&s->irq), 0,
                        qdev_get_gpio_in(DEVICE(&s->cpu), ARM_CPU_IRQ));
+    sysbus_connect_irq(SYS_BUS_DEVICE(&s->irq), 1,
+                       qdev_get_gpio_in(DEVICE(&s->cpu), ARM_CPU_FIQ));
 
     /* Init SRAM */
     memory_region_init_ram(&s->sram, OBJECT(dev), "sram", c->sram_size,
