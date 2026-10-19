@@ -1,7 +1,8 @@
 {
-  "next_display_id": 10,
+  "next_display_id": 11,
   "next_comment_id": 6,
   "display_id_map": {
+    "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
@@ -19,6 +20,17 @@
     }
   },
   "issues": {
+    "25996a88-7702-44e8-bef5-560dd4aa3872": {
+      "uuid": "25996a88-7702-44e8-bef5-560dd4aa3872",
+      "display_id": 10,
+      "title": "kaizen: fix hater findings 8-13 on psp-fidelity and run lockstep on later commits",
+      "description": "Evidence: #844 only covered first 3 commits. Change: small fixes, then ask qemu-tools for lockstep with a CCP start. Effort M, risk low.",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T23:35:04.575159257Z",
+      "updated_at": "2026-10-19T23:35:04.575159257Z"
+    },
     "25e08e72-0466-4f5b-bd22-eac066255084": {
       "uuid": "25e08e72-0466-4f5b-bd22-eac066255084",
       "display_id": 1,
@@ -176,8 +188,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:34:58.961902546Z",
+    "timestamp": "2026-10-19T23:35:04.575159257Z",
     "agent_id": "U0Ke",
-    "agent_seq": 17
+    "agent_seq": 18
   }
 }
