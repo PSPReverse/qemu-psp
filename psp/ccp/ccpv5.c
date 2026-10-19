@@ -779,6 +779,9 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
     qs->ccp_q_tail = qs->ccp_q_head;
     qs->ccp_q_status = CCP_Q_STATUS_SUCCESS;
     qs->ccp_q_control |= CCP_Q_CTRL_HALT;
+
+    s->int_status |= CCP_CFG_INT_STATUS_DONE;
+    qemu_set_irq(s->irq, 1);
 }
 
 static void ccp_queue_write(CcpV5State* s, hwaddr offset, uint32_t val,
@@ -873,6 +876,9 @@ static uint32_t ccp_config_read(CcpV5State* s, hwaddr offset)
         /* size of zlib decompressed data? */
         val = s->zlib_bytes_written;
         break;
+    case CCP_CFG_INT_STATUS_OFFSET:
+        val = s->int_status;
+        break;
     case 0x38:
         /* The on chip bootloader waits for bit 0 to go 1. */
         val = 1;
@@ -885,9 +891,10 @@ static uint32_t ccp_config_read(CcpV5State* s, hwaddr offset)
 
 static void ccp_config_write(CcpV5State* s, hwaddr offset, uint32_t value)
 {
-    (void)s;
     trace_ccp_config_write(offset, value);
-    return;
+    if (offset == CCP_CFG_INT_STATUS_OFFSET) {
+        s->int_status &= ~value;
+    }
 }
 
 static uint64_t ccp_read(void* opaque, hwaddr offset, unsigned int size)
@@ -987,6 +994,7 @@ static void ccp_init(Object* obj)
                           CCP_MMIO_SIZE);
 
     sysbus_init_mmio(sbd, &s->iomem);
+    sysbus_init_irq(sbd, &s->irq);
 
     ccp_init_q(s);
     s->sha_ctx.raw = NULL;

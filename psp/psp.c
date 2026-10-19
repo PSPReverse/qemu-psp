@@ -202,6 +202,9 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->ccp), 0, PSP_CCP_BASE);
+    /* CCP completion is interrupt-controller source id 0x15 (group 0, bit 21) */
+    sysbus_connect_irq(SYS_BUS_DEVICE(&s->ccp), 0,
+                       qdev_get_gpio_in(DEVICE(&s->irq), 0x15));
 
     /* Map Mailbox> */
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->mailbox), errp)) {
