@@ -136,6 +136,15 @@ static void ccp_memcpy(void* dst, void* src, size_t len, ccp_pt_bitwise bwise,
     }
 }
 
+/*
+ * True if [addr, addr + len) lies within the LSB. The guest controls both
+ * values, so the check is written to not wrap around for a large addr.
+ */
+static bool ccp_lsb_range_ok(CcpV5State *s, hwaddr addr, hwaddr len)
+{
+    return addr <= sizeof(s->lsb.u.lsb) && len <= sizeof(s->lsb.u.lsb) - addr;
+}
+
 static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
                          ccp_memtype src_type, bool write)
 {
@@ -150,7 +159,7 @@ static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
             return ptr;
         }
     } else if (src_type == CCP_MEMTYPE_SB) {
-        if ((addr + *len) > sizeof(s->lsb.u.lsb)) {
+        if (!ccp_lsb_range_ok(s, addr, *len)) {
             /* The access exceeds the LSB size: Cap the len at LSB max. TODO */
             qemu_log_mask(LOG_GUEST_ERROR,
                           "CCP Error: Access exceeds LSB size \n");
