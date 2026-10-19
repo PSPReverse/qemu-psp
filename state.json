@@ -1,11 +1,12 @@
 {
-  "next_display_id": 13,
+  "next_display_id": 14,
   "next_comment_id": 11,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "3e3c5291-aebb-4f75-a1ca-8c9b43e9f626": 11,
     "6966aa00-4422-424b-8a3b-883159ab4dc2": 12,
+    "6eec7cb1-0df7-4d1b-9c31-9a1a2509f5f0": 13,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
     "bb4047d3-70c1-40ba-9d34-6e7cd774d47f": 8,
@@ -111,6 +112,17 @@
       "labels": [
         "kaizen"
       ]
+    },
+    "6eec7cb1-0df7-4d1b-9c31-9a1a2509f5f0": {
+      "uuid": "6eec7cb1-0df7-4d1b-9c31-9a1a2509f5f0",
+      "display_id": 13,
+      "title": "Host-memory hazards in CCP and SMN/x86 externs (libafl review #928)",
+      "description": "Priority order: CCP lsb OOB (ccp_sha ctx_id unbounded; get_raw_ptr SB addr+len wrap; ccp_copy_to_host/guest SB memcpy unchecked; AES dst_addr uses DST_LO twice and dst memtype uses SRC_MEM); aspfuzz_write_smn_flash unbounded memcpy; aspfuzz_smn_read/write signed size, aspfuzz_x86_* no checks; dead aspfuzz_smn_slots/state/update_slot; then sha_ctx type confusion, NULL map hangs, uninit leaks, vmstate for SMN slots/x86 mapper, access-observer uninit value. MUST NOT touch guest-memory copy semantics of CCP passthrough (Zen1 bug). Base claude/psp-fidelity-4.",
+      "status": "open",
+      "priority": "high",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T23:53:57.172773263Z",
+      "updated_at": "2026-10-19T23:53:57.172773263Z"
     },
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": {
       "uuid": "b475fd5b-f80e-4399-b2e4-e2d1e4155495",
@@ -270,8 +282,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:53:08.039562128Z",
+    "timestamp": "2026-10-19T23:53:57.172773263Z",
     "agent_id": "U0Ke",
-    "agent_seq": 28
+    "agent_seq": 29
   }
 }
