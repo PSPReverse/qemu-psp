@@ -665,7 +665,7 @@ static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     rsa_mode = func.rsa.mode;
     rsa_key_mtype = CCP5_CMD_KEY_MEM(desc);
     rsa_src_mtype = CCP5_CMD_SRC_MEM(desc);
-    rsa_dst_mtype = CCP5_CMD_SRC_MEM(desc);
+    rsa_dst_mtype = CCP5_CMD_DST_MEM(desc);
 
     rsa_key_addr =
         CCP5_CMD_KEY_LO(desc) | ((hwaddr)(CCP5_CMD_KEY_HI(desc)) << 32);
@@ -914,13 +914,12 @@ static uint64_t ccp_read(void* opaque, hwaddr offset, unsigned int size)
         ret = ccp_ctrl_read(s, offset);
     } else if (offset < CCP_CONFIG_OFFSET) {
         /* CCP queue access */
-        if (id > CCP_Q_COUNT) {
-            /* This should never happen, but... */
+        id = (offset >> 12) - 1; // Make queue index start with 0
+        if (id >= CCP_Q_COUNT) {
             qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Invalid queue id 0x%d\n",
                           id);
             return ret;
         }
-        id = (offset >> 12) - 1; // Make queue index start with 0
         ret = ccp_queue_read(s, offset & 0xfff, id);
     } else {
         ret = ccp_config_read(s, offset & 0xfff);
@@ -948,13 +947,12 @@ static void ccp_write(void* opaque, hwaddr offset, uint64_t value,
         ccp_ctrl_write(s, offset, value);
     } else if (offset < CCP_CONFIG_OFFSET) {
         /* CCP queue access */
-        if (id > CCP_Q_COUNT) {
-            /* This should never happen, but... */
+        id = (offset >> 12) - 1; // Make queue index start with 0
+        if (id >= CCP_Q_COUNT) {
             qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: Invalid queue id 0x%d\n",
                           id);
             return;
         }
-        id = (offset >> 12) - 1; // Make queue index start with 0
         ccp_queue_write(s, offset & 0xfff, value, id);
     } else {
         ccp_config_write(s, offset & 0xfff, value);
