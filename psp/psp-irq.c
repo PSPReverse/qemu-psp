@@ -188,7 +188,7 @@ static void psp_irq_set_inject(Object *obj, Visitor *v, const char *name,
         error_setg(errp, "device must be realized to inject an interrupt");
         return;
     }
-    if (id >= 4 * 32) {
+    if (id >= PSP_IRQ_NUM_SOURCES) {
         error_setg(errp, "interrupt source %u out of range", id);
         return;
     }
@@ -208,7 +208,7 @@ int32_t aspfuzz_irq_inject(uint32_t id)
 {
     BQL_LOCK_GUARD();
 
-    if (aspfuzz_irq_state == NULL || id >= 4 * 32) {
+    if (aspfuzz_irq_state == NULL || id >= PSP_IRQ_NUM_SOURCES) {
         return -1;
     }
     qemu_set_irq(qdev_get_gpio_in(DEVICE(aspfuzz_irq_state), id), 1);
@@ -255,7 +255,7 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
 
     /* One GPIO input per interrupt source (4 groups x 32); devices connect
      * their output line to the matching source index. */
-    qdev_init_gpio_in(dev, psp_irq_set_irq, 4 * 32);
+    qdev_init_gpio_in(dev, psp_irq_set_irq, PSP_IRQ_NUM_SOURCES);
 
     /* Output line to the PSP core. */
     sysbus_init_irq(SYS_BUS_DEVICE(s), &s->parent_irq);
@@ -282,15 +282,11 @@ static void psp_irq_reset_hold(Object* obj, ResetType type)
 
     s->irq_buffer[0] = s->force_group0;
     s->irq_buffer[1] = s->force_group1;
+    s->irq_buffer[2] = 0;
     s->irq_buffer[3] = s->force_group3;
     psp_irq_update(s);
 }
 
-/*
- * Runtime hook (qom-set only, device must be realized): raise source id
- * (group * 32 + bit) through the same GPIO input the devices use. Pending
- * state is cleared by the firmware's ACK write, as for device interrupts.
- */
 static const Property properties[] = {
     DEFINE_PROP_STRING("psp_irq_ident", PSPIrqState, ident),
     DEFINE_PROP_UINT32("psp_irq_generation", PSPIrqState, generation,
