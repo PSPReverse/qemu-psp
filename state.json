@@ -1,8 +1,9 @@
 {
-  "next_display_id": 2,
+  "next_display_id": 3,
   "next_comment_id": 1,
   "display_id_map": {
-    "25e08e72-0466-4f5b-bd22-eac066255084": 1
+    "25e08e72-0466-4f5b-bd22-eac066255084": 1,
+    "bbea8178-d6fa-4271-80ec-68db95ee9157": 2
   },
   "locks": {
     "1": {
@@ -20,12 +21,23 @@
       "created_by": "U0Ke",
       "created_at": "2026-10-18T23:49:02.140508795Z",
       "updated_at": "2026-10-18T23:49:02.140508795Z"
+    },
+    "bbea8178-d6fa-4271-80ec-68db95ee9157": {
+      "uuid": "bbea8178-d6fa-4271-80ec-68db95ee9157",
+      "display_id": 2,
+      "title": "PR 6 (stack tip): JSON register tables — finish round-2 review fixes, verify, split into 2 commits",
+      "description": "Local bookmark claude/psp-regs-wip (unreviewed WIP). Round-2 fixes requested from the Haiku subagent: dup-key rejection, normalised+sorted JSON enforced, psp-regs.c.inc static include, validations, dead-code removal, generator unit tests. NEXT: check working copy state, rebuild (cd build-nix && ninja qemu-system-arm), rerun Zen3 trace-equivalence vs 6e3dfe27 (see scratch/HANDOFF-qemu-psp.md), run test_gen_regs.py, re-run the-hater then the-verifier, then split: commit A pure conversion (the 4 Zen3 entries still in generic.json), commit B move them to zen3.json with a message stating other generations now read 0 there. Findings in scratch/HATER-regs.md.",
+      "status": "open",
+      "priority": "high",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T18:07:35.269767140Z",
+      "updated_at": "2026-10-19T18:07:35.269767140Z"
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-18T23:49:05.906261883Z",
+    "timestamp": "2026-10-19T18:07:35.269767140Z",
     "agent_id": "U0Ke",
-    "agent_seq": 2
+    "agent_seq": 3
   }
 }
