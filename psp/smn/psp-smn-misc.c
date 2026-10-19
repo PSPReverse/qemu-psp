@@ -3,6 +3,8 @@
 #include "psp/smn/psp-smn-misc.h"
 
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "trace.h"
 
@@ -269,6 +271,23 @@ static void psp_smn_misc_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
+static void psp_smn_misc_reset_hold(Object *obj, ResetType type)
+{
+    PSPSmnMiscState *s = PSP_SMN_MISC(obj);
+
+    s->placeholder_2d01380 = 0;
+}
+
+static const VMStateDescription psp_smn_misc_vmstate = {
+    .name = "psp-smn-misc",
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32(placeholder_2d01380, PSPSmnMiscState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const Property psp_smn_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_smn_misc_generation", PSPSmnMiscState, generation,
                        PSP_GENERATION_MAX),
@@ -277,7 +296,10 @@ static const Property psp_smn_misc_properties[] = {
 static void psp_smn_misc_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
     dc->realize = psp_smn_misc_realize;
+    dc->vmsd = &psp_smn_misc_vmstate;
+    rc->phases.hold = psp_smn_misc_reset_hold;
     device_class_set_props(dc, psp_smn_misc_properties);
 }
 
