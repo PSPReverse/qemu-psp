@@ -1,10 +1,11 @@
 {
-  "next_display_id": 12,
+  "next_display_id": 13,
   "next_comment_id": 11,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "3e3c5291-aebb-4f75-a1ca-8c9b43e9f626": 11,
+    "6966aa00-4422-424b-8a3b-883159ab4dc2": 12,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
     "bb4047d3-70c1-40ba-9d34-6e7cd774d47f": 8,
@@ -96,6 +97,17 @@
       "labels": [
         "kaizen"
       ]
+    },
+    "6966aa00-4422-424b-8a3b-883159ab4dc2": {
+      "uuid": "6966aa00-4422-424b-8a3b-883159ab4dc2",
+      "display_id": 12,
+      "title": "Device state for snapshot determinism: timer, sts, irq, mailbox reset (libafl review #924)",
+      "description": "1 timer vmsd+reset_hold (control,count,period,misc[4], timer_del expiry). 2 delete aspfuzz_timer_* globals+blocks in psp-timer.c (check aspfuzz no longer imports them, f98c70ca). 3 write path phys==0x3010400 bug (moot after 2). 4 psp-sts vmsd+reset. 5 irq reset_hold also zero ccp_queue_bitfield. 6 mailbox reset_hold clear int_enable+values. 7 timer period guard (1 -> 10ns storm), re-arm after restore. 8 irq post_load psp_irq_update. 9 leftover trace_psp_mailbox_read(blub,5), ctz(0) in trace. Base claude/psp-fidelity-4.",
+      "status": "open",
+      "priority": "high",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T23:53:00.819975185Z",
+      "updated_at": "2026-10-19T23:53:00.819975185Z"
     },
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": {
       "uuid": "b475fd5b-f80e-4399-b2e4-e2d1e4155495",
@@ -255,8 +267,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:48:24.274725805Z",
+    "timestamp": "2026-10-19T23:53:00.819975185Z",
     "agent_id": "U0Ke",
-    "agent_seq": 26
+    "agent_seq": 27
   }
 }
