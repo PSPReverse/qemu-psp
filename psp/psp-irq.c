@@ -44,6 +44,7 @@ static void psp_irq_update(PSPIrqState* irq)
     bool pending = irq->irq_buffer[0] | irq->irq_buffer[1] |
                    irq->irq_buffer[2] | irq->irq_buffer[3];
     qemu_set_irq(irq->parent_irq, pending);
+    qemu_set_irq(irq->parent_fiq, pending);
 }
 
 /*
@@ -208,6 +209,9 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
 
     /* Output line to the PSP core. */
     sysbus_init_irq(SYS_BUS_DEVICE(s), &s->parent_irq);
+    /* Off-chip BL services IRQ, SecOS services FIQ; each stage masks the
+     * other, so both lines follow the same pending state. */
+    sysbus_init_irq(SYS_BUS_DEVICE(s), &s->parent_fiq);
 }
 
 /*

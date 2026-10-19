@@ -49,6 +49,7 @@ typedef struct PSPIrqState {
 
     /* Output line to the PSP core, asserted while any irq_buffer bit is set. */
     qemu_irq parent_irq;
+    qemu_irq parent_fiq;
 
     /* Debug: group-0 sources forced pending at reset */
     uint32_t force_group0;
