@@ -288,6 +288,16 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
     memory_region_add_subregion_overlap(&s->psp_smn_space, c->flash,
                                         &flash->psp_smn_flash, 0);
 
+    /* The Zen3 off-chip BL reads the flash through SMN 0x47000000, the on-chip
+     * BL through 0x44000000: expose the same image at both. */
+    if (c->gen == ZEN3) {
+        memory_region_init_alias(&s->psp_smn_flash_alias, OBJECT(dev),
+                                 "smn-flash-alias", &flash->psp_smn_flash, 0,
+                                 PSP_SMN_FLASH_SIZE_16);
+        memory_region_add_subregion_overlap(&s->psp_smn_space, 0x47000000,
+                                            &s->psp_smn_flash_alias, 0);
+    }
+
     PSPSmnSmuState* smu = &s->psp_smn_smu;
     memory_region_add_subregion_overlap(&s->psp_smn_space, c->smu,
                                         &smu->psp_smn_smu, 0);
