@@ -154,6 +154,7 @@ static const VMStateDescription mailbox_vmstate = {
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(int_enable, MailboxState),
+        VMSTATE_UINT32_ARRAY(values, MailboxState, 3),
         VMSTATE_END_OF_LIST()
     }
 };
