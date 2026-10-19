@@ -30,7 +30,9 @@ typedef struct PSPSmnMiscState {
     /* <public> */
     MemoryRegion iomem;
     PspGeneration generation;
-    /* Placeholder read/write-back register at SMN 0x02d01380 (bit 0 write) */
+    /*
+     * Placeholder read/write-back register at SMN 0x02d01380, all generations
+     */
     uint32_t placeholder_2d01380;
 } PSPSmnMiscState;
 
