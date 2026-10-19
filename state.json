@@ -1,9 +1,10 @@
 {
-  "next_display_id": 3,
+  "next_display_id": 4,
   "next_comment_id": 1,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
-    "bbea8178-d6fa-4271-80ec-68db95ee9157": 2
+    "bbea8178-d6fa-4271-80ec-68db95ee9157": 2,
+    "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3
   },
   "locks": {
     "1": {
@@ -32,12 +33,23 @@
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:07:35.269767140Z",
       "updated_at": "2026-10-19T18:07:35.269767140Z"
+    },
+    "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": {
+      "uuid": "bfaabe7d-0bf2-406c-ae44-1db47b835fcf",
+      "display_id": 3,
+      "title": "Restructure claude/psp-ccp-fixes into ~5 stacked PRs for Stefan's review",
+      "description": "20 iterative commits -> IC, CCP, timer, mailbox doorbell (final design only), Zen3 bring-up. Each stage must build and give a before/after boot trace on Zen2/Zen3 (only Zen3 firmware is available locally). No pushes to main; claude/* branches only. Files mixed across topics: psp/psp.c, psp/trace-events, include/psp/psp.h need hunk-level splitting. Use the-hater + the-verifier per PR.",
+      "status": "open",
+      "priority": "high",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T18:07:42.911552387Z",
+      "updated_at": "2026-10-19T18:07:42.911552387Z"
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T18:07:35.269767140Z",
+    "timestamp": "2026-10-19T18:07:42.911552387Z",
     "agent_id": "U0Ke",
-    "agent_seq": 3
+    "agent_seq": 4
   }
 }
