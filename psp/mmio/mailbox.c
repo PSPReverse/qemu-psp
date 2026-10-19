@@ -80,12 +80,36 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
      * like secure CPU accesses) and current_cpu is not reliable under the
      * fuzzing bridge, so test whether the vCPU is inside guest execution.
      */
-    if (index == 0 && s->doorbell_irq_id >= 0 &&
+    if (index == 0 && s->doorbell_irq_id >= 0 && s->int_enable &&
         !(first_cpu && first_cpu->running)) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
     return MEMTX_OK;
 }
+
+static uint64_t mailbox_ctrl_read(void* opaque, hwaddr offset,
+                                  unsigned int size)
+{
+    MailboxState* s = MAILBOX(opaque);
+
+    return s->int_enable;
+}
+
+static void mailbox_ctrl_write(void* opaque, hwaddr offset, uint64_t value,
+                               unsigned int size)
+{
+    MailboxState* s = MAILBOX(opaque);
+
+    s->int_enable = value;
+}
+
+static const MemoryRegionOps mailbox_ctrl_ops = {
+    .read = mailbox_ctrl_read,
+    .write = mailbox_ctrl_write,
+    .endianness = DEVICE_LITTLE_ENDIAN,
+    .impl.min_access_size = 4,
+    .impl.max_access_size = 4,
+};
 
 static const MemoryRegionOps mailbox_mem_ops = {
     .read = mailbox_read,
@@ -113,11 +137,16 @@ static void realize(DeviceState* dev, Error** errp)
                           TYPE_MAILBOX, 4 * 3);
 
     sysbus_init_mmio(sbd, &s->iomem);
+
+    memory_region_init_io(&s->ctrl_iomem, OBJECT(dev), &mailbox_ctrl_ops, s,
+                          TYPE_MAILBOX "-ctrl", 4);
+    sysbus_init_mmio(sbd, &s->ctrl_iomem);
+
     sysbus_init_irq(sbd, &s->doorbell_irq);
 }
 
 static const Property mailbox_properties[] = {
-    DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, -1),
+    DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, 0x3c),
 };
 
 static void class_init(ObjectClass* oc, const void* data)
