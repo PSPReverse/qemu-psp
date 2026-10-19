@@ -24,6 +24,7 @@
 
 #include "psp/ccp/ccpv5.h"
 
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
 #include "trace.h"
@@ -999,9 +1000,26 @@ static void ccp_init(Object* obj)
     s->zlib_bytes_written = 0;
 }
 
+static const VMStateDescription ccp_vmstate = {
+    .name = TYPE_CCP_V5,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32(int_status, CcpV5State),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
+static void ccp_class_init(ObjectClass* oc, const void* data)
+{
+    DeviceClass* dc = DEVICE_CLASS(oc);
+    dc->vmsd = &ccp_vmstate;
+}
+
 static const TypeInfo ccp_info = {
     .name = TYPE_CCP_V5,
     .parent = TYPE_SYS_BUS_DEVICE,
+    .class_init = ccp_class_init,
     .instance_init = ccp_init,
     .instance_size = sizeof(CcpV5State),
 
