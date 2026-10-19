@@ -20,6 +20,8 @@
 
 #include "psp/mmio/psp-timer.h"
 
+#include "hw/irq.h"
+#include "hw/qdev-properties.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -27,12 +29,28 @@
 
 static char ident[] = "PSP Timer";
 
-//// +++ Begin ASPFuzz code +++
-uint64_t aspfuzz_timer_count_0 = 0;
-uint64_t aspfuzz_timer_control_0 = 0;
-uint64_t aspfuzz_timer_count_1 = 0;
-uint64_t aspfuzz_timer_control_1 = 0;
-//// +++ End ASPFuzz code +++
+/* Assumed 100 MHz counter (10 ns per count); the period is clamped to 1 us */
+static void psp_timer_arm(PSPTimerState* s)
+{
+    int64_t period_ns;
+
+    if (s->expiry_irq_id < 0 || !(s->psp_timer_control & 1) ||
+        s->psp_timer_period == 0) {
+        timer_del(&s->expiry_timer);
+        return;
+    }
+    period_ns = MAX((int64_t)s->psp_timer_period * 10, 1000);
+    timer_mod(&s->expiry_timer,
+              qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + period_ns);
+}
+
+static void psp_timer_expire(void* opaque)
+{
+    PSPTimerState* s = PSP_TIMER(opaque);
+
+    qemu_set_irq(s->expiry_irq, 1);
+    psp_timer_arm(s);
+}
 
 static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
 {
@@ -40,23 +58,6 @@ static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
     uint64_t val;
     hwaddr phys_base = s->psp_timer_iomem.addr;
 
-    //// +++ Begin ASPFuzz code +++
-    if (phys_base == 0x3010400) {
-        if (aspfuzz_timer_count_0 != s->psp_timer_count) {
-            s->psp_timer_count = aspfuzz_timer_count_0;
-        }
-        if (aspfuzz_timer_control_0 != s->psp_timer_control) {
-            s->psp_timer_control = aspfuzz_timer_control_0;
-        }
-    } else {
-        if (aspfuzz_timer_count_1 != s->psp_timer_count) {
-            s->psp_timer_count = aspfuzz_timer_count_1;
-        }
-        if (aspfuzz_timer_control_1 != s->psp_timer_control) {
-            s->psp_timer_control = aspfuzz_timer_control_1;
-        }
-    }
-    //// +++ End ASPFuzz code +++
 
     if (size != sizeof(uint32_t)) {
         qemu_log_mask(
@@ -83,15 +84,6 @@ static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
         break;
     }
 
-    //// +++ Begin ASPFuzz code +++
-    if (phys_base == 0x3010400) {
-        aspfuzz_timer_count_0 = s->psp_timer_count;
-        aspfuzz_timer_control_0 = s->psp_timer_control;
-    } else {
-        aspfuzz_timer_count_1 = s->psp_timer_count;
-        aspfuzz_timer_control_1 = s->psp_timer_control;
-    }
-    //// +++ End ASPFuzz code +++
 
     return val;
 }
@@ -103,23 +95,6 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
     hwaddr phys = s->psp_timer_iomem.addr;
     phys += offset;
 
-    //// +++ Begin ASPFuzz code +++
-    if (phys == 0x3010400) {
-        if (aspfuzz_timer_count_0 != s->psp_timer_count) {
-            s->psp_timer_count = aspfuzz_timer_count_0;
-        }
-        if (aspfuzz_timer_control_0 != s->psp_timer_control) {
-            s->psp_timer_control = aspfuzz_timer_control_0;
-        }
-    } else {
-        if (aspfuzz_timer_count_1 != s->psp_timer_count) {
-            s->psp_timer_count = aspfuzz_timer_count_1;
-        }
-        if (aspfuzz_timer_control_1 != s->psp_timer_control) {
-            s->psp_timer_control = aspfuzz_timer_control_1;
-        }
-    }
-    //// +++ End ASPFuzz code +++
 
     if (size != sizeof(uint32_t) && size != sizeof(uint8_t)) {
         qemu_log_mask(LOG_UNIMP,
@@ -132,6 +107,16 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
     case 0x0:
         s->psp_timer_control = val;
         trace_psp_timer_control_write(offset, val);
+        psp_timer_arm(s);
+        break;
+    case 0x4:
+    case 0x8:
+    case 0xc:
+        /* Written by the off-chip BL timer start; meaning not modelled */
+        break;
+    case 0x10:
+        s->psp_timer_period = val;
+        psp_timer_arm(s);
         break;
     case 0x1:
         /* XXX For single byte access by the on chip bl... */
@@ -150,15 +135,6 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
         break;
     }
 
-    //// +++ Begin ASPFuzz code +++
-    if (phys == 0x3010400) {
-        aspfuzz_timer_count_0 = s->psp_timer_count;
-        aspfuzz_timer_control_0 = s->psp_timer_control;
-    } else {
-        aspfuzz_timer_count_1 = s->psp_timer_count;
-        aspfuzz_timer_control_1 = s->psp_timer_control;
-    }
-    //// +++ End ASPFuzz code +++
 }
 
 static const MemoryRegionOps timer_mem_ops = {
@@ -179,12 +155,24 @@ static void psp_timer_init(Object* obj)
     memory_region_init_io(&s->psp_timer_iomem, obj, &timer_mem_ops, s,
                           TYPE_PSP_TIMER, PSP_TIMER_SIZE);
     sysbus_init_mmio(sbd, &s->psp_timer_iomem);
+    sysbus_init_irq(sbd, &s->expiry_irq);
+    timer_init_ns(&s->expiry_timer, QEMU_CLOCK_VIRTUAL, psp_timer_expire, s);
+}
+
+static const Property psp_timer_properties[] = {
+    DEFINE_PROP_INT32("expiry_irq_id", PSPTimerState, expiry_irq_id, -1),
+};
+
+static void psp_timer_class_init(ObjectClass* oc, const void* data)
+{
+    device_class_set_props(DEVICE_CLASS(oc), psp_timer_properties);
 }
 
 static const TypeInfo psp_timer_info = {
     .name = TYPE_PSP_TIMER,
     .parent = TYPE_SYS_BUS_DEVICE,
     .instance_init = psp_timer_init,
+    .class_init = psp_timer_class_init,
     .instance_size = sizeof(PSPTimerState),
 };
 
