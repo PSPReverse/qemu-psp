@@ -51,8 +51,10 @@ typedef struct PSPIrqState {
     qemu_irq parent_irq;
     qemu_irq parent_fiq;
 
-    /* Debug: group-0 sources forced pending at reset */
+    /* Debug: group-0/1/3 sources forced pending at reset */
     uint32_t force_group0;
+    uint32_t force_group1;
+    uint32_t force_group3;
 
     /* Identifier of this instance */
     char* ident;

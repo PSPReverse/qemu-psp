@@ -23,6 +23,7 @@
 #include "psp/psp-irq.h"
 
 #include "system/address-spaces.h"
+#include "qapi/visitor.h"
 #include "hw/boards.h"
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
@@ -169,10 +170,37 @@ static const MemoryRegionOps irq_mem_ops = {
     .impl.max_access_size = 4,
 };
 
+/*
+ * Runtime hook (qom-set only, device must be realized): raise source id
+ * (group * 32 + bit) through the same GPIO input the devices use. Pending
+ * state is cleared by the firmware's ACK write, as for device interrupts.
+ */
+static void psp_irq_set_inject(Object *obj, Visitor *v, const char *name,
+                               void *opaque, Error **errp)
+{
+    PSPIrqState *s = PSP_IRQ(obj);
+    uint32_t id;
+
+    if (!visit_type_uint32(v, name, &id, errp)) {
+        return;
+    }
+    if (!qdev_is_realized(DEVICE(s))) {
+        error_setg(errp, "device must be realized to inject an interrupt");
+        return;
+    }
+    if (id >= 4 * 32) {
+        error_setg(errp, "interrupt source %u out of range", id);
+        return;
+    }
+    qemu_set_irq(qdev_get_gpio_in(DEVICE(s), id), 1);
+}
+
 static void psp_irq_init(Object* obj)
 {
     PSPIrqState* s = PSP_IRQ(obj);
     s->ident = NULL;
+    object_property_add(obj, "inject", "uint32", NULL, psp_irq_set_inject,
+                        NULL, NULL);
 }
 
 static void psp_irq_realize(DeviceState* dev, Error** errp)
@@ -211,22 +239,35 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
 
 /*
  * Debug hook for source-assert experiments: mark the given group-N sources
- * pending at reset (e.g. force_group0=0x20000000 raises id 0x1d). The firmware
- * clears them with the normal ACK write.
+ * pending at reset. The firmware clears them with the normal ACK write.
+ * Bit n of force_groupN is source N * 32 + n, e.g.:
+ *   force_group0=0x20000000  raises id 0x1d (group0 bit 29)
+ *   force_group1=0x04000000  raises id 0x3a (group1 bit 26)
+ *   force_group3=0x00000001  raises id 0x60 (group3 bit 0, tick)
+ *   force_group3=0x001f0000  raises ids 0x70..0x74 (group3 bits 16..20)
  */
 static void psp_irq_reset_hold(Object* obj, ResetType type)
 {
     PSPIrqState* s = PSP_IRQ(obj);
 
     s->irq_buffer[0] = s->force_group0;
+    s->irq_buffer[1] = s->force_group1;
+    s->irq_buffer[3] = s->force_group3;
     psp_irq_update(s);
 }
 
+/*
+ * Runtime hook (qom-set only, device must be realized): raise source id
+ * (group * 32 + bit) through the same GPIO input the devices use. Pending
+ * state is cleared by the firmware's ACK write, as for device interrupts.
+ */
 static const Property properties[] = {
     DEFINE_PROP_STRING("psp_irq_ident", PSPIrqState, ident),
     DEFINE_PROP_UINT32("psp_irq_generation", PSPIrqState, generation,
                        PSP_GENERATION_MAX),
     DEFINE_PROP_UINT32("force_group0", PSPIrqState, force_group0, 0),
+    DEFINE_PROP_UINT32("force_group1", PSPIrqState, force_group1, 0),
+    DEFINE_PROP_UINT32("force_group3", PSPIrqState, force_group3, 0),
 };
 
 /*
