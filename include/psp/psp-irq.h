@@ -24,6 +24,9 @@
 
 #include "psp/generations.h"
 
+/* Interrupt sources: 4 groups of 32 */
+#define PSP_IRQ_NUM_SOURCES (4 * 32)
+
 #define FIQ_HANDLED_BITFIELD_OFFSET 0xb0
 #define FIQ_ALL_PROCESSED_OFFSET 0xc0
 #define FIQ_NEXT_OFFSET 0xc4
