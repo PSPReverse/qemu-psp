@@ -72,23 +72,11 @@ static void psp_irq_set_irq(void* opaque, int n, int level)
 }
 
 
-static void psp_irq_write_ccp_queue(PSPIrqState* irq, hwaddr offset, uint64_t value) {
-    unsigned int old_val = irq->ccp_queue_bitfield[offset >> 2];
-    if (old_val == value)
-        return;
-
-    // we are inside the interrupt_bitfield
-    unsigned int diff = old_val ^ value;
-    unsigned int idx = __builtin_ctz(diff);
-    if ((old_val & diff) != 0) {
-        // bit was cleared
-        trace_psp_irq_clear_bit(offset * 8 + idx);
-    } else {
-        // bit was set
-        trace_psp_irq_set_bit(offset * 8 + idx);
-    }
-
-    // trace_psp_irq_write_bitfield(offset, value, size);
+/* +0x0..0xc: per-group enable mask, one word per group of 32 sources. */
+static void psp_irq_write_enable(PSPIrqState* irq, hwaddr offset,
+                                 uint64_t value)
+{
+    trace_psp_irq_write_bitfield(offset, value, 4);
     irq->ccp_queue_bitfield[offset >> 2] = value;
     psp_irq_update(irq);
 }
@@ -126,7 +114,7 @@ static void psp_irq_write(void* opaque, hwaddr offset, uint64_t value,
     PSPIrqState* irq = PSP_IRQ(opaque);
 
     if (offset < 0x10) {
-        psp_irq_write_ccp_queue(irq, offset, value);
+        psp_irq_write_enable(irq, offset, value);
     } else if (offset >= 0xb0 && offset < 0xc8) {
         psp_irq_write_fiq(irq, offset, value, size);
     } else {
