@@ -1,12 +1,13 @@
 {
-  "next_display_id": 6,
+  "next_display_id": 7,
   "next_comment_id": 1,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
     "bbea8178-d6fa-4271-80ec-68db95ee9157": 2,
-    "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3
+    "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3,
+    "cd28a6a9-00da-4edc-a291-faed68aacece": 6
   },
   "locks": {
     "1": {
@@ -68,12 +69,23 @@
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:07:42.911552387Z",
       "updated_at": "2026-10-19T18:07:42.911552387Z"
+    },
+    "cd28a6a9-00da-4edc-a291-faed68aacece": {
+      "uuid": "cd28a6a9-00da-4edc-a291-faed68aacece",
+      "display_id": 6,
+      "title": "Open fidelity gaps: CCP int_status not in vmstate, Zen+ IC window unverified, timer 0x0301070c/0x03010a44 unmodelled",
+      "description": "CCP int_status and mailbox int_enable are not in snapshot state; Zen+ shares the Zen1 window by inference only (psp-etl #544); SecOS idle writes 0x0301070c and tick block 0x03010a44 are unmodelled; XTS-AES/DES3/ECC engines and queue error status are no-ops.",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T18:08:08.697638444Z",
+      "updated_at": "2026-10-19T18:08:08.697638444Z"
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T18:08:02.959947684Z",
+    "timestamp": "2026-10-19T18:08:08.697638444Z",
     "agent_id": "U0Ke",
-    "agent_seq": 6
+    "agent_seq": 7
   }
 }
