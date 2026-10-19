@@ -66,6 +66,13 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
         val = 0x100;
         break;
 
+    // Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)
+    case 0x6c14c:
+    case 0x6c94c:
+    case 0x6d14c:
+        val = 0x100;
+        break;
+
     // Zen Tesla
     case 0x5c310:
         val = 0xffffffff;
