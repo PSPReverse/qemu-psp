@@ -55,6 +55,8 @@ typedef struct PSPSmnState {
     MemoryRegion psp_smn_space;
     /* Full 32bit SMN address space */
     AddressSpace psp_smn_space_as;
+    /* Second window onto the flash image (Zen3 off-chip BL reads 0x47000000) */
+    MemoryRegion psp_smn_flash_alias;
 
     /* PSP Misc device that covers the whole SMN address space */
     // PSPMiscState psp_smn_misc;
