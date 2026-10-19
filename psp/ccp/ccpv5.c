@@ -706,7 +706,8 @@ static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     }
 }
 
-static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+/* @return true if the request could not be executed */
+static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
 
     ccp_engine engine = CCP5_CMD_ENGINE(desc);
@@ -718,10 +719,10 @@ static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     case CCP_ENGINE_XTS_AES_128:
         qemu_log_mask(LOG_UNIMP,
                       "CCP Error: Unimplemented engine (AES-XTS-128)\n");
-        break;
+        return true;
     case CCP_ENGINE_DES3:
         qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (DES3)\n");
-        break;
+        return true;
     case CCP_ENGINE_SHA:
         ccp_sha(s, id, desc);
         break;
@@ -736,12 +737,13 @@ static void ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         break;
     case CCP_ENGINE_ECC:
         qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (ECC)\n");
-        break;
+        return true;
     default:
         qemu_log_mask(LOG_UNIMP, "CCP Error: Unknown engine! val 0x%x\n",
                       CCP5_CMD_ENGINE(desc));
         break;
     }
+    return false;
 }
 
 static void ccp_process_q(CcpV5State* s, uint32_t id)
@@ -752,6 +754,7 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
     hwaddr req_len;
     uint32_t tail;
     uint32_t head;
+    bool failed = false;
     /* TODO: This operation needs to be delayed! */
 
     qs = &s->q_states[id];
@@ -770,7 +773,7 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
 
     while (tail < head) {
         desc = cpu_physical_memory_map(tail, &req_len, false);
-        ccp_execute(s, id, desc);
+        failed |= ccp_execute(s, id, desc);
         /* TODO: What is "access_len" ? */
         cpu_physical_memory_unmap(desc, req_len, false, sizeof(ccp5_desc));
         tail += sizeof(ccp5_desc);
@@ -778,7 +781,7 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
 
     /* TODO: Return proper CCP error codes */
     qs->ccp_q_tail = qs->ccp_q_head;
-    qs->ccp_q_status = CCP_Q_STATUS_SUCCESS;
+    qs->ccp_q_status = failed ? CCP_Q_STATUS_ERROR : CCP_Q_STATUS_SUCCESS;
     qs->ccp_q_control |= CCP_Q_CTRL_HALT;
 
     s->int_status |= CCP_CFG_INT_STATUS_DONE;
