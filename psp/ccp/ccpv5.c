@@ -24,6 +24,7 @@
 
 #include "psp/ccp/ccpv5.h"
 
+#include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
@@ -1044,14 +1045,37 @@ static const VMStateDescription ccp_q_vmstate = {
 };
 
 /*
+ * Drop any in-flight hash or inflate stream. Neither is migrated, so the
+ * stream state is only meaningful within the instance that started it.
+ */
+static void ccp_drop_stream_state(CcpV5State *s)
+{
+    ccp_clear_sha_ctx(&s->sha_ctx);
+    /* Ends the inflate state if one is live; a no-op on a zeroed stream. */
+    ccp_zlib_end(&s->zlib_state);
+    memset(&s->zlib_state, 0, sizeof(s->zlib_state));
+}
+
+static int ccp_post_load(void *opaque, int version_id)
+{
+    /*
+     * Snapshots taken mid-hash or mid-stream are not supported: the restored
+     * device starts with no in-flight SHA or zlib context.
+     */
+    ccp_drop_stream_state(opaque);
+    return 0;
+}
+
+/*
  * Not migrated: sha_ctx (raw pointer to a lazily allocated nettle context),
  * zlib_state (z_stream with internal pointers) and dma_timer/dma_timer_qid
- * (QEMUTimer, currently unused). They need custom save/load hooks.
+ * (QEMUTimer, currently unused). They are dropped in ccp_post_load instead.
  */
 static const VMStateDescription ccp_vmstate = {
     .name = TYPE_CCP_V5,
     .version_id = 1,
     .minimum_version_id = 1,
+    .post_load = ccp_post_load,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(int_status, CcpV5State),
         VMSTATE_STRUCT_ARRAY(q_states, CcpV5State, CCP_Q_COUNT, 1,
@@ -1063,10 +1087,21 @@ static const VMStateDescription ccp_vmstate = {
     }
 };
 
+static void ccp_reset_hold(Object *obj, ResetType type)
+{
+    CcpV5State *s = CCP_V5(obj);
+
+    ccp_drop_stream_state(s);
+    s->zlib_bytes_written = 0;
+}
+
 static void ccp_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
+
     dc->vmsd = &ccp_vmstate;
+    rc->phases.hold = ccp_reset_hold;
 }
 
 static const TypeInfo ccp_info = {
