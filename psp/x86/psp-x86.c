@@ -39,7 +39,6 @@ static PSPX86State* global_x86_state = NULL;
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size);
 int32_t aspfuzz_x86_write(hwaddr addr, void* buf, hwaddr size)
 {
-	trace_psp_x86_misc_write(addr, 0, "test", 0);
     if (global_x86_state == NULL) {
         return -1;
     }
