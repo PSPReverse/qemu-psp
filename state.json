@@ -122,7 +122,10 @@
       "priority": "high",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T23:53:57.172773263Z",
-      "updated_at": "2026-10-19T23:53:57.172773263Z"
+      "updated_at": "2026-10-19T23:54:05.399594523Z",
+      "labels": [
+        "kaizen"
+      ]
     },
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": {
       "uuid": "b475fd5b-f80e-4399-b2e4-e2d1e4155495",
@@ -282,8 +285,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:53:57.172773263Z",
+    "timestamp": "2026-10-19T23:54:05.399594523Z",
     "agent_id": "U0Ke",
-    "agent_seq": 29
+    "agent_seq": 30
   }
 }
