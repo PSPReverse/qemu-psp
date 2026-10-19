@@ -206,13 +206,20 @@ static PSPIrqState* aspfuzz_irq_state;
 int32_t aspfuzz_irq_inject(uint32_t id);
 int32_t aspfuzz_irq_inject(uint32_t id)
 {
-    BQL_LOCK_GUARD();
+    bool took_bql = !bql_locked();
+    int32_t rc = -1;
 
-    if (aspfuzz_irq_state == NULL || id >= PSP_IRQ_NUM_SOURCES) {
-        return -1;
+    if (took_bql) {
+        bql_lock();
     }
-    qemu_set_irq(qdev_get_gpio_in(DEVICE(aspfuzz_irq_state), id), 1);
-    return 0;
+    if (aspfuzz_irq_state != NULL && id < PSP_IRQ_NUM_SOURCES) {
+        qemu_set_irq(qdev_get_gpio_in(DEVICE(aspfuzz_irq_state), id), 1);
+        rc = 0;
+    }
+    if (took_bql) {
+        bql_unlock();
+    }
+    return rc;
 }
 
 static void psp_irq_init(Object* obj)
