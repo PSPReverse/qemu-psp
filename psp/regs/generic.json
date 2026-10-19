@@ -1,0 +1,418 @@
+{
+  "spaces": {
+    "smn_misc": [
+      {
+        "offset": "0x51050",
+        "value": "0xb1aab1aa"
+      },
+      {
+        "offset": "0x5a078",
+        "value": "0x10"
+      },
+      {
+        "offset": "0x5a088",
+        "value": "0x1"
+      },
+      {
+        "offset": "0x5a08c",
+        "value": "0x8",
+        "note": "Zen2 ABL0"
+      },
+      {
+        "offset": "0x5a098",
+        "value": "0x1",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x5a304",
+        "value": "0x1"
+      },
+      {
+        "offset": "0x5a870",
+        "value": "0x1"
+      },
+      {
+        "offset": "0x5b304",
+        "value": "0xffffffff"
+      },
+      {
+        "offset": "0x5b310",
+        "value": "0xffffffff",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x5bb04",
+        "value": "0xffffffff"
+      },
+      {
+        "offset": "0x5bb10",
+        "value": "0xffffffff",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x5c14c",
+        "value": "0x100",
+        "note": "Zen 2"
+      },
+      {
+        "offset": "0x5c310",
+        "value": "0xffffffff",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x5c94c",
+        "value": "0x100",
+        "note": "Zen 2"
+      },
+      {
+        "offset": "0x5d0cc",
+        "value": "0x20"
+      },
+      {
+        "offset": "0x5e000",
+        "value": "0x1"
+      },
+      {
+        "offset": "0x5fb10",
+        "value": "0x1e113",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x1002034",
+        "value": "0x1e113",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x1003034",
+        "value": "0x1e112"
+      },
+      {
+        "offset": "0x1004034",
+        "value": "0x1e112"
+      },
+      {
+        "offset": "0x1010034",
+        "value": "0x1e112",
+        "note": "Zen Tesla"
+      },
+      {
+        "offset": "0x1018034",
+        "value": "0x1e113"
+      },
+      {
+        "offset": "0x1025034",
+        "value": "0x1e113"
+      },
+      {
+        "offset": "0x102e034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x1030034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x1046034",
+        "value": "0x1e103"
+      },
+      {
+        "offset": "0x1047034",
+        "value": "0x1e103"
+      },
+      {
+        "offset": "0x106c034",
+        "value": "0x1e113"
+      },
+      {
+        "offset": "0x106d034",
+        "value": "0x1e113"
+      },
+      {
+        "offset": "0x106e034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x1080034",
+        "value": "0x1e113"
+      },
+      {
+        "offset": "0x1081034",
+        "value": "0x1e113"
+      },
+      {
+        "offset": "0x1096034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x1097034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x10a8034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x10d8034",
+        "value": "0x1e312"
+      },
+      {
+        "offset": "0x3b10024",
+        "value": "0x1",
+        "note": "polled by Zen2 off-chip @af2a"
+      },
+      {
+        "offset": "0x3b10034",
+        "value": "0x1",
+        "note": "polled by Zen off-chip @ae22"
+      },
+      {
+        "offset": "0x3b10704",
+        "value": "0x1",
+        "note": "polled by Zen off-chip @827a"
+      },
+      {
+        "offset": "0x9025034",
+        "value": "0x1e113",
+        "note": "Zen 2"
+      },
+      {
+        "offset": "0x18080064",
+        "value": "0x600"
+      },
+      {
+        "offset": "0x18480064",
+        "value": "0x600"
+      }
+    ],
+    "psp_misc": [
+      {
+        "offset": "0x100ac",
+        "value": "0x1",
+        "note": "Checked in zen 2 off-chip bl at 00002abc"
+      },
+      {
+        "offset": "0x4fd53",
+        "value": "0x2",
+        "note": "Zen2 ABL0: needs to be at least two"
+      },
+      {
+        "offset": "0x51808",
+        "value": "0x15",
+        "note": "added by me"
+      },
+      {
+        "offset": "0x51d00",
+        "value": "0xd474ca10"
+      },
+      {
+        "offset": "0x51d04",
+        "value": "0x9d274bf4"
+      },
+      {
+        "offset": "0x51d08",
+        "value": "0xdbfeff86"
+      },
+      {
+        "offset": "0x51d0c",
+        "value": "0xbd111061"
+      },
+      {
+        "offset": "0x51ef0",
+        "value": "0xb5"
+      },
+      {
+        "offset": "0x5a078",
+        "value": "0x10"
+      },
+      {
+        "offset": "0x5a088",
+        "value": "0x1",
+        "note": "The on chip bootloader waits for bit 0 to go 1."
+      },
+      {
+        "offset": "0x5a870",
+        "value": "0x1"
+      },
+      {
+        "offset": "0x5b304",
+        "value": "0xffffffff",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x5bb04",
+        "value": "0xffffffff",
+        "note": "Read by the on chip bootloader and acted upon. TODO verify"
+      },
+      {
+        "offset": "0x5d0cc",
+        "value": "0x20",
+        "note": "The off chip bootloader wants bit 5 to be one, otherwise it returns an error dubbed PSPSTATUS_CCX_SEC_BISI_EN_NOT_SET_IN_FUSE_RAM."
+      },
+      {
+        "offset": "0x5e000",
+        "value": "0x1",
+        "note": "The on chip bootloader waits for bit 0 to go 1"
+      },
+      {
+        "offset": "0x1003034",
+        "value": "0x1e112",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1004034",
+        "value": "0x1e112",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1018034",
+        "value": "0x1e113",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1025034",
+        "value": "0x1e113",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x102e034",
+        "value": "0x1e312",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1030034",
+        "value": "0x1e312",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1046034",
+        "value": "0x1e103",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1047034",
+        "value": "0x1e103",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x106c034",
+        "value": "0x1e113",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x106d034",
+        "value": "0x1e113",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x106e034",
+        "value": "0x1e312",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1080034",
+        "value": "0x1e113",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1081034",
+        "value": "0x1e113",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1096034",
+        "value": "0x1e313",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x1097034",
+        "value": "0x1e313",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x10a8034",
+        "value": "0x1e313",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x10d8034",
+        "value": "0x1e313",
+        "note": "Read by the on chip bootloader and acted upon."
+      },
+      {
+        "offset": "0x30101c0",
+        "value": "0x80102",
+        "note": "TODO this should depend on dbg flag: https://github.com/PSPReverse/PSPEmu/blob/78e4be24e882ae67867063c894fbfb2ecbe50f3f/psp-dev-mmio-unknown.c#L67"
+      },
+      {
+        "offset": "0x3200048",
+        "value": "0xbc0b0552",
+        "note": "Zen2"
+      },
+      {
+        "offset": "0x320004c",
+        "value": "0xbc090071",
+        "note": "Zen and Zen+"
+      },
+      {
+        "offset": "0x3200050",
+        "value": "0x300",
+        "note": "Zen2"
+      },
+      {
+        "offset": "0x3b10034",
+        "value": "0x1",
+        "note": "Some SMU ready/online bit the off chip bootloader waits for after the firmware was loaded. TODO: Move SMU related stuff into separate device"
+      },
+      {
+        "offset": "0x3b10704",
+        "value": "0x1",
+        "note": "Some SMU ready/online bit the off chip bootloader waits for after the firmware was loaded. TODO: Move SMU related stuff into separate device"
+      },
+      {
+        "offset": "0x18080064",
+        "value": "0x600",
+        "note": "The on chip bootloader waits for bit 9 and 10 to become set."
+      },
+      {
+        "offset": "0x18480064",
+        "value": "0x600",
+        "note": "The on chip bootloader waits for bit 9 and 10 to become set."
+      },
+      {
+        "offset": "0x240003fd",
+        "value": "0x60"
+      },
+      {
+        "offset": "0x26d81e77",
+        "value": "0x7"
+      }
+    ],
+    "x86_misc": [
+      {
+        "offset": "0xfed81e77",
+        "value": "0x7",
+        "note": "The off chip bootloader waits for bits 0-2 to be set. AOACx77 DEVSTS_27"
+      },
+      {
+        "offset": "0xfffdfc0002ed",
+        "value": "0x60",
+        "note": "16550 line status register (THRE|TEMT) of the legacy I/O UARTs: COM1 0x3f8, COM2 0x2f8, COM3 0x3e8, COM4 0x2e8. The BLs poll TEMT (bit 6) before every debug byte."
+      },
+      {
+        "offset": "0xfffdfc0002fd",
+        "value": "0x60",
+        "note": "16550 line status register (THRE|TEMT) of the legacy I/O UARTs: COM1 0x3f8, COM2 0x2f8, COM3 0x3e8, COM4 0x2e8. The BLs poll TEMT (bit 6) before every debug byte."
+      },
+      {
+        "offset": "0xfffdfc0003ed",
+        "value": "0x60",
+        "note": "16550 line status register (THRE|TEMT) of the legacy I/O UARTs: COM1 0x3f8, COM2 0x2f8, COM3 0x3e8, COM4 0x2e8. The BLs poll TEMT (bit 6) before every debug byte."
+      },
+      {
+        "offset": "0xfffdfc0003fd",
+        "value": "0x60",
+        "note": "16550 line status register (THRE|TEMT) of the legacy I/O UARTs: COM1 0x3f8, COM2 0x2f8, COM3 0x3e8, COM4 0x2e8. The BLs poll TEMT (bit 6) before every debug byte."
+      }
+    ]
+  }
+}

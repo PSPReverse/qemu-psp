@@ -30,11 +30,6 @@
 #define PSP_MISC_ZEN3_PLACEHOLDER_COUNT 10
 #define PSP_MISC_PLACEHOLDER_COUNT 6
 
-typedef struct PSPMiscReg {
-    uint32_t addr;
-    uint32_t val;
-} PSPMiscReg;
-
 typedef struct PSPMiscState {
     SysBusDevice parent_obj;
     MemoryRegion iomem;

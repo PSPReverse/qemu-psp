@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Generate psp-regs.c.inc from the register tables in psp/regs.
+
+usage: gen_regs.py --output psp-regs.c.inc FILE.json...
+
+Every file named in REQUIRED_FILES must be given exactly once. Each file is
+a JSON object {"spaces": {SPACE: [{"offset": HEX, "value": HEX, "note": S}]}}.
+HEX must be canonical (lowercase, no leading zeros). Lists must be sorted by
+offset with no duplicates. "note" is optional but must not be empty. Values
+are 32-bit. A generation entry must not repeat a generic entry.
+"""
+
+import argparse
+import json
+import os
+import re
+import sys
+
+# File stem -> PspGeneration enumerator (include/psp/generations.h).
+GENERATIONS = {
+    "zen": "ZEN",
+    "zen_plus": "ZEN_PLUS",
+    "zen2": "ZEN2",
+    "zen3": "ZEN3",
+    "zen_tesla": "ZENTESLA",
+}
+GENERIC = "generic"
+REQUIRED_FILES = {GENERIC, *GENERATIONS}
+
+# JSON space key -> PspRegSpace enumerator (include/psp/psp-regs.h), and the
+# exclusive upper bound for offsets in that space (None: 64-bit).
+SPACES = {
+    "smn_misc": ("PSP_REG_SPACE_SMN_MISC", (1 << 32) - 1),
+    "psp_misc": ("PSP_REG_SPACE_PSP_MISC", None),
+    "x86_misc": ("PSP_REG_SPACE_X86_MISC", None),
+}
+VALUE_LIMIT = 1 << 32
+OFFSET_LIMIT = 1 << 64
+ENTRY_KEYS = {"offset", "value", "note"}
+HEX_LOOSE = re.compile(r"0[xX][0-9a-fA-F]+")
+HEX_CANON = re.compile(r"0x(?:0|[1-9a-f][0-9a-f]*)")
+
+
+def fail(path, msg):
+    sys.exit(f"gen_regs.py: {path}: {msg}")
+
+
+def no_duplicate_keys(pairs):
+    obj = {}
+    for key, value in pairs:
+        if key in obj:
+            raise ValueError(f"duplicate key {key!r}")
+        obj[key] = value
+    return obj
+
+
+def parse_hex(path, where, text):
+    if not isinstance(text, str) or HEX_LOOSE.fullmatch(text) is None:
+        fail(path, f'{where}: {text!r} is not a hex string such as "0x1f"')
+    value = int(text, 16)
+    if HEX_CANON.fullmatch(text) is None:
+        fail(path, f'{where}: {text!r} is not canonical, write "0x{value:x}"')
+    return value
+
+
+def load(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            doc = json.load(f, object_pairs_hook=no_duplicate_keys)
+    except ValueError as e:
+        fail(path, f"invalid JSON: {e}")
+    if not isinstance(doc, dict):
+        fail(path, "top level must be an object")
+    extra = sorted(set(doc) - {"spaces"})
+    if extra or "spaces" not in doc:
+        fail(path, f"top level must have exactly the key 'spaces' "
+                   f"(found {sorted(doc)})")
+    if not isinstance(doc["spaces"], dict):
+        fail(path, "'spaces' must be an object")
+
+    result = {space: [] for space in SPACES}
+    for space, entries in doc["spaces"].items():
+        if space not in SPACES:
+            fail(path, f"unknown space {space!r}, expected one of "
+                       f"{sorted(SPACES)}")
+        if not isinstance(entries, list):
+            fail(path, f"space {space!r} must be a list")
+        max_offset = SPACES[space][1] or OFFSET_LIMIT
+        prev = None
+        for i, e in enumerate(entries):
+            where = f"{space}[{i}]"
+            if not isinstance(e, dict) or not {"offset", "value"} <= set(e):
+                fail(path, f"{where}: needs 'offset' and 'value'")
+            if not set(e) <= ENTRY_KEYS:
+                fail(path, f"{where}: unknown key(s) "
+                           f"{sorted(set(e) - ENTRY_KEYS)}")
+            note = e.get("note")
+            if "note" in e and (not isinstance(note, str) or not note):
+                fail(path, f"{where}: 'note' must be a non-empty string, "
+                           f"or omit the key")
+            offset = parse_hex(path, where + ".offset", e["offset"])
+            value = parse_hex(path, where + ".value", e["value"])
+            if offset >= max_offset:
+                fail(path, f"{where}: offset 0x{offset:x} is outside the "
+                           f"{space} space (must be < 0x{max_offset:x})")
+            if value >= VALUE_LIMIT:
+                fail(path, f"{where}: value 0x{value:x} is wider than 32 "
+                           f"bits")
+            if prev is not None:
+                if offset == prev:
+                    fail(path, f"{where}: duplicate offset 0x{offset:x}; "
+                               f"delete one of them")
+                if offset < prev:
+                    fail(path, f"{where}: offset 0x{offset:x} comes after "
+                               f"0x{prev:x}; sort the {space} list by offset")
+            prev = offset
+            result[space].append((offset, value))
+    return result
+
+
+def check_redundant(data, paths):
+    generic = {space: dict(rows) for space, rows in data[GENERIC].items()}
+    for stem in GENERATIONS:
+        for space, rows in data[stem].items():
+            for offset, value in rows:
+                if generic[space].get(offset) == value:
+                    fail(paths[stem], f"{space} offset 0x{offset:x} repeats "
+                                      f"generic.json with the same value "
+                                      f"0x{value:x}; delete it")
+
+
+def table_name(stem, space):
+    return f"psp_regs_{stem}_{space}"
+
+
+def render(data):
+    out = [
+        "/* Generated by psp/regs/gen_regs.py from the JSON files in",
+        " * psp/regs. Do not edit. Included by psp-regs.c. */",
+        "",
+    ]
+    for stem in [GENERIC, *GENERATIONS]:
+        for space in SPACES:
+            rows = data[stem][space]
+            if not rows:
+                continue
+            name = table_name(stem, space)
+            out.append(f"static const PspRegEntry {name}[] = {{")
+            for offset, value in rows:
+                out.append(f"    {{UINT64_C(0x{offset:x}), "
+                           f"UINT64_C(0x{value:x})}},")
+            out.append("};")
+            out.append("")
+
+    def cells(stem):
+        for space, (enum, _) in SPACES.items():
+            rows = data[stem][space]
+            if rows:
+                yield f"[{enum}] = {{{table_name(stem, space)}, {len(rows)}}},"
+            else:
+                yield f"[{enum}] = {{NULL, 0}},"
+
+    out.append(f"QEMU_BUILD_BUG_ON(PSP_GENERATION_MAX != {len(GENERATIONS)});")
+    out.append("")
+    out.append("static const PspRegTable "
+               "psp_regs_generic[PSP_REG_SPACE_MAX] = {")
+    out.extend("    " + c for c in cells(GENERIC))
+    out.append("};")
+    out.append("")
+    out.append("static const PspRegTable "
+               "psp_regs_by_gen[PSP_GENERATION_MAX][PSP_REG_SPACE_MAX] = {")
+    for stem, enum in GENERATIONS.items():
+        out.append(f"    [{enum}] = {{")
+        out.extend("        " + c for c in cells(stem))
+        out.append("    },")
+    out.append("};")
+    out.append("")
+    return "\n".join(out)
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--output", required=True)
+    ap.add_argument("inputs", nargs="+")
+    args = ap.parse_args()
+
+    paths = {}
+    for path in args.inputs:
+        stem = os.path.splitext(os.path.basename(path))[0]
+        if stem in paths:
+            sys.exit(f"gen_regs.py: {path}: given twice")
+        if stem not in REQUIRED_FILES:
+            sys.exit(f"gen_regs.py: {path}: unknown register file")
+        paths[stem] = path
+    missing = sorted(REQUIRED_FILES - set(paths))
+    if missing:
+        sys.exit("gen_regs.py: missing register file(s): "
+                 + ", ".join(f"{m}.json" for m in missing))
+
+    data = {stem: load(paths[stem]) for stem in REQUIRED_FILES}
+    check_redundant(data, paths)
+
+    with open(args.output, "w", encoding="utf-8") as f:
+        f.write(render(data))
+
+
+if __name__ == "__main__":
+    main()
