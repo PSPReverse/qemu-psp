@@ -23,6 +23,8 @@
 #include "psp/psp-misc.h"
 
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "trace.h"
 
@@ -386,6 +388,27 @@ static void psp_misc_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
 }
 
+static void psp_misc_reset_hold(Object *obj, ResetType type)
+{
+    PSPMiscState *s = PSP_MISC(obj);
+
+    memset(s->zen3_placeholder, 0, sizeof(s->zen3_placeholder));
+    memset(s->placeholder, 0, sizeof(s->placeholder));
+}
+
+static const VMStateDescription psp_misc_vmstate = {
+    .name = "psp-misc",
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32_ARRAY(zen3_placeholder, PSPMiscState,
+                             PSP_MISC_ZEN3_PLACEHOLDER_COUNT),
+        VMSTATE_UINT32_ARRAY(placeholder, PSPMiscState,
+                             PSP_MISC_PLACEHOLDER_COUNT),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const Property properties[] = {
     DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
     DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
@@ -396,7 +419,10 @@ static const Property properties[] = {
 static void psp_misc_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
     dc->realize = psp_misc_realize;
+    dc->vmsd = &psp_misc_vmstate;
+    rc->phases.hold = psp_misc_reset_hold;
     device_class_set_props(dc, properties);
 }
 
