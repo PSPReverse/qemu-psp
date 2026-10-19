@@ -20,6 +20,10 @@ typedef struct MailboxState {
     /*< public >*/
     MemoryRegion iomem;
     uint32_t values[3];
+
+    /* Debug: IC source raised on a write to word 0; -1 = none */
+    int32_t doorbell_irq_id;
+    qemu_irq doorbell_irq;
 } MailboxState;
 
 #endif

@@ -20,6 +20,8 @@
 
 #include "psp/mmio/mailbox.h"
 
+#include "hw/irq.h"
+#include "hw/qdev-properties.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -67,6 +69,9 @@ static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
     }
     s->values[index] = value;
     trace_psp_mailbox_write(index_to_name(index), s->values[index]);
+    if (index == 0 && s->doorbell_irq_id >= 0) {
+        qemu_set_irq(s->doorbell_irq, 1);
+    }
 }
 
 static const MemoryRegionOps mailbox_mem_ops = {
@@ -95,12 +100,18 @@ static void realize(DeviceState* dev, Error** errp)
                           TYPE_MAILBOX, 4 * 3);
 
     sysbus_init_mmio(sbd, &s->iomem);
+    sysbus_init_irq(sbd, &s->doorbell_irq);
 }
+
+static const Property mailbox_properties[] = {
+    DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, -1),
+};
 
 static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = realize;
+    device_class_set_props(dc, mailbox_properties);
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
