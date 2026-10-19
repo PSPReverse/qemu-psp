@@ -1,5 +1,5 @@
 {
-  "next_display_id": 9,
+  "next_display_id": 10,
   "next_comment_id": 6,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -9,7 +9,8 @@
     "bbea8178-d6fa-4271-80ec-68db95ee9157": 2,
     "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3,
     "c8058c48-704a-4ed5-8a90-28c641dd733a": 7,
-    "cd28a6a9-00da-4edc-a291-faed68aacece": 6
+    "cd28a6a9-00da-4edc-a291-faed68aacece": 6,
+    "fcbdea3b-5f7c-4339-b585-2c347ef4679e": 9
   },
   "locks": {
     "1": {
@@ -157,12 +158,23 @@
           "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAgG74M/AW0X6LHLcc6u5U9cyt81zpkGKoUopGKozlpsbwBqxg8YASOncn17y6B13q/d+/eHlU2VWpqDWt/+fOAg=="
         }
       }
+    },
+    "fcbdea3b-5f7c-4339-b585-2c347ef4679e": {
+      "uuid": "fcbdea3b-5f7c-4339-b585-2c347ef4679e",
+      "display_id": 9,
+      "title": "kaizen: check Zen2 firmware use of XTS/DES3/ECC CCP engines",
+      "description": "Evidence: hater #5 (scratch/HATER-fidelity.md): error status now returned on all gens; Zen2 SecOS/SEV paths unchecked. Change: static read of bl.bin/SecOS blobs for CCP engine ids, report which paths hit them. Effort M, risk none.",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-19T23:34:53.513195023Z",
+      "updated_at": "2026-10-19T23:34:53.513195023Z"
     }
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:34:36.476708713Z",
+    "timestamp": "2026-10-19T23:34:53.513195023Z",
     "agent_id": "U0Ke",
-    "agent_seq": 15
+    "agent_seq": 16
   }
 }
