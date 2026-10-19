@@ -195,6 +195,23 @@ static void psp_irq_set_inject(Object *obj, Visitor *v, const char *name,
     qemu_set_irq(qdev_get_gpio_in(DEVICE(s), id), 1);
 }
 
+/*
+ * Fuzzer hook, same pattern as the aspfuzz_smn_* externs: raise source id
+ * (group * 32 + bit) without a QOM lookup. Call it between runs, with the
+ * vCPU stopped.
+ */
+static PSPIrqState* aspfuzz_irq_state;
+
+int32_t aspfuzz_irq_inject(uint32_t id);
+int32_t aspfuzz_irq_inject(uint32_t id)
+{
+    if (aspfuzz_irq_state == NULL || id >= 4 * 32) {
+        return -1;
+    }
+    qemu_set_irq(qdev_get_gpio_in(DEVICE(aspfuzz_irq_state), id), 1);
+    return 0;
+}
+
 static void psp_irq_init(Object* obj)
 {
     PSPIrqState* s = PSP_IRQ(obj);
@@ -207,6 +224,8 @@ static void psp_irq_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
     PSPIrqState* s = PSP_IRQ(dev);
+
+    aspfuzz_irq_state = s;
 
     // clear the bitfields
     memset(&s->ccp_queue_bitfield, 0, sizeof(s->ccp_queue_bitfield));
