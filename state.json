@@ -1,6 +1,6 @@
 {
   "next_display_id": 8,
-  "next_comment_id": 1,
+  "next_comment_id": 2,
   "display_id_map": {
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
@@ -36,7 +36,18 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:07:55.239673150Z",
-      "updated_at": "2026-10-19T18:07:55.239673150Z"
+      "updated_at": "2026-10-19T20:47:44.702223163Z",
+      "comments": {
+        "ce655d9e-6244-4ec9-9e00-0ad2ffd88e47": {
+          "display_id": 1,
+          "author": "U0Ke",
+          "content": "Rust-ON build recipe: PATH += /nix/store/*-rustc-1.98.1/bin, *-cargo-1.98.1/bin, *-rust-bindgen-unwrapped-0.72.1/bin; BINDGEN_EXTRA_CLANG_ARGS='-isystem /nix/store/*-glibc-2.44-25-dev/include'; ../configure --target-list=arm-softmmu --without-default-features --enable-fdt=internal --audio-drv-list= --enable-nettle --enable-rust --disable-werror; workspace .workspace/rust-excursion, builddir build-rust. Plan: stacked PRs IC, CCP, timer, mailbox doorbell, Zen3 bring-up, JSON reg tables, then Rust port after LibAFL 11.x.",
+          "created_at": "2026-10-19T20:47:44.695803953Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAgzzjX+VLtUZr7E4T1Tb1rRh8VHpyhE7Dl+6mhK/jJMAdxStgckhdqeFWu/t30beGh068F8DXika0xH38PL4pBA=="
+        }
+      }
     },
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": {
       "uuid": "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0",
@@ -95,8 +106,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T20:41:04.857055021Z",
+    "timestamp": "2026-10-19T20:47:44.702223163Z",
     "agent_id": "U0Ke",
-    "agent_seq": 8
+    "agent_seq": 9
   }
 }
