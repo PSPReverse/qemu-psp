@@ -9,6 +9,7 @@
 #include "trace.h"
 
 #include "psp/x86/x86-misc.h"
+#include "psp/psp-regs.h"
 
 typedef struct RegionInfo {
     char const* const region_name;
@@ -99,34 +100,20 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
     uint64_t val;
     LoggingInfo info = get_logging_info_for_addr(addr);
 
-    switch (addr) {
-    /* The off chip bootloader waits for bits 0-2 to be set. */
-    /* AOACx77 DEVSTS_27*/
-    case 0xfed81e77:
-        val = 0x7;
-        break;
-    /* 16550 line status register (THRE|TEMT) of the legacy I/O UARTs: COM1
-     * 0x3f8, COM2 0x2f8, COM3 0x3e8, COM4 0x2e8. The BLs poll TEMT (bit 6)
-     * before every debug byte. */
-    case 0xfffdfc0003fd:
-    case 0xfffdfc0002fd:
-    case 0xfffdfc0003ed:
-    case 0xfffdfc0002ed:
-        val = 0x60;
-        break;
-    /*
-     * I/O port 0x61 (NMI status/control) through the 0xfffdfc000000 window.
-     * Placeholder following the PC-compatible port 0x61 convention; inferred,
-     * not taken from the PPR. Bits 0-1 read back the last write. Bit 4 is the
-     * refresh toggle: it flips on every read, a deterministic stand-in for the
-     * ~15 us refresh clock. Bit 5 (timer-2 output) is stubbed to 0. Applied to
-     * all generations as chipset behaviour.
-     */
-    case 0xfffdfc000061:
+    if (addr == 0xfffdfc000061) {
+        /*
+         * I/O port 0x61 (NMI status/control) through the 0xfffdfc000000
+         * window. Placeholder following the PC-compatible port 0x61
+         * convention; inferred, not taken from the PPR. Bits 0-1 read back
+         * the last write. Bit 4 is the refresh toggle: it flips on every
+         * read, a deterministic stand-in for the ~15 us refresh clock. Bit 5
+         * (timer-2 output) is stubbed to 0. Applied to all generations as
+         * chipset behaviour.
+         */
         val = (s->port61_ctl & 0x3) | (s->port61_refresh ? 0x10 : 0);
         s->port61_refresh = !s->port61_refresh;
-        break;
-    default:
+    } else if (!psp_regs_lookup(s->generation, PSP_REG_SPACE_X86_MISC, addr,
+                                &val)) {
         trace_psp_x86_misc_read_unimplemented(addr, info.region_name,
                                               info.offset);
         return 0;
@@ -171,9 +158,9 @@ static const MemoryRegionOps misc_mem_ops = {
 static void psp_x86_misc_realize(DeviceState* dev, Error** errp)
 {
     PSPX86MiscState* s = PSP_X86_MISC(dev);
-    if (s->generation == PSP_GENERATION_MAX) {
+    if (s->generation >= PSP_GENERATION_MAX) {
         error_setg(errp,
-                   "property 'generation' not specified for PSP X86 misc");
+                   "property 'psp_generation' not specified or invalid for PSP X86 misc");
         return;
     }
     /* Init mmio */

@@ -1,0 +1,28 @@
+{
+  "spaces": {
+    "smn_misc": [
+      {
+        "offset": "0x5da20",
+        "value": "0x1",
+        "note": "Zen3 off-chip BL (fn 0xc7c0 via 0xc5dc, bit offset 0x5100): fuse words (1,0) select SoC class 2, required by fn 0x134c8 (byte [0x156fa] >= 2) before the FET walk. Inferred from code, not measured on hardware."
+      },
+      {
+        "offset": "0x6c14c",
+        "value": "0x100",
+        "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
+      },
+      {
+        "offset": "0x6c94c",
+        "value": "0x100",
+        "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
+      },
+      {
+        "offset": "0x6d14c",
+        "value": "0x100",
+        "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
+      }
+    ],
+    "psp_misc": [],
+    "x86_misc": []
+  }
+}
