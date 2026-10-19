@@ -34,6 +34,9 @@
 /* TODO: Restrict access to specific MemoryRegions only.
  *       Verify correct use of cpu_physical_memory_map/unmap */
 
+/* Upper bound on descriptors processed per queue run (guest controls head) */
+#define CCP_Q_MAX_DESC_PER_RUN 4096
+
 /* TODO Document*/
 static void ccp_process_q(CcpV5State* s, uint32_t id);
 
@@ -758,6 +761,7 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
     hwaddr req_len;
     uint32_t tail;
     uint32_t head;
+    uint32_t desc_count = 0;
     bool failed = false;
     /* TODO: This operation needs to be delayed! */
 
@@ -773,10 +777,28 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
     tail = qs->ccp_q_tail;
     head = qs->ccp_q_head;
 
-    req_len = sizeof(ccp5_desc);
-
     while (tail < head) {
+        /* Head and tail are guest-controlled, bound the work per call */
+        if (desc_count++ >= CCP_Q_MAX_DESC_PER_RUN) {
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error: queue %u exceeds %d descriptors\n", id,
+                          CCP_Q_MAX_DESC_PER_RUN);
+            failed = true;
+            break;
+        }
+
+        /* The mapping may be shortened by the memory layer, so reset it */
+        req_len = sizeof(ccp5_desc);
         desc = cpu_physical_memory_map(tail, &req_len, false);
+        if (!desc || req_len < sizeof(ccp5_desc)) {
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error: cannot map descriptor at 0x%x\n", tail);
+            if (desc) {
+                cpu_physical_memory_unmap(desc, req_len, false, 0);
+            }
+            failed = true;
+            break;
+        }
         failed |= ccp_execute(s, id, desc);
         /* TODO: What is "access_len" ? */
         cpu_physical_memory_unmap(desc, req_len, false, sizeof(ccp5_desc));
