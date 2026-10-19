@@ -11,6 +11,7 @@
 static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
                                   unsigned int size)
 {
+    PSPSmnMiscState* s = opaque;
     uint64_t val;
     switch (offset) {
     case 0x51050:
@@ -214,7 +215,17 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
         val = 0x600;
         break;
 
+    case 0x2d01380:
+        /* Placeholder, see psp_smn_misc_write(). Not measured. */
+        val = s->placeholder_2d01380;
+        break;
+
     default:
+        /* Zen3 off-chip BL reads this bank. Not modelled: placeholder 0. */
+        if (s->generation == ZEN3 && offset >= 0x5d138 && offset <= 0x5d154) {
+            val = 0;
+            break;
+        }
         trace_psp_smn_misc_read_unimplemented(offset);
         return 0;
     }
@@ -226,6 +237,14 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
 static void psp_smn_misc_write(void* opaque, hwaddr offset, uint64_t value,
                                unsigned int size)
 {
+    PSPSmnMiscState *s = opaque;
+
+    /* Placeholder: the value is stored unmodelled and read back. */
+    if (offset == 0x2d01380) {
+        s->placeholder_2d01380 = value;
+        trace_psp_smn_misc_write(offset, value);
+        return;
+    }
     trace_psp_smn_misc_write_unimplemented(offset, value);
 }
 
