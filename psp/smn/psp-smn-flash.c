@@ -34,19 +34,25 @@
 
 // +++ Begin ASPFuzz code +++
 // TODO: Replace this with AddressSpace write and an offset
-// TODO: What if the ram ptr isn't long enough
 MemoryRegion* asp_smn_mr = NULL;
-void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr);
-void aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void* ptr)
+int32_t aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void *ptr);
+int32_t aspfuzz_write_smn_flash(hwaddr addr, hwaddr len, const void *ptr)
 {
     const uint8_t* buf = ptr;
     if (!asp_smn_mr) {
         qemu_log_mask(LOG_GUEST_ERROR,
                       "Memory region was not initialized prior to setting\n");
-        return;
+        return -1;
+    }
+    hwaddr size = memory_region_size(asp_smn_mr);
+    if (addr > size || len > size - addr) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "aspfuzz_write_smn_flash: write exceeds flash size\n");
+        return -1;
     }
     uint8_t* ram_ptr = qemu_map_ram_ptr(asp_smn_mr->ram_block, addr);
     memcpy(ram_ptr, buf, len);
+    return 0;
 }
 // +++ End ASPFuzz code +++
 
