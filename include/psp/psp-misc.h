@@ -26,6 +26,10 @@
 #define TYPE_PSP_MISC "amd_psp.misc"
 #define PSP_MISC(obj) OBJECT_CHECK(PSPMiscState, (obj), TYPE_PSP_MISC)
 
+/* Registers that are accessed but not modelled (psp-misc.c) */
+#define PSP_MISC_ZEN3_PLACEHOLDER_COUNT 10
+#define PSP_MISC_PLACEHOLDER_COUNT 7
+
 typedef struct PSPMiscReg {
     uint32_t addr;
     uint32_t val;
@@ -43,6 +47,12 @@ typedef struct PSPMiscState {
 
     /* Which Generation is being emulated*/
     PspGeneration generation;
+
+    /* Zen3 placeholder registers, see psp_misc_placeholder_slot() */
+    uint32_t zen3_placeholder[PSP_MISC_ZEN3_PLACEHOLDER_COUNT];
+
+    /* Placeholder registers on all generations */
+    uint32_t placeholder[PSP_MISC_PLACEHOLDER_COUNT];
 
 } PSPMiscState;
 

@@ -255,35 +255,89 @@ static int psp_misc_load_value(hwaddr addr, uint64_t* val)
     return 0;
 }
 
+/*
+ * Registers that the boot path accesses but nothing models yet. They are
+ * plain read/write-back storage, reset to 0 (what an unmodelled read returned
+ * before). The stored values are placeholders, not hardware behaviour.
+ */
+static const hwaddr psp_misc_zen3_placeholder_addr[] = {
+    0x3010004, 0x3010058, 0x3260028, 0x32000dc, 0x3200054,
+    0x320021c, 0x320022c, 0x30109a4, 0x301070c, 0x3010a44,
+};
+
+_Static_assert(ARRAY_SIZE(psp_misc_zen3_placeholder_addr) ==
+                   PSP_MISC_ZEN3_PLACEHOLDER_COUNT,
+               "zen3 placeholder table and state size must match");
+
+/*
+ * Placeholders on every generation. 0x3210044 bit (id - 0x70) is set by the
+ * firmware's 0x70..0x73 interrupt handler; the bit meanings are not measured.
+ */
+static const hwaddr psp_misc_placeholder_addr[] = {
+    0x3200a00, 0x3200a04, 0x3200a08, 0x3210044,
+    0x30109f0, 0x30109f4, 0x30109f8,
+};
+
+_Static_assert(ARRAY_SIZE(psp_misc_placeholder_addr) ==
+                   PSP_MISC_PLACEHOLDER_COUNT,
+               "placeholder table and state size must match");
+
+/* @return storage for a placeholder register, or NULL if addr is not one */
+static uint32_t *psp_misc_placeholder_slot(PSPMiscState *misc, hwaddr addr)
+{
+    if (misc->generation == ZEN3) {
+        for (size_t i = 0; i < ARRAY_SIZE(psp_misc_zen3_placeholder_addr);
+             i++) {
+            if (psp_misc_zen3_placeholder_addr[i] == addr) {
+                return &misc->zen3_placeholder[i];
+            }
+        }
+    }
+    for (size_t i = 0; i < ARRAY_SIZE(psp_misc_placeholder_addr); i++) {
+        if (psp_misc_placeholder_addr[i] == addr) {
+            return &misc->placeholder[i];
+        }
+    }
+    return NULL;
+}
+
 static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
                            unsigned int size)
 {
-    // PSPMiscState *misc = PSP_MISC(opaque);
-    // hwaddr phys_base = misc->iomem.addr;
-    // hwaddr phys_abs;
-    // phys_abs = phys_base + offset;
+    PSPMiscState* misc = PSP_MISC(opaque);
+    hwaddr phys_abs = misc->iomem.addr + offset;
+    uint32_t *slot = psp_misc_placeholder_slot(misc, phys_abs);
 
     /* TODO: Allow write to specific registers */
 
-    trace_psp_misc_write_unimplemented(offset, value, size);
+    if (slot) {
+        *slot = value;
+        trace_psp_misc_write(offset, value, size);
+    } else {
+        trace_psp_misc_write_unimplemented(offset, value, size);
+    }
 }
 
 static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPMiscState* misc = PSP_MISC(opaque);
     hwaddr phys_abs;
-    // int i;
     hwaddr phys_base;
     uint64_t value;
+    uint32_t *slot;
 
     phys_base = misc->iomem.addr;
     phys_abs = phys_base + offset;
     value = 0;
 
-    if (psp_misc_load_value(phys_abs, &value)) {
-        trace_psp_misc_read_unimplemented(offset, size);
-    } else {
+    slot = psp_misc_placeholder_slot(misc, phys_abs);
+    if (!psp_misc_load_value(phys_abs, &value)) {
         trace_psp_misc_read(offset, value, size);
+    } else if (slot) {
+        value = *slot;
+        trace_psp_misc_read(offset, value, size);
+    } else {
+        trace_psp_misc_read_unimplemented(offset, size);
     }
 
     return value;

@@ -126,7 +126,17 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
 static void psp_x86_misc_write(void* opaque, hwaddr addr, uint64_t value,
                                unsigned int size)
 {
+    PSPX86MiscState* s = PSP_X86_MISC(opaque);
     LoggingInfo info = get_logging_info_for_addr(addr);
+
+    /*
+     * COM4 line control register (0x2e8 + 3), written by the Zen3 off-chip
+     * BL. Accepted and logged but not stored; reads stay unmodelled.
+     */
+    if (addr == 0xfffdfc0002eb && s->generation == ZEN3) {
+        trace_psp_x86_misc_write(addr, value, info.region_name, info.offset);
+        return;
+    }
     trace_psp_x86_misc_write_unimplemented(addr, value, info.region_name,
                                            info.offset);
 }
