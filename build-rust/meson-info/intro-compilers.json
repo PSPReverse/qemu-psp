@@ -1,0 +1,90 @@
+{
+  "host": {
+    "c": {
+      "id": "gcc",
+      "exelist": [
+        "gcc",
+        "-m64"
+      ],
+      "linker_exelist": [
+        "gcc",
+        "-m64"
+      ],
+      "file_suffixes": [
+        "c"
+      ],
+      "default_suffix": "c",
+      "version": "16.2.0",
+      "full_version": "gcc (GCC) 16.2.0",
+      "linker_id": "ld.bfd"
+    },
+    "rust": {
+      "id": "rustc",
+      "exelist": [
+        "rustc",
+        "-C",
+        "linker=gcc",
+        "-C",
+        "link-arg=-m64"
+      ],
+      "linker_exelist": [
+        "rustc",
+        "-C",
+        "linker=gcc",
+        "-C",
+        "link-arg=-m64"
+      ],
+      "file_suffixes": [
+        "rs"
+      ],
+      "default_suffix": "rs",
+      "version": "1.98.1",
+      "full_version": "1.98.1",
+      "linker_id": "ld.bfd"
+    }
+  },
+  "build": {
+    "c": {
+      "id": "gcc",
+      "exelist": [
+        "gcc",
+        "-m64"
+      ],
+      "linker_exelist": [
+        "gcc",
+        "-m64"
+      ],
+      "file_suffixes": [
+        "c"
+      ],
+      "default_suffix": "c",
+      "version": "16.2.0",
+      "full_version": "gcc (GCC) 16.2.0",
+      "linker_id": "ld.bfd"
+    },
+    "rust": {
+      "id": "rustc",
+      "exelist": [
+        "rustc",
+        "-C",
+        "linker=gcc",
+        "-C",
+        "link-arg=-m64"
+      ],
+      "linker_exelist": [
+        "rustc",
+        "-C",
+        "linker=gcc",
+        "-C",
+        "link-arg=-m64"
+      ],
+      "file_suffixes": [
+        "rs"
+      ],
+      "default_suffix": "rs",
+      "version": "1.98.1",
+      "full_version": "1.98.1",
+      "linker_id": "ld.bfd"
+    }
+  }
+}

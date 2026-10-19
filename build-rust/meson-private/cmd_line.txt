@@ -1,0 +1,12 @@
+[options]
+fdt = internal
+audio_drv_list = 
+nettle = enabled
+werror = false
+auto_features = disabled
+rust = enabled
+docs = disabled
+
+[properties]
+native_file = ['/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/config-meson.cross']
+

@@ -1,0 +1,111 @@
+{
+  "version": "10.2.0",
+  "descriptive_name": "qemu",
+  "license": [
+    "unknown"
+  ],
+  "license_files": [],
+  "subproject_dir": "subprojects",
+  "subprojects": [
+    {
+      "name": "dtc",
+      "version": "1.6.0",
+      "descriptive_name": "dtc"
+    },
+    {
+      "name": "keycodemapdb",
+      "version": "undefined",
+      "descriptive_name": "keycodemapdb"
+    },
+    {
+      "name": "anyhow-1-rs",
+      "version": "1.0.98",
+      "descriptive_name": "anyhow-1-rs"
+    },
+    {
+      "name": "arbitrary-int-1-rs",
+      "version": "1.2.7",
+      "descriptive_name": "arbitrary-int-1-rs"
+    },
+    {
+      "name": "either-1-rs",
+      "version": "1.12.0",
+      "descriptive_name": "either-1-rs"
+    },
+    {
+      "name": "itertools-0.11-rs",
+      "version": "0.11.0",
+      "descriptive_name": "itertools-0.11-rs"
+    },
+    {
+      "name": "unicode-ident-1-rs",
+      "version": "1.0.12",
+      "descriptive_name": "unicode-ident-1-rs"
+    },
+    {
+      "name": "proc-macro2-1-rs",
+      "version": "1.0.95",
+      "descriptive_name": "proc-macro2-1-rs"
+    },
+    {
+      "name": "quote-1-rs",
+      "version": "1.12.0",
+      "descriptive_name": "quote-1-rs"
+    },
+    {
+      "name": "proc-macro-error-attr-1-rs",
+      "version": "1.12.0",
+      "descriptive_name": "proc-macro-error-attr-1-rs"
+    },
+    {
+      "name": "syn-2-rs",
+      "version": "2.0.104",
+      "descriptive_name": "syn-2-rs"
+    },
+    {
+      "name": "proc-macro-error-1-rs",
+      "version": "1.0.4",
+      "descriptive_name": "proc-macro-error-1-rs"
+    },
+    {
+      "name": "bilge-impl-0.2-rs",
+      "version": "0.2.0",
+      "descriptive_name": "bilge-impl-0.2-rs"
+    },
+    {
+      "name": "bilge-0.2-rs",
+      "version": "0.2.0",
+      "descriptive_name": "bilge-0.2-rs"
+    },
+    {
+      "name": "libc-0.2-rs",
+      "version": "0.2.162",
+      "descriptive_name": "libc-0.2-rs"
+    },
+    {
+      "name": "foreign-0.3-rs",
+      "version": "0.2.0",
+      "descriptive_name": "foreign-0.3-rs"
+    },
+    {
+      "name": "glib-sys-0.21-rs",
+      "version": "0.21.2",
+      "descriptive_name": "glib-sys-0.21-rs"
+    },
+    {
+      "name": "attrs-0.2-rs",
+      "version": "0.2.9",
+      "descriptive_name": "attrs-0.2-rs"
+    },
+    {
+      "name": "berkeley-softfloat-3",
+      "version": "undefined",
+      "descriptive_name": "berkeley-softfloat-3"
+    },
+    {
+      "name": "berkeley-testfloat-3",
+      "version": "undefined",
+      "descriptive_name": "berkeley-testfloat-3"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+# QEMU configure log mån 19 okt 2026 19:50:16 CEST
+# Configured with: '../configure' '--target-list=arm-softmmu' '--without-default-features' '--enable-fdt=internal' '--audio-drv-list=' '--enable-nettle' '--enable-rust' '--disable-werror'
+
+#
+
+funcs: do_compiler do_cc compile_object check_define main
+lines: 119 124 337 346 0
+gcc -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c
+
+funcs: do_compiler do_cc compile_object check_define main
+lines: 119 124 337 380 0
+gcc -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c
+config-temp/qemu-conf.c:2:2: error: #error __i386__ not defined
+    2 | #error __i386__ not defined
+      |  ^~~~~
+
+funcs: do_compiler do_cc compile_object check_define main
+lines: 119 124 337 382 0
+gcc -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c
+
+funcs: do_compiler do_cc compile_object check_define main
+lines: 119 124 337 383 0
+gcc -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c
+config-temp/qemu-conf.c:2:2: error: #error __ILP32__ not defined
+    2 | #error __ILP32__ not defined
+      |  ^~~~~
+
+funcs: do_compiler do_cc compile_object main
+lines: 119 124 937 0
+gcc -m64 -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c
+
+funcs: do_compiler do_cc compile_prog main
+lines: 119 130 1113 0
+gcc -m64 -Werror -fPIE -DPIE -o config-temp/qemu-conf.exe config-temp/qemu-conf.c -pie
+
+funcs: do_compiler do_cc compile_prog main
+lines: 119 130 1178 0
+gcc -m64 -o config-temp/qemu-conf.exe config-temp/qemu-conf.c
+config-temp/qemu-conf.c:2:3: error: #error LITTLE
+    2 | # error LITTLE
+      |   ^~~~~
+
+funcs: do_compiler do_cc compile_object check_define main
+lines: 119 124 337 1235 0
+gcc -m64 -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c
+config-temp/qemu-conf.c:2:2: error: #error __ANDROID__ not defined
+    2 | #error __ANDROID__ not defined
+      |  ^~~~~
+
+funcs: do_compiler do_cc compile_object main
+lines: 119 124 1246 0
+gcc -m64 -c -o config-temp/qemu-conf.o config-temp/qemu-conf.c

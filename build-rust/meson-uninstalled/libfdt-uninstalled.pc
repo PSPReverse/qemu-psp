@@ -1,0 +1,10 @@
+prefix=/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust
+includedir=${prefix}/include
+libdir=${prefix}/lib
+srcdir=/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion
+
+Name: libfdt
+Description: Flat Device Tree manipulation
+Version: 1.6.0
+Libs: -L${prefix}/subprojects/dtc/libfdt -lfdt
+Cflags: -I${prefix}/subprojects/dtc/libfdt -I${srcdir}/subprojects/dtc/libfdt

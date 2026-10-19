@@ -1,0 +1,908 @@
+{
+    "sysroot": "/nix/store/53lvgpxsb3b9ghkgb4v0jra6zzlnyw8n-rustc-1.98.1",
+    "sysroot_src": "/nix/store/53lvgpxsb3b9ghkgb4v0jra6zzlnyw8n-rustc-1.98.1/lib/rustlib/src/rust/library/",
+    "crates": [
+        {
+            "display_name": "anyhow",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/anyhow-1.0.98/src/lib.rs",
+            "edition": "2018",
+            "cfg": [
+                "feature=\"std\"",
+                "std_backtrace"
+            ],
+            "is_proc_macro": false,
+            "deps": []
+        },
+        {
+            "display_name": "arbitrary_int",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/arbitrary-int-1.2.7/src/lib.rs",
+            "edition": "2021",
+            "cfg": [],
+            "is_proc_macro": false,
+            "deps": []
+        },
+        {
+            "display_name": "either",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/either-1.12.0/src/lib.rs",
+            "edition": "2018",
+            "cfg": [
+                "feature=\"use_std\"",
+                "feature=\"use_alloc\""
+            ],
+            "is_proc_macro": false,
+            "deps": []
+        },
+        {
+            "display_name": "itertools",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/itertools-0.11.0/src/lib.rs",
+            "edition": "2018",
+            "cfg": [
+                "feature=\"use_std\"",
+                "feature=\"use_alloc\""
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 2,
+                    "name": "either"
+                }
+            ]
+        },
+        {
+            "display_name": "unicode_ident",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/unicode-ident-1.0.12/src/lib.rs",
+            "edition": "2021",
+            "cfg": [],
+            "is_proc_macro": false,
+            "deps": []
+        },
+        {
+            "display_name": "proc_macro2",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/proc-macro2-1.0.95/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "feature=\"proc-macro\"",
+                "no_literal_byte_character",
+                "no_literal_c_string",
+                "no_source_text",
+                "wrap_proc_macro"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 4,
+                    "name": "unicode_ident"
+                }
+            ]
+        },
+        {
+            "display_name": "quote",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/quote-1.0.36/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "feature=\"proc-macro\""
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                }
+            ]
+        },
+        {
+            "display_name": "proc_macro_error_attr",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/proc-macro-error-attr-1.0.4/src/lib.rs",
+            "edition": "2018",
+            "cfg": [
+                "use_fallback",
+                "feature=\"syn-error\"",
+                "feature=\"proc-macro\""
+            ],
+            "is_proc_macro": true,
+            "deps": [
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 6,
+                    "name": "quote"
+                }
+            ],
+            "proc_macro_dylib_path": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/subprojects/proc-macro-error-attr-1.0.4/libproc_macro_error_attr.so"
+        },
+        {
+            "display_name": "syn",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/syn-2.0.104/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "feature=\"full\"",
+                "feature=\"derive\"",
+                "feature=\"parsing\"",
+                "feature=\"printing\"",
+                "feature=\"clone-impls\"",
+                "feature=\"proc-macro\"",
+                "feature=\"extra-traits\""
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 6,
+                    "name": "quote"
+                },
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 4,
+                    "name": "unicode_ident"
+                }
+            ]
+        },
+        {
+            "display_name": "proc_macro_error",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/proc-macro-error-1.0.4/src/lib.rs",
+            "edition": "2018",
+            "cfg": [
+                "use_fallback",
+                "feature=\"syn-error\"",
+                "feature=\"proc-macro\""
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 7,
+                    "name": "proc_macro_error_attr"
+                },
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 6,
+                    "name": "quote"
+                },
+                {
+                    "crate": 8,
+                    "name": "syn"
+                }
+            ]
+        },
+        {
+            "display_name": "bilge_impl",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/bilge-impl-0.2.0/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "use_fallback",
+                "feature=\"syn-error\"",
+                "feature=\"proc-macro\""
+            ],
+            "is_proc_macro": true,
+            "deps": [
+                {
+                    "crate": 3,
+                    "name": "itertools"
+                },
+                {
+                    "crate": 7,
+                    "name": "proc_macro_error_attr"
+                },
+                {
+                    "crate": 9,
+                    "name": "proc_macro_error"
+                },
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 6,
+                    "name": "quote"
+                },
+                {
+                    "crate": 8,
+                    "name": "syn"
+                }
+            ],
+            "proc_macro_dylib_path": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/subprojects/bilge-impl-0.2.0/libbilge_impl.so"
+        },
+        {
+            "display_name": "bilge",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/bilge-0.2.0/src/lib.rs",
+            "edition": "2021",
+            "cfg": [],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 1,
+                    "name": "arbitrary_int"
+                },
+                {
+                    "crate": 10,
+                    "name": "bilge_impl"
+                }
+            ]
+        },
+        {
+            "display_name": "libc",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/libc-0.2.162/src/lib.rs",
+            "edition": "2015",
+            "cfg": [
+                "freebsd11",
+                "libc_priv_mod_use",
+                "libc_union",
+                "libc_const_size_of",
+                "libc_align",
+                "libc_int128",
+                "libc_core_cvoid",
+                "libc_packedN",
+                "libc_cfg_target_vendor",
+                "libc_non_exhaustive",
+                "libc_long_array",
+                "libc_ptr_addr_of",
+                "libc_underscore_const_names",
+                "libc_const_extern_fn"
+            ],
+            "is_proc_macro": false,
+            "deps": []
+        },
+        {
+            "display_name": "foreign",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/foreign-0.3.1/src/lib.rs",
+            "edition": "2021",
+            "cfg": [],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 12,
+                    "name": "libc"
+                }
+            ]
+        },
+        {
+            "display_name": "glib_sys",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/glib-sys-0.21.2/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "feature=\"v2_66\"",
+                "feature=\"v2_64\"",
+                "feature=\"v2_62\"",
+                "feature=\"v2_60\"",
+                "feature=\"v2_58\""
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 12,
+                    "name": "libc"
+                }
+            ]
+        },
+        {
+            "display_name": "attrs",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/subprojects/attrs-0.2.9/src/lib.rs",
+            "edition": "2021",
+            "cfg": [],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 8,
+                    "name": "syn"
+                }
+            ]
+        },
+        {
+            "display_name": "qemu_macros",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/qemu-macros/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON",
+                "use_fallback",
+                "feature=\"syn-error\"",
+                "feature=\"proc-macro\""
+            ],
+            "is_proc_macro": true,
+            "deps": [
+                {
+                    "crate": 15,
+                    "name": "attrs"
+                },
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 8,
+                    "name": "syn"
+                },
+                {
+                    "crate": 6,
+                    "name": "quote"
+                }
+            ],
+            "proc_macro_dylib_path": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/qemu-macros/libqemu_macros.so"
+        },
+        {
+            "display_name": "rust-qemu-macros-tests",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/qemu-macros/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON",
+                "use_fallback",
+                "feature=\"syn-error\"",
+                "feature=\"proc-macro\""
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 15,
+                    "name": "attrs"
+                },
+                {
+                    "crate": 5,
+                    "name": "proc_macro2"
+                },
+                {
+                    "crate": 8,
+                    "name": "syn"
+                },
+                {
+                    "crate": 6,
+                    "name": "quote"
+                }
+            ]
+        },
+        {
+            "display_name": "common",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/common/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 12,
+                    "name": "libc"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                }
+            ]
+        },
+        {
+            "display_name": "rust-common-tests",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/common/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 12,
+                    "name": "libc"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                }
+            ]
+        },
+        {
+            "display_name": "bits",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/bits/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                }
+            ]
+        },
+        {
+            "display_name": "rust-bits-tests",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/bits/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                }
+            ]
+        },
+        {
+            "display_name": "util",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/util/libutil.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 0,
+                    "name": "anyhow"
+                },
+                {
+                    "crate": 12,
+                    "name": "libc"
+                },
+                {
+                    "crate": 13,
+                    "name": "foreign"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                }
+            ]
+        },
+        {
+            "display_name": "rust-util-tests",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/util/rust-util-tests.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 0,
+                    "name": "anyhow"
+                },
+                {
+                    "crate": 12,
+                    "name": "libc"
+                },
+                {
+                    "crate": 13,
+                    "name": "foreign"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                }
+            ]
+        },
+        {
+            "display_name": "bql",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/bql/libbql.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                }
+            ]
+        },
+        {
+            "display_name": "migration",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/migration/libmigration.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 24,
+                    "name": "bql"
+                }
+            ]
+        },
+        {
+            "display_name": "qom",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/qom/libqom.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                }
+            ]
+        },
+        {
+            "display_name": "system",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/system/libsystem.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                }
+            ]
+        },
+        {
+            "display_name": "chardev",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/chardev/libchardev.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                }
+            ]
+        },
+        {
+            "display_name": "hwcore",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/hw/core/libhwcore.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 28,
+                    "name": "chardev"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                },
+                {
+                    "crate": 27,
+                    "name": "system"
+                }
+            ]
+        },
+        {
+            "display_name": "rust-hwcore-rs-integration",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/hw/core/tests/tests.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 29,
+                    "name": "hwcore"
+                },
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                }
+            ]
+        },
+        {
+            "display_name": "rust-integration",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/tests/tests/vmstate_tests.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                }
+            ]
+        },
+        {
+            "display_name": "trace",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/trace/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 12,
+                    "name": "libc"
+                }
+            ]
+        },
+        {
+            "display_name": "pl011",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/rust/hw/char/pl011/libpl011.rlib.p/structured/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 11,
+                    "name": "bilge"
+                },
+                {
+                    "crate": 10,
+                    "name": "bilge_impl"
+                },
+                {
+                    "crate": 20,
+                    "name": "bits"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 14,
+                    "name": "glib_sys"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                },
+                {
+                    "crate": 28,
+                    "name": "chardev"
+                },
+                {
+                    "crate": 27,
+                    "name": "system"
+                },
+                {
+                    "crate": 29,
+                    "name": "hwcore"
+                },
+                {
+                    "crate": 32,
+                    "name": "trace"
+                }
+            ]
+        },
+        {
+            "display_name": "hpet",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/rust/hw/timer/hpet/src/lib.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 18,
+                    "name": "common"
+                },
+                {
+                    "crate": 16,
+                    "name": "qemu_macros"
+                },
+                {
+                    "crate": 22,
+                    "name": "util"
+                },
+                {
+                    "crate": 25,
+                    "name": "migration"
+                },
+                {
+                    "crate": 24,
+                    "name": "bql"
+                },
+                {
+                    "crate": 26,
+                    "name": "qom"
+                },
+                {
+                    "crate": 27,
+                    "name": "system"
+                },
+                {
+                    "crate": 29,
+                    "name": "hwcore"
+                }
+            ]
+        },
+        {
+            "display_name": "rust_arm_softmmu",
+            "root_module": "/home/vringar/projects/AMD-PSP/projects/qemu/.workspace/rust-excursion/build-rust/librust_arm_softmmu.a.p/structured/rust_arm_softmmu.rs",
+            "edition": "2021",
+            "cfg": [
+                "MESON"
+            ],
+            "is_proc_macro": false,
+            "deps": [
+                {
+                    "crate": 33,
+                    "name": "pl011"
+                }
+            ]
+        }
+    ]
+}
