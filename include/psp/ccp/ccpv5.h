@@ -19,6 +19,7 @@
 #ifndef AMD_CCP_V5_H
 #define AMD_CCP_V5_H
 #include "system/memory.h"
+#include "hw/irq.h"
 #include "hw/sysbus.h"
 #include "qemu/timer.h"
 
@@ -51,6 +52,8 @@
 #define CCP_Q_STATUS_OFFSET 0x100 /* Queue status register offset */
 
 /* Global registers */
+#define CCP_CFG_INT_STATUS_OFFSET 0x8
+#define CCP_CFG_INT_STATUS_DONE BIT(17)
 #define CCP_G_Q_MASK_OFFSET 0x0
 #define CCP_G_Q_PRIO_OFFSET 0x4
 
@@ -112,6 +115,13 @@ typedef struct CcpV5State {
      * can be active at the same time.
      */
     int32_t dma_timer_qid;
+
+    /*
+     * Config-region status @ +0x8 (abs 0x03006008): bit17 = queue completion,
+     * write-1-to-clear. Completion also raises the interrupt controller.
+     */
+    uint32_t int_status;
+    qemu_irq irq;
 
     /* Exposed after zlib extraction finishes */
     uint32_t zlib_bytes_written;
