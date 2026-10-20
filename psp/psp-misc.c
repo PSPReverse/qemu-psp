@@ -21,6 +21,7 @@
 #include "qemu/osdep.h"
 
 #include "psp/psp-misc.h"
+#include "psp/mmio/psp-timer.h"
 
 #include "hw/qdev-properties.h"
 #include "hw/resettable.h"
@@ -324,6 +325,29 @@ static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
     }
 }
 
+/*
+ * Low and high word of the 64-bit system tick counter, see
+ * psp_timer_system_ticks(). Each read takes its own snapshot, so the two words
+ * can disagree if the counter carries between them. Zero unless counter_hz is
+ * set on timer1, which keeps the default reads unmodelled.
+ */
+static bool psp_misc_system_ticks_word(hwaddr addr, unsigned int size,
+                                       uint64_t *val)
+{
+    uint64_t ticks;
+
+    if (addr != 0x032001f0 && addr != 0x032001f4) {
+        return false;
+    }
+    ticks = psp_timer_system_ticks();
+    if (ticks == 0) {
+        return false;
+    }
+    ticks = addr == 0x032001f0 ? (uint32_t)ticks : (uint32_t)(ticks >> 32);
+    *val = ticks & MAKE_64BIT_MASK(0, size * 8);
+    return true;
+}
+
 static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPMiscState* misc = PSP_MISC(opaque);
@@ -337,7 +361,8 @@ static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
     value = 0;
 
     slot = psp_misc_placeholder_slot(misc, phys_abs & ~(hwaddr)3);
-    if (!psp_misc_load_value(phys_abs, &value)) {
+    if (psp_misc_system_ticks_word(phys_abs, size, &value) ||
+        !psp_misc_load_value(phys_abs, &value)) {
         trace_psp_misc_read(offset, value, size);
     } else if (slot) {
         value = (*slot >> ((phys_abs & 3) * 8)) & MAKE_64BIT_MASK(0, size * 8);
