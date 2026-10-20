@@ -32,17 +32,26 @@
 
 static char ident[] = "PSP Timer";
 
+/*
+ * Shortest expiry interval. A guest period of 1 would otherwise give a
+ * 10 ns timer and an interrupt storm.
+ */
+#define PSP_TIMER_MIN_EXPIRY_NS 1000
+
 /* 100 MHz counter: 10 ns per count */
 static void psp_timer_arm(PSPTimerState* s)
 {
+    int64_t delay_ns;
+
     if (s->expiry_irq_id < 0 || !(s->psp_timer_control & 1) ||
         s->psp_timer_period == 0) {
         timer_del(&s->expiry_timer);
         return;
     }
+    delay_ns = MAX((int64_t)s->psp_timer_period * 10,
+                   PSP_TIMER_MIN_EXPIRY_NS);
     timer_mod(&s->expiry_timer,
-              qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) +
-                  (int64_t)s->psp_timer_period * 10);
+              qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) + delay_ns);
 }
 
 static void psp_timer_expire(void* opaque)
@@ -201,6 +210,7 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
         break;
     case 0x10:
         s->psp_timer_period = val;
+        psp_timer_arm(s);
         break;
     /* Placeholder: plain write-back, meaning inferred and not modelled */
     case 0x14:
