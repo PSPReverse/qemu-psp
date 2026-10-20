@@ -86,23 +86,31 @@ static void psp_irq_write_enable(PSPIrqState* irq, hwaddr offset,
     psp_irq_update(irq);
 }
 
+/* Trace the lowest source acknowledged by a FIQ clear; a zero write clears none. */
+static void psp_irq_trace_clear(unsigned int base, uint64_t value)
+{
+    if (value) {
+        trace_psp_irq_clear_bit(base + __builtin_ctz(value));
+    }
+}
+
 static void psp_irq_write_fiq(PSPIrqState* irq, hwaddr offset, uint64_t value, unsigned int size) {
     switch (offset) {
         case FIQ_HANDLED_BITFIELD_OFFSET:
             irq->irq_buffer[0] &= ~value;
-            trace_psp_irq_clear_bit(__builtin_ctz(value));
+            psp_irq_trace_clear(0, value);
             break;
         case FIQ_HANDLED_BITFIELD_OFFSET+4:
             irq->irq_buffer[1] &= ~value;
-            trace_psp_irq_clear_bit(32+__builtin_ctz(value));
+            psp_irq_trace_clear(32, value);
             break;
         case FIQ_HANDLED_BITFIELD_OFFSET+8:
             irq->irq_buffer[2] &= ~value;
-            trace_psp_irq_clear_bit(64+__builtin_ctz(value));
+            psp_irq_trace_clear(64, value);
             break;
         case FIQ_HANDLED_BITFIELD_OFFSET+12:
             irq->irq_buffer[3] &= ~value;
-            trace_psp_irq_clear_bit(96+__builtin_ctz(value));
+            psp_irq_trace_clear(96, value);
             break;
         default:
             trace_psp_irq_write_unimplemented(offset, value, size);
