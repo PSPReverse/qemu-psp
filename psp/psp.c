@@ -216,6 +216,15 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         return;
     }
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->mailbox), 0, PSP_MAILBOX_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->mailbox), 1, PSP_MAILBOX_CTRL_BASE);
+    /* x86-side writes raise IC source doorbell_irq_id (default 0x3c) once the
+     * firmware has armed 0x0301069c; -global driver=amd_psp.mailbox,
+     * property=doorbell_irq_id,value=N overrides, -1 disables. */
+    if (s->mailbox.doorbell_irq_id >= 0 && s->mailbox.doorbell_irq_id < 128) {
+        sysbus_connect_irq(SYS_BUS_DEVICE(&s->mailbox), 0,
+                           qdev_get_gpio_in(DEVICE(&s->irq),
+                                            s->mailbox.doorbell_irq_id));
+    }
 
     /* Map Fuse */
     if (s->dbg_mode) {

@@ -60,6 +60,8 @@
 
 // TODO: check if this is consistent across versions
 #define PSP_MAILBOX_BASE 0x03010570
+/* Device-side mailbox interrupt enable, set by the SecOS mailbox driver */
+#define PSP_MAILBOX_CTRL_BASE 0x0301069c
 
 #define PSP_FUSE_BASE 0x03010104
 #define PSP_FUSE_NAME "PSP Fuse"
