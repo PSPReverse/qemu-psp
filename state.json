@@ -1,6 +1,6 @@
 {
   "next_display_id": 17,
-  "next_comment_id": 18,
+  "next_comment_id": 19,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -337,7 +337,7 @@
       "priority": "high",
       "created_by": "U0Ke",
       "created_at": "2026-10-20T00:00:24.726219958Z",
-      "updated_at": "2026-10-20T00:17:30.366830477Z",
+      "updated_at": "2026-10-20T02:40:08.696089824Z",
       "labels": [
         "kaizen"
       ],
@@ -350,6 +350,15 @@
           "kind": "note",
           "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
           "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAf1nizVmHnKECcO+L/lnaBCfWvNvfI9kh4Ynbt5olTvWw80tGF6D6+rkGYZ2VeYy7CbEQRoUzr2JzV0iWJVXWDA=="
+        },
+        "6c11f772-9a0d-4ade-8ae3-f74cb48bf2f3": {
+          "display_id": 18,
+          "author": "U0Ke",
+          "content": "pushed claude/psp-fidelity-9 = accaac6e. tracecmp Zen2 IDENTICAL (#997) BUT blind to the AES dst_addr/dst_mtype fix (no ccp_* trace carries dst). TODO: add dst addr+memtype to the AES trace point, rerun tracecmp, and ask aspfuzz for the gate rerun (bug A/B) on this rev.",
+          "created_at": "2026-10-20T02:40:08.526795309Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABALGsWxgFlH61NTLTt3e5ZuydxTkm51vza5Qd/aCCaGGE3sLarEvcuV/4utvcrmc4DL1r3yDQ9xb2SfeDKh938Dw=="
         },
         "cce7b250-85e1-4bd2-8432-6039df163d7f": {
           "display_id": 12,
@@ -399,8 +408,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T01:05:02.985140141Z",
+    "timestamp": "2026-10-20T02:40:08.696089824Z",
     "agent_id": "U0Ke",
-    "agent_seq": 43
+    "agent_seq": 44
   }
 }
