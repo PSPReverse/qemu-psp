@@ -79,7 +79,7 @@ static void cs_write(void* opaque, hwaddr addr, uint64_t value,
                      unsigned int size)
 {
     AccessObserverState* s = PSP_X86_ACCESS_OBSERVER(opaque);
-    if (addr >= s->base && addr < s->base + s->size) {
+    if (addr >= s->base && addr - s->base < s->size) {
         s->observed_illegal_write = addr;
         s->pc_illegal_write = get_pc();
     }
@@ -93,13 +93,19 @@ static void cs_write(void* opaque, hwaddr addr, uint64_t value,
 static uint64_t cs_read(void* opaque, hwaddr addr, unsigned int size)
 {
     AccessObserverState* s = PSP_X86_ACCESS_OBSERVER(opaque);
-    if (addr >= s->base && addr < s->base + s->size) {
+    if (addr >= s->base && addr - s->base < s->size) {
         s->observed_illegal_read = addr;
         s->pc_illegal_read = get_pc();
     }
-    uint64_t value;
-    address_space_read(&s->x86_memory->as, addr, MEMTXATTRS_UNSPECIFIED, &value,
-                       size);
+    uint64_t value = 0;
+    MemTxResult res = address_space_read(&s->x86_memory->as, addr,
+                                         MEMTXATTRS_UNSPECIFIED, &value, size);
+    if (res != MEMTX_OK) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "Access observer: read at 0x%" HWADDR_PRIx " failed\n",
+                      addr);
+        return 0;
+    }
     return value;
 }
 
@@ -116,6 +122,12 @@ static void realize(DeviceState* dev, Error** errp)
     ERRP_GUARD();
 
     AccessObserverState* s = PSP_X86_ACCESS_OBSERVER(dev);
+    if (!s->x86_memory) {
+        error_setg(errp,
+                   "property 'x86_memory' not specified for PSP X86 Access "
+                   "Observer");
+        return;
+    }
     /* Init x86 */
     memory_region_init_io(&s->mr, OBJECT(dev), &mem_ops, s,
                           "access-observer-mr", X86_PHYS_ADDR_SPACE_SIZE);
