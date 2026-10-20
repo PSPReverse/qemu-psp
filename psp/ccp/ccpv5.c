@@ -38,6 +38,9 @@
 /* Upper bound on descriptors processed per queue run (guest controls head) */
 #define CCP_Q_MAX_DESC_PER_RUN 4096
 
+/* Upper bound on one AES request: the host staging buffers are sized by it */
+#define CCP_AES_MAX_LEN (16 * 1024 * 1024)
+
 /* TODO Document*/
 static void ccp_process_q(CcpV5State* s, uint32_t id);
 
@@ -613,10 +616,30 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
         qemu_log_mask(LOG_GUEST_ERROR, "CCP Error AES: zero-length request\n");
         return true;
     }
+    if (len > CCP_AES_MAX_LEN) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "CCP Error AES: request length %u exceeds %u\n", len,
+                      CCP_AES_MAX_LEN);
+        return true;
+    }
+    /* nettle asserts on partial blocks in ECB mode */
+    if (func.aes.mode == CCP_AES_MODE_ECB && len % 16) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "CCP Error AES: ECB length %u is not a multiple of 16\n",
+                      len);
+        return true;
+    }
 
-    uint8_t* src_buf = malloc(len);
-    uint8_t* dst_buf = malloc(len);
+    uint8_t *src_buf = g_try_malloc(len);
+    uint8_t *dst_buf = g_try_malloc(len);
     bool failed = false;
+
+    if (!src_buf || !dst_buf) {
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP Error AES: out of host memory\n");
+        g_free(src_buf);
+        g_free(dst_buf);
+        return true;
+    }
 
     ccp_aes_log_func(func);
 
@@ -663,8 +686,8 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
                       func.aes.mode);
     }
 
-    free(src_buf);
-    free(dst_buf);
+    g_free(src_buf);
+    g_free(dst_buf);
     return failed;
 }
 
