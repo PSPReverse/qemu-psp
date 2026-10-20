@@ -1,6 +1,6 @@
 {
   "next_display_id": 16,
-  "next_comment_id": 12,
+  "next_comment_id": 13,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -282,10 +282,21 @@
       "priority": "high",
       "created_by": "U0Ke",
       "created_at": "2026-10-20T00:00:24.726219958Z",
-      "updated_at": "2026-10-20T00:00:30.324960271Z",
+      "updated_at": "2026-10-20T00:03:51.769046206Z",
       "labels": [
         "kaizen"
-      ]
+      ],
+      "comments": {
+        "cce7b250-85e1-4bd2-8432-6039df163d7f": {
+          "display_id": 12,
+          "author": "U0Ke",
+          "content": "Also: AES dst_addr uses DST_LO twice (should be DST_HI) and dst_mtype from SRC_MEM (should be DST_MEM): verified real in ccpv5.c, changes guest-visible AES dst; skipped in fidelity-5 on purpose, do carefully (a descriptor with DST_HI!=0 or SRC/DST memtype mismatch).",
+          "created_at": "2026-10-20T00:03:51.758745055Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABA0kN37bVLEy6snfo883+fEjy8JubeTqXEc0wKtS36RLl8oOHDXz2O/KCgeXGtSbP5l+z/vns9U8JQCg7t8JiYCw=="
+        }
+      }
     },
     "fcbdea3b-5f7c-4339-b585-2c347ef4679e": {
       "uuid": "fcbdea3b-5f7c-4339-b585-2c347ef4679e",
@@ -324,8 +335,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T00:01:42.436978270Z",
+    "timestamp": "2026-10-20T00:03:51.769046206Z",
     "agent_id": "U0Ke",
-    "agent_seq": 35
+    "agent_seq": 36
   }
 }
