@@ -20,6 +20,9 @@
 
 #include "psp/mmio/mailbox.h"
 
+#include "hw/core/cpu.h"
+#include "hw/irq.h"
+#include "hw/qdev-properties.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -35,34 +38,84 @@ static const char* index_to_name(int index)
     case 2:
         return "ptr_high";
     default:
-        qemu_log_mask(LOG_GUEST_ERROR, "Invalid index_to_name\n");
-        exit(1);
+        return "invalid";
     }
 }
 static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
 {
     MailboxState* s = MAILBOX(opaque);
     hwaddr index = offset / 4;
-    assert(index < 3);
+    if (index >= 3) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "%s: out-of-range mailbox read @ offset 0x%" HWADDR_PRIx "\n",
+                      __func__, offset);
+        return 0;
+    }
     trace_psp_mailbox_read(index_to_name(index), s->values[index]);
     trace_psp_mailbox_read("blub", 5);
     return s->values[index];
 }
 
-static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
-                          unsigned int size)
+static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
+                                 unsigned int size, MemTxAttrs attrs)
 {
     MailboxState* s = MAILBOX(opaque);
 
     hwaddr index = offset / 4;
-    assert(index < 3);
+    if (index >= 3) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "%s: out-of-range mailbox write @ offset 0x%" HWADDR_PRIx "\n",
+                      __func__, offset);
+        return MEMTX_OK;
+    }
     s->values[index] = value;
     trace_psp_mailbox_write(index_to_name(index), s->values[index]);
+    trace_psp_mailbox_write_attrs(index, value, attrs.unspecified, attrs.secure,
+                                  attrs.requester_id);
+    /*
+     * Debug doorbell: only for writes NOT issued by the PSP core. The fuzz
+     * harness injects word 0 from a host thread (no vCPU context); the
+     * firmware's own response writes run inside the vCPU and must not
+     * re-raise the source. Memory attrs cannot tell them apart (both look
+     * like secure CPU accesses) and current_cpu is not reliable under the
+     * fuzzing bridge, so test whether the vCPU is inside guest execution.
+     */
+    if (index == 0 && s->doorbell_irq_id >= 0 && s->int_enable &&
+        !(first_cpu && first_cpu->running)) {
+        qemu_set_irq(s->doorbell_irq, 1);
+    }
+    return MEMTX_OK;
 }
+
+static uint64_t mailbox_ctrl_read(void* opaque, hwaddr offset,
+                                  unsigned int size)
+{
+    MailboxState* s = MAILBOX(opaque);
+
+    trace_psp_mailbox_ctrl_read(s->int_enable);
+    return s->int_enable;
+}
+
+static void mailbox_ctrl_write(void* opaque, hwaddr offset, uint64_t value,
+                               unsigned int size)
+{
+    MailboxState* s = MAILBOX(opaque);
+
+    trace_psp_mailbox_ctrl_write(value);
+    s->int_enable = value;
+}
+
+static const MemoryRegionOps mailbox_ctrl_ops = {
+    .read = mailbox_ctrl_read,
+    .write = mailbox_ctrl_write,
+    .endianness = DEVICE_LITTLE_ENDIAN,
+    .impl.min_access_size = 4,
+    .impl.max_access_size = 4,
+};
 
 static const MemoryRegionOps mailbox_mem_ops = {
     .read = mailbox_read,
-    .write = mailbox_write,
+    .write_with_attrs = mailbox_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
     .valid.min_access_size = 1,
     .valid.max_access_size = 4,
@@ -86,12 +139,23 @@ static void realize(DeviceState* dev, Error** errp)
                           TYPE_MAILBOX, 4 * 3);
 
     sysbus_init_mmio(sbd, &s->iomem);
+
+    memory_region_init_io(&s->ctrl_iomem, OBJECT(dev), &mailbox_ctrl_ops, s,
+                          TYPE_MAILBOX "-ctrl", 4);
+    sysbus_init_mmio(sbd, &s->ctrl_iomem);
+
+    sysbus_init_irq(sbd, &s->doorbell_irq);
 }
+
+static const Property mailbox_properties[] = {
+    DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, 0x3c),
+};
 
 static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = realize;
+    device_class_set_props(dc, mailbox_properties);
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
