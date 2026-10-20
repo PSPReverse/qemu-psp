@@ -1,6 +1,6 @@
 {
   "next_display_id": 21,
-  "next_comment_id": 25,
+  "next_comment_id": 26,
   "display_id_map": {
     "0a66f2d4-cf0c-4d3f-8901-b213db1bea15": 18,
     "2120413d-8b04-4c1f-84f7-abe2bf5daba9": 20,
@@ -335,7 +335,18 @@
       "priority": "high",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:07:42.911552387Z",
-      "updated_at": "2026-10-19T18:07:42.911552387Z"
+      "updated_at": "2026-10-20T05:33:56.481029808Z",
+      "comments": {
+        "73f63d79-dbe7-4644-b270-0bb85e6de95f": {
+          "display_id": 25,
+          "author": "U0Ke",
+          "content": "Stack pushed to PSPReverse/qemu-psp (branches only, stacked on claude/qemu-10.2 5adfae7e): claude/pr1-ic bf9f8721, pr2-ccp c6c2048c, pr3-timer 76125c0b, pr4-mailbox 7a992934 (KNOWN NOT MERGEABLE upstream: doorbell keyed on first_cpu->running, needs redesign, #20), pr5-zen3 3f7c6211 (tip). Each reviewed by the-hater once (scratch/HATER-pr1-ic.md, HATER-pr2-5.md), fixes applied except PR4. Zen3 boot at tip: 5704 lines, ends sts 0x107. Not done: the-verifier pass, qtest, Signed-off-by. Fidelity chain (fidelity-2..12) sits on 6e3dfe27 and is NOT rebased onto the stack yet.",
+          "created_at": "2026-10-20T05:33:56.450105412Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAtJjZ9xrLdyaJ41+3tC6//Kzsrv3akN0qKibvDAKgi7XoC75x52nLyXvSZyhpVaUM20S13FXa0YwqQKS/4yVgCA=="
+        }
+      }
     },
     "c8058c48-704a-4ed5-8a90-28c641dd733a": {
       "uuid": "c8058c48-704a-4ed5-8a90-28c641dd733a",
@@ -528,8 +539,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T05:17:28.619445186Z",
+    "timestamp": "2026-10-20T05:33:56.481029808Z",
     "agent_id": "U0Ke",
-    "agent_seq": 58
+    "agent_seq": 59
   }
 }
