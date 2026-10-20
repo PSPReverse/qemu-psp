@@ -602,7 +602,7 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     ccp_function func;
     // bool init;
     // bool eom;
-    uint8_t key_local[32];
+    uint8_t key_local[32] = {0};
     ccp_memtype key_mtype, src_mtype, dst_mtype;
     hwaddr key_addr, src_addr, dst_addr;
     uint32_t len;
@@ -630,7 +630,8 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
         return true;
     }
 
-    uint8_t *src_buf = g_try_malloc(len);
+    /* A SYSTEM source is not copied, so keep the staged input deterministic */
+    uint8_t *src_buf = g_try_malloc0(len);
     uint8_t *dst_buf = g_try_malloc(len);
     bool failed = false;
 
@@ -763,11 +764,16 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     hwaddr rsa_dst;
     CcpV5RsaPubKey rsa_pubkey;
 
-    uint8_t rsa_exp[512]; /* Only 2048 & 4096 for now */
-    uint8_t rsa_mod[512]; /* Only 2048 & 4096 for now */
-    uint8_t rsa_msg[512]; /* Assuming it is a signature with length equal to the
-                             modulus */
-    uint8_t rsa_result[512];
+    /*
+     * Only 2048 & 4096 for now. The inputs are zeroed because a SYSTEM source
+     * is not copied, and the result because mpz_export() writes nothing when
+     * the result is 0.
+     */
+    uint8_t rsa_exp[512] = {0};
+    uint8_t rsa_mod[512] = {0};
+    /* Assuming it is a signature with length equal to the modulus */
+    uint8_t rsa_msg[512] = {0};
+    uint8_t rsa_result[512] = {0};
 
     func.raw = CCP5_CMD_FUNCTION(desc);
     init = CCP5_CMD_INIT(desc);
