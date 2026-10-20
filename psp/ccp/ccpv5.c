@@ -468,7 +468,9 @@ static void ccp_copy_to_host(CcpV5State* s, void* hdst, hwaddr src,
         hsrc = cpu_physical_memory_map(src, &plen, false);
         assert(plen == len);
         memcpy(hdst, hsrc, len);
-        cpu_physical_memory_unmap(hsrc, len, false, plen);
+        if (hsrc) {
+            cpu_physical_memory_unmap(hsrc, len, false, plen);
+        }
     } else if (stype == CCP_MEMTYPE_SB) {
         if (!ccp_lsb_range_ok(s, src, len)) {
             qemu_log_mask(LOG_GUEST_ERROR,
@@ -491,7 +493,9 @@ static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
         hdst = cpu_physical_memory_map(dst, &plen, true);
         assert(plen == len);
         memcpy(hdst, hsrc, plen);
-        cpu_physical_memory_unmap(hdst, plen, true, plen);
+        if (hdst) {
+            cpu_physical_memory_unmap(hdst, plen, true, plen);
+        }
     } else if (dtype == CCP_MEMTYPE_SB) {
         if (!ccp_lsb_range_ok(s, dst, len)) {
             qemu_log_mask(LOG_GUEST_ERROR,
@@ -559,7 +563,8 @@ static void ccp_aes_log_func(ccp_function func)
                   mode, type, func.aes.encrypt ? "true" : "false");
 }
 
-static void ccp_aes(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+/* @return true if the descriptor failed and the queue must report an error */
+static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 {
     ccp_function func;
     // bool init;
@@ -573,6 +578,11 @@ static void ccp_aes(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     // init = CCP5_CMD_INIT(desc);
     // eom = CCP5_CMD_EOM(desc);
     len = CCP5_CMD_LEN(desc);
+
+    if (len == 0) {
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP Error AES: zero-length request\n");
+        return true;
+    }
 
     uint8_t* src_buf = malloc(len);
     uint8_t* dst_buf = malloc(len);
@@ -618,6 +628,7 @@ static void ccp_aes(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
     free(src_buf);
     free(dst_buf);
+    return false;
 }
 
 static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
@@ -755,8 +766,7 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
     switch (engine) {
     case CCP_ENGINE_AES:
-        ccp_aes(s, id, desc);
-        break;
+        return ccp_aes(s, id, desc);
     case CCP_ENGINE_XTS_AES_128:
         qemu_log_mask(LOG_UNIMP,
                       "CCP Error: Unimplemented engine (AES-XTS-128)\n");
