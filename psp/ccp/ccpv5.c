@@ -404,7 +404,9 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     if (plen_in != len) {
         qemu_log_mask(LOG_GUEST_ERROR,
                       "CCP Error ZLIB: Couldn't map guest input memory\n");
-        cpu_physical_memory_unmap(hsrc, plen_in, true, plen_in);
+        if (hsrc) {
+            cpu_physical_memory_unmap(hsrc, plen_in, false, 0);
+        }
         return true;
     }
     /* Mapping output buffer */
@@ -443,6 +445,10 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
                 cpu_physical_memory_unmap(hdst, plen_out, true, plen_out);
             continue;
         }
+    }
+
+    if (hsrc) {
+        cpu_physical_memory_unmap(hsrc, plen_in, false, plen_in);
     }
 
     s->zlib_bytes_written += s->zlib_state.total_out;
