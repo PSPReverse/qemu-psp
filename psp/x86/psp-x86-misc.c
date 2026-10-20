@@ -104,7 +104,15 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
     case 0xfed81e77:
         val = 0x7;
         break;
+    /*
+     * 16550 line status register (THRE|TEMT) of the legacy I/O UARTs: COM1
+     * 0x3f8, COM2 0x2f8, COM3 0x3e8, COM4 0x2e8. The BLs poll TEMT (bit 6)
+     * before every debug byte.
+     */
     case 0xfffdfc0003fd:
+    case 0xfffdfc0002fd:
+    case 0xfffdfc0003ed:
+    case 0xfffdfc0002ed:
         val = 0x60;
         break;
     default:
