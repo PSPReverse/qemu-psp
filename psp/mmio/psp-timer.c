@@ -61,6 +61,7 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
     s->psp_timer_count = 0;
     s->psp_timer_period = 0;
     memset(s->psp_timer_misc, 0, sizeof(s->psp_timer_misc));
+    memset(s->psp_timer_placeholder, 0, sizeof(s->psp_timer_placeholder));
     s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
     timer_del(&s->expiry_timer);
 }
@@ -104,6 +105,7 @@ static const VMStateDescription psp_timer_vmstate = {
         VMSTATE_UINT32(psp_timer_count, PSPTimerState),
         VMSTATE_UINT32(psp_timer_period, PSPTimerState),
         VMSTATE_UINT32_ARRAY(psp_timer_misc, PSPTimerState, 4),
+        VMSTATE_UINT32_ARRAY(psp_timer_placeholder, PSPTimerState, 3),
         VMSTATE_INT64(counter_anchor_ns, PSPTimerState),
         VMSTATE_END_OF_LIST()
     }
@@ -141,6 +143,12 @@ static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
         break;
     case 0x10:
         val = s->psp_timer_period;
+        break;
+    /* Placeholder: plain read-back, meaning inferred and not modelled */
+    case 0x14:
+    case 0x18:
+    case 0x1c:
+        val = s->psp_timer_placeholder[(reg - 0x14) >> 2];
         break;
     case 0x20:
         if (s->counter_hz) {
@@ -193,6 +201,12 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
         break;
     case 0x10:
         s->psp_timer_period = val;
+        break;
+    /* Placeholder: plain write-back, meaning inferred and not modelled */
+    case 0x14:
+    case 0x18:
+    case 0x1c:
+        s->psp_timer_placeholder[(offset - 0x14) >> 2] = val;
         break;
     case 0x1:
         /* XXX For single byte access by the on chip bl... */
