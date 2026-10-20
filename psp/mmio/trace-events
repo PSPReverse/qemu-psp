@@ -10,6 +10,7 @@ psp_timer_counter_read(uint64_t value) "value=0x%"PRIx64
 
 # psp-fuse.c
 psp_fuse_read(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
+psp_fuse_write(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx64" value=0x%"PRIx64" size=0x%x"
 
 # mailbox.c
 psp_mailbox_write(const char *target, uint32_t value) "target=%s, value=0x%"PRIx32
