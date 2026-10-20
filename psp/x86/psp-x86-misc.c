@@ -95,6 +95,7 @@ LoggingInfo get_logging_info_for_addr(hwaddr addr)
 
 static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
 {
+    PSPX86MiscState *s = PSP_X86_MISC(opaque);
     uint64_t val;
     LoggingInfo info = get_logging_info_for_addr(addr);
 
@@ -113,6 +114,18 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
     case 0xfffdfc0002ed:
         val = 0x60;
         break;
+    /*
+     * I/O port 0x61 (NMI status/control) through the 0xfffdfc000000 window.
+     * Placeholder following the PC-compatible port 0x61 convention; inferred,
+     * not taken from the PPR. Bits 0-1 read back the last write. Bit 4 is the
+     * refresh toggle: it flips on every read, a deterministic stand-in for the
+     * ~15 us refresh clock. Bit 5 (timer-2 output) is stubbed to 0. Applied to
+     * all generations as chipset behaviour.
+     */
+    case 0xfffdfc000061:
+        val = (s->port61_ctl & 0x3) | (s->port61_refresh ? 0x10 : 0);
+        s->port61_refresh = !s->port61_refresh;
+        break;
     default:
         trace_psp_x86_misc_read_unimplemented(addr, info.region_name,
                                               info.offset);
@@ -129,6 +142,12 @@ static void psp_x86_misc_write(void* opaque, hwaddr addr, uint64_t value,
     PSPX86MiscState* s = PSP_X86_MISC(opaque);
     LoggingInfo info = get_logging_info_for_addr(addr);
 
+    /* Port 0x61 placeholder: bits 0-1 stored, see psp_x86_misc_read */
+    if (addr == 0xfffdfc000061) {
+        s->port61_ctl = value & 0x3;
+        trace_psp_x86_misc_write(addr, value, info.region_name, info.offset);
+        return;
+    }
     /*
      * COM4 line control register (0x2e8 + 3), written by the Zen3 off-chip
      * BL. Accepted and logged but not stored; reads stay unmodelled.
