@@ -1,5 +1,5 @@
 {
-  "next_display_id": 17,
+  "next_display_id": 18,
   "next_comment_id": 21,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
@@ -15,6 +15,7 @@
     "bbea8178-d6fa-4271-80ec-68db95ee9157": 2,
     "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3,
     "c8058c48-704a-4ed5-8a90-28c641dd733a": 7,
+    "cb24fd5b-03ed-41ed-bb6d-78c302f7798a": 17,
     "cd28a6a9-00da-4edc-a291-faed68aacece": 6,
     "d9db2dfe-1e3d-4840-90a4-aff16d8816b3": 14,
     "fcbdea3b-5f7c-4339-b585-2c347ef4679e": 9
@@ -290,6 +291,17 @@
       "created_at": "2026-10-19T20:41:04.857055021Z",
       "updated_at": "2026-10-19T20:41:04.857055021Z"
     },
+    "cb24fd5b-03ed-41ed-bb6d-78c302f7798a": {
+      "uuid": "cb24fd5b-03ed-41ed-bb6d-78c302f7798a",
+      "display_id": 17,
+      "title": "libafl round 3 leftovers: uninit leaks, access-observer, x86 mapper, SMN/mapper vmstate, AES dst trace",
+      "description": "From #928: 7 AES src_buf/key_local and RSA rsa_result[512] uninitialised when memtype SYSTEM or mpz result 0 -> zero-init (host-stack leak + nondeterminism). 10 access-observer.c 'uint64_t value' uninit on failed address_space_read; x86_memory link unchecked in realize; addr<base+size wrap; x86 mapper rejects size!=4 though min_access_size=1; PSP_X86_SLOT_SIZE macros unparenthesised; no vmstate for SMN slots/x86 mapper (hard, re-apply aliases in post_load). Plus add dst addr+memtype to AES trace point so tracecmp can see the DST_HI/DST_MEM fix. Base claude/psp-fidelity-9.",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-20T03:31:34.259472650Z",
+      "updated_at": "2026-10-20T03:31:34.259472650Z"
+    },
     "cd28a6a9-00da-4edc-a291-faed68aacece": {
       "uuid": "cd28a6a9-00da-4edc-a291-faed68aacece",
       "display_id": 6,
@@ -428,8 +440,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T03:07:32.081635953Z",
+    "timestamp": "2026-10-20T03:31:34.259472650Z",
     "agent_id": "U0Ke",
-    "agent_seq": 46
+    "agent_seq": 47
   }
 }
