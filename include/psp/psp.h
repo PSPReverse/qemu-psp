@@ -54,6 +54,8 @@
 #define PSP_MMIO_NAME "PSP MMIO"
 
 #define PSP_IRQ_BASE 0x03010200
+/* Zen1/Zen+ IC window; the ACK/PEN/ID block sits at +0xb0 (0x030103b0) */
+#define PSP_IRQ_BASE_ZEN 0x03010300
 #define PSP_IRQ_NAME "PSP IRQ"
 
 // TODO: check if this is consistent across versions

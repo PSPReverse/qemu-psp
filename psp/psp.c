@@ -45,6 +45,7 @@ typedef struct AmdPspClass {
     hwaddr rom_base;
 
     hwaddr sts_base;
+    hwaddr irq_base;
 
     const char* smn_type;
     hwaddr smn_ctrl_base;
@@ -140,7 +141,7 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->irq), errp)) {
         return;
     }
-    sysbus_mmio_map(SYS_BUS_DEVICE(&s->irq), 0, PSP_IRQ_BASE);
+    sysbus_mmio_map(SYS_BUS_DEVICE(&s->irq), 0, c->irq_base);
 
     /* Deliver PSP interrupts to the ARM core. */
     sysbus_connect_irq(SYS_BUS_DEVICE(&s->irq), 0,
@@ -264,6 +265,7 @@ static void amd_psp_zen_class_init(ObjectClass* oc, const void* data)
     pspc->smn_container_base = 0x01000000;
 
     pspc->sts_base = 0x032000e8;
+    pspc->irq_base = PSP_IRQ_BASE_ZEN;
 }
 
 static void amd_psp_zen_plus_class_init(ObjectClass* oc, const void* data)
@@ -293,6 +295,7 @@ static void amd_psp_zen_two_class_init(ObjectClass* oc, const void* data)
     pspc->smn_container_base = 0x01000000;
 
     pspc->sts_base = 0x032000d8;
+    pspc->irq_base = PSP_IRQ_BASE;
 }
 
 static void amd_psp_zen_three_class_init(ObjectClass* oc, const void* data)
@@ -313,6 +316,7 @@ static void amd_psp_zen_three_class_init(ObjectClass* oc, const void* data)
     pspc->smn_container_base = 0x01000000;
 
     pspc->sts_base = 0x032000d8;
+    pspc->irq_base = PSP_IRQ_BASE;
 }
 
 static void amd_psp_zen_tesla_class_init(ObjectClass* oc, const void* data)
@@ -333,6 +337,7 @@ static void amd_psp_zen_tesla_class_init(ObjectClass* oc, const void* data)
     pspc->smn_container_base = 0x01000000;
 
     pspc->sts_base = 0x032000f0;
+    pspc->irq_base = PSP_IRQ_BASE;
 }
 
 static const TypeInfo amd_psp_types[] = {
