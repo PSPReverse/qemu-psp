@@ -26,6 +26,7 @@
 #include "migration/vmstate.h"
 #include "qemu/host-utils.h"
 #include "qemu/log.h"
+#include "qemu/main-loop.h"
 #include "trace.h"
 
 #include "psp/psp.h"
@@ -72,21 +73,71 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
     memset(s->psp_timer_misc, 0, sizeof(s->psp_timer_misc));
     memset(s->psp_timer_placeholder, 0, sizeof(s->psp_timer_placeholder));
     s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+    s->counter_offset_ns = 0;
     timer_del(&s->expiry_timer);
 }
 
 /*
  * Counter for counter_hz != 0: the last written value plus elapsed virtual
- * time scaled to counter_hz. The enable bit is not consulted in this mode.
+ * time (plus any aspfuzz_timer_advance() offset) scaled to counter_hz. The
+ * enable bit is not consulted in this mode.
  */
 static uint32_t psp_timer_derived_count(PSPTimerState *s)
 {
     int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
     /* The anchor can be ahead of the clock after a restore; do not wrap */
-    int64_t elapsed = MAX(now - s->counter_anchor_ns, 0);
+    uint64_t elapsed = MAX(now - s->counter_anchor_ns, 0);
 
     return s->psp_timer_count +
-           muldiv64(elapsed, s->counter_hz, NANOSECONDS_PER_SECOND);
+           muldiv64(elapsed + s->counter_offset_ns, s->counter_hz,
+                    NANOSECONDS_PER_SECOND);
+}
+
+/*
+ * Fuzzer hook, same pattern as aspfuzz_irq_inject: the realized timer1 (the
+ * first instance realized; psp.c realizes timer1 before timer2). Cleared at
+ * unrealize.
+ */
+static PSPTimerState *aspfuzz_timer_state;
+
+/*
+ * Advance the guest-visible time of the derived counter by ns. Only has an
+ * effect when counter_hz != 0; with counter_hz == 0 the offset is stored but
+ * not read. The opt-in expiry timer is neither fired nor re-armed. The BQL is
+ * taken if the caller does not hold it. Returns -1 if timer1 is not realized
+ * or the offset would overflow; else 0.
+ */
+int32_t aspfuzz_timer_advance(uint64_t ns)
+{
+    bool took_bql = !bql_locked();
+    int32_t rc = -1;
+
+    if (took_bql) {
+        bql_lock();
+    }
+    if (aspfuzz_timer_state != NULL &&
+        ns <= UINT64_MAX - aspfuzz_timer_state->counter_offset_ns) {
+        aspfuzz_timer_state->counter_offset_ns += ns;
+        rc = 0;
+    }
+    if (took_bql) {
+        bql_unlock();
+    }
+    return rc;
+}
+
+static void psp_timer_realize(DeviceState *dev, Error **errp)
+{
+    if (aspfuzz_timer_state == NULL) {
+        aspfuzz_timer_state = PSP_TIMER(dev);
+    }
+}
+
+static void psp_timer_unrealize(DeviceState *dev)
+{
+    if (aspfuzz_timer_state == PSP_TIMER(dev)) {
+        aspfuzz_timer_state = NULL;
+    }
 }
 
 /*
@@ -116,6 +167,7 @@ static const VMStateDescription psp_timer_vmstate = {
         VMSTATE_UINT32_ARRAY(psp_timer_misc, PSPTimerState, 4),
         VMSTATE_UINT32_ARRAY(psp_timer_placeholder, PSPTimerState, 3),
         VMSTATE_INT64(counter_anchor_ns, PSPTimerState),
+        VMSTATE_UINT64(counter_offset_ns, PSPTimerState),
         VMSTATE_END_OF_LIST()
     }
 };
@@ -270,6 +322,8 @@ static void psp_timer_class_init(ObjectClass* oc, const void* data)
     ResettableClass *rc = RESETTABLE_CLASS(oc);
 
     device_class_set_props(dc, psp_timer_properties);
+    dc->realize = psp_timer_realize;
+    dc->unrealize = psp_timer_unrealize;
     dc->vmsd = &psp_timer_vmstate;
     rc->phases.hold = psp_timer_reset_hold;
 }

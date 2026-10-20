@@ -57,6 +57,11 @@ typedef struct PSPTimerState {
     uint32_t counter_hz;
     /* Virtual time at which psp_timer_count was last written (derived mode) */
     int64_t counter_anchor_ns;
+    /*
+     * Extra virtual time (ns) added to the derived counter by
+     * aspfuzz_timer_advance(); zeroed on reset
+     */
+    uint64_t counter_offset_ns;
 
     /* Opt-in expiry interrupt: IC source raised every period while enabled;
      * -1 = off (keeps snapshots free of host-clock timers). */
@@ -65,4 +70,7 @@ typedef struct PSPTimerState {
     QEMUTimer expiry_timer;
 
 } PSPTimerState;
+
+/* Fuzzer hook, see psp-timer.c */
+int32_t aspfuzz_timer_advance(uint64_t ns);
 #endif
