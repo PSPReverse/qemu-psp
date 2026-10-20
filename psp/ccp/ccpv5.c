@@ -649,6 +649,8 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     key_addr = CCP5_CMD_KEY_LO(desc) | ((hwaddr)(CCP5_CMD_KEY_HI(desc)) << 32);
     src_addr = CCP5_CMD_SRC_LO(desc) | ((hwaddr)(CCP5_CMD_SRC_HI(desc)) << 32);
     dst_addr = CCP5_CMD_DST_LO(desc) | ((hwaddr)(CCP5_CMD_DST_HI(desc)) << 32);
+    trace_ccp_aes(func.aes.mode, func.aes.type, func.aes.encrypt, src_addr,
+                  src_mtype, dst_addr, dst_mtype, len);
 
     switch (func.aes.mode) {
 
