@@ -1,5 +1,5 @@
 {
-  "next_display_id": 15,
+  "next_display_id": 16,
   "next_comment_id": 12,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
@@ -7,6 +7,7 @@
     "3e3c5291-aebb-4f75-a1ca-8c9b43e9f626": 11,
     "6966aa00-4422-424b-8a3b-883159ab4dc2": 12,
     "6eec7cb1-0df7-4d1b-9c31-9a1a2509f5f0": 13,
+    "8a40d963-789f-422c-b1e3-69b0c6209bd8": 15,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
     "bb4047d3-70c1-40ba-9d34-6e7cd774d47f": 8,
@@ -127,6 +128,17 @@
       "labels": [
         "kaizen"
       ]
+    },
+    "8a40d963-789f-422c-b1e3-69b0c6209bd8": {
+      "uuid": "8a40d963-789f-422c-b1e3-69b0c6209bd8",
+      "display_id": 15,
+      "title": "Timer counter driven by virtual time (opt-in) so long polls finish (qemu-tools #936)",
+      "description": "Zen2 off-chip config parks in a psp_timer_counter poll loop: counter is +1 per read (~120k reads/s), 39.4M reads in 330 s, counter 0x8bae7f. Proposal: opt-in property (e.g. counter_ticks_per_second / counter_mode=virtual) deriving the counter from QEMU_CLOCK_VIRTUAL (deterministic only with icount; keep default = current +1/read so fuzz determinism unchanged). Bundle with #12 timer vmsd work. Verify with qemu-tools tracecmp (both default=identical, and opt-in gets past the park).",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-20T00:01:36.162831001Z",
+      "updated_at": "2026-10-20T00:01:36.162831001Z"
     },
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": {
       "uuid": "b475fd5b-f80e-4399-b2e4-e2d1e4155495",
@@ -309,8 +321,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T00:00:30.324960271Z",
+    "timestamp": "2026-10-20T00:01:36.162831001Z",
     "agent_id": "U0Ke",
-    "agent_seq": 33
+    "agent_seq": 34
   }
 }
