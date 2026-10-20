@@ -287,6 +287,8 @@ static void psp_irq_reset_hold(Object* obj, ResetType type)
 {
     PSPIrqState* s = PSP_IRQ(obj);
 
+    /* Same power-on state as realize: firmware enables sources again */
+    memset(s->ccp_queue_bitfield, 0, sizeof(s->ccp_queue_bitfield));
     s->irq_buffer[0] = s->force_group0;
     s->irq_buffer[1] = s->force_group1;
     s->irq_buffer[2] = 0;
@@ -303,6 +305,13 @@ static const Property properties[] = {
     DEFINE_PROP_UINT32("force_group3", PSPIrqState, force_group3, 0),
 };
 
+/* The core lines are derived state; recompute them from the restored bits */
+static int psp_irq_post_load(void *opaque, int version_id)
+{
+    psp_irq_update(PSP_IRQ(opaque));
+    return 0;
+}
+
 /*
  * Snapshot the full interrupt state so the fuzzer's fast-snapshot
  * (syx) restores pending/ACK state deterministically every iteration.
@@ -311,6 +320,7 @@ static const VMStateDescription psp_irq_vmstate = {
     .name = "psp-irq",
     .version_id = 1,
     .minimum_version_id = 1,
+    .post_load = psp_irq_post_load,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32_ARRAY(ccp_queue_bitfield, PSPIrqState, 4),
         VMSTATE_UINT32_ARRAY(irq_buffer, PSPIrqState, 4),
