@@ -106,6 +106,8 @@ typedef struct CcpV5State {
     CcpV5Lsb lsb;
 
     CcpV5ShaCtx sha_ctx;
+    /* SHA type (CCP_SHA_TYPE_*) of sha_ctx; only valid while raw is set */
+    uint32_t sha_ctx_type;
     CcpV5ZlibState zlib_state;
 
     /* Timer to process QUEUE events "asynchronously" */

@@ -274,9 +274,14 @@ static void ccp_perform_sha_256(CcpV5State* s, hwaddr src, uint32_t len,
     hwaddr plen;
     uint32_t bytes_read = 0;
 
-    if (s->sha_ctx.raw == NULL) {
-        /* Init new SHA256 context */
+    /*
+     * The context is shared by both SHA types: restart it on init, or when
+     * the live context belongs to the other type.
+     */
+    if (init || s->sha_ctx.raw == NULL || s->sha_ctx_type != CCP_SHA_TYPE_256) {
+        ccp_clear_sha_ctx(&s->sha_ctx);
         ccp_init_sha256_ctx(&s->sha_ctx);
+        s->sha_ctx_type = CCP_SHA_TYPE_256;
     }
     if (s->sha_ctx.raw != NULL) {
         while (bytes_read < len) {
@@ -320,9 +325,14 @@ static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
     hwaddr plen;
     uint32_t bytes_read = 0;
 
-    if (s->sha_ctx.raw == NULL) {
-        /* Init new SHA384 context */
+    /*
+     * The context is shared by both SHA types: restart it on init, or when
+     * the live context belongs to the other type.
+     */
+    if (init || s->sha_ctx.raw == NULL || s->sha_ctx_type != CCP_SHA_TYPE_384) {
+        ccp_clear_sha_ctx(&s->sha_ctx);
         ccp_init_sha384_ctx(&s->sha_ctx);
+        s->sha_ctx_type = CCP_SHA_TYPE_384;
     }
     if (s->sha_ctx.raw != NULL) {
         while (bytes_read < len) {
