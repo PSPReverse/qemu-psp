@@ -1,6 +1,6 @@
 {
   "next_display_id": 18,
-  "next_comment_id": 22,
+  "next_comment_id": 23,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -374,7 +374,7 @@
       "priority": "high",
       "created_by": "U0Ke",
       "created_at": "2026-10-20T00:00:24.726219958Z",
-      "updated_at": "2026-10-20T03:07:32.081635953Z",
+      "updated_at": "2026-10-20T03:42:54.112887518Z",
       "labels": [
         "kaizen"
       ],
@@ -396,6 +396,15 @@
           "kind": "note",
           "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
           "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABALGsWxgFlH61NTLTt3e5ZuydxTkm51vza5Qd/aCCaGGE3sLarEvcuV/4utvcrmc4DL1r3yDQ9xb2SfeDKh938Dw=="
+        },
+        "a9946046-a02e-44a8-835c-679f333a650b": {
+          "display_id": 22,
+          "author": "U0Ke",
+          "content": "AES dst fix (fidelity-9): not exercised by the 60 s Zen2 boot window (3 requests, all dst<1M, same memtype).",
+          "created_at": "2026-10-20T03:42:54.107921875Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAwePGbLlHTA90c4B9FUQ3ExiXIdZYVFDBAspLi8736xPPtXN/Q7ZmdfoGf/40idNZZ7+DhjLcA40z+BG+ZIdNAQ=="
         },
         "b27f1a01-a0e7-4f51-8667-f943ac39b9d2": {
           "display_id": 20,
@@ -454,8 +463,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T03:42:38.590096975Z",
+    "timestamp": "2026-10-20T03:42:54.112887518Z",
     "agent_id": "U0Ke",
-    "agent_seq": 49
+    "agent_seq": 50
   }
 }
