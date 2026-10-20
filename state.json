@@ -1,5 +1,5 @@
 {
-  "next_display_id": 14,
+  "next_display_id": 15,
   "next_comment_id": 12,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
@@ -14,6 +14,7 @@
     "bfaabe7d-0bf2-406c-ae44-1db47b835fcf": 3,
     "c8058c48-704a-4ed5-8a90-28c641dd733a": 7,
     "cd28a6a9-00da-4edc-a291-faed68aacece": 6,
+    "d9db2dfe-1e3d-4840-90a4-aff16d8816b3": 14,
     "fcbdea3b-5f7c-4339-b585-2c347ef4679e": 9
   },
   "locks": {
@@ -257,6 +258,17 @@
         }
       }
     },
+    "d9db2dfe-1e3d-4840-90a4-aff16d8816b3": {
+      "uuid": "d9db2dfe-1e3d-4840-90a4-aff16d8816b3",
+      "display_id": 14,
+      "title": "Device crashes found by hazard hunt (scratch/DEVICE-HAZARDS.md)",
+      "description": "1 psp-fuse.c:37-42 no write callback -> NULL call on any write to 0x03010104 (crash). 2 ccpv5.c:458-461 AES LOCAL src len=0 -> unmap(NULL). 4 AES/RSA LOCAL range crossing region boundary asserts (459,477). 6 ZLIB src never unmapped on success (393-447) leaks bounce budget -> NULL maps cascade. 7 sha ctx type confusion (also #13). 8 AES ECB len%16 nettle assert (G). 9 malloc(len) unchecked. 10 no per-descriptor cap on len/4096 work (G). Items 3,5 covered by #13. Dead code: write-catcher.c (corrupt diff text lines 134-137), psp-osmem.c. Do after claude/psp-fidelity-5. Keep CCP guest copy overflow semantics.",
+      "status": "open",
+      "priority": "high",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-20T00:00:24.726219958Z",
+      "updated_at": "2026-10-20T00:00:24.726219958Z"
+    },
     "fcbdea3b-5f7c-4339-b585-2c347ef4679e": {
       "uuid": "fcbdea3b-5f7c-4339-b585-2c347ef4679e",
       "display_id": 9,
@@ -294,8 +306,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-19T23:54:11.132934242Z",
+    "timestamp": "2026-10-20T00:00:24.726219958Z",
     "agent_id": "U0Ke",
-    "agent_seq": 31
+    "agent_seq": 32
   }
 }
