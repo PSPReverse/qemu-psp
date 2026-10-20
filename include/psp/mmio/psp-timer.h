@@ -73,4 +73,7 @@ typedef struct PSPTimerState {
 
 /* Fuzzer hook, see psp-timer.c */
 int32_t aspfuzz_timer_advance(uint64_t ns);
+
+/* 64-bit counter for PSP-misc 0x032001f0/f4, 0 unless counter_hz != 0 */
+uint64_t psp_timer_system_ticks(void);
 #endif

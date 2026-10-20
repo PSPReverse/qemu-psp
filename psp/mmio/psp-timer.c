@@ -82,7 +82,7 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
  * time (plus any aspfuzz_timer_advance() offset) scaled to counter_hz. The
  * enable bit is not consulted in this mode.
  */
-static uint32_t psp_timer_derived_count(PSPTimerState *s)
+static uint64_t psp_timer_derived_ticks(PSPTimerState *s)
 {
     int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
     /* The anchor can be ahead of the clock after a restore; do not wrap */
@@ -91,6 +91,11 @@ static uint32_t psp_timer_derived_count(PSPTimerState *s)
     return s->psp_timer_count +
            muldiv64(elapsed + s->counter_offset_ns, s->counter_hz,
                     NANOSECONDS_PER_SECOND);
+}
+
+static uint32_t psp_timer_derived_count(PSPTimerState *s)
+{
+    return psp_timer_derived_ticks(s);
 }
 
 /*
@@ -124,6 +129,19 @@ int32_t aspfuzz_timer_advance(uint64_t ns)
         bql_unlock();
     }
     return rc;
+}
+
+/*
+ * The 64-bit counter read by PSP-misc at 0x032001f0 (low word) and 0x032001f4
+ * (high word). Same source as the +0x20 counter for timer1, unwrapped. Returns
+ * 0 if timer1 is not realized or counter_hz is 0. Called from the BQL.
+ */
+uint64_t psp_timer_system_ticks(void)
+{
+    if (aspfuzz_timer_state == NULL || aspfuzz_timer_state->counter_hz == 0) {
+        return 0;
+    }
+    return psp_timer_derived_ticks(aspfuzz_timer_state);
 }
 
 static void psp_timer_realize(DeviceState *dev, Error **errp)
