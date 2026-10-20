@@ -11,6 +11,7 @@
 static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
                                   unsigned int size)
 {
+    PSPSmnMiscState* s = opaque;
     uint64_t val;
     switch (offset) {
     case 0x51050:
@@ -64,6 +65,26 @@ static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
     // Zen 2
     case 0x5c14c:
         val = 0x100;
+        break;
+
+    /* Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8) */
+    case 0x6c14c:
+    case 0x6c94c:
+    case 0x6d14c:
+        val = 0x100;
+        break;
+
+    /*
+     * Zen 3 only: off-chip BL fuse read (fn 0xc7c0 via 0xc5dc, bit offset
+     * 0x5100). Inferred from the code, not measured on hardware: the SoC class
+     * decode of this word is not verified, and 0x1 is the value returned here.
+     */
+    case 0x5da20:
+        if (s->generation != ZEN3) {
+            trace_psp_smn_misc_read_unimplemented(offset);
+            return 0;
+        }
+        val = 0x1;
         break;
 
     // Zen Tesla
