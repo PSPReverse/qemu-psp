@@ -1,7 +1,8 @@
 {
-  "next_display_id": 18,
+  "next_display_id": 19,
   "next_comment_id": 24,
   "display_id_map": {
+    "0a66f2d4-cf0c-4d3f-8901-b213db1bea15": 18,
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
     "3e3c5291-aebb-4f75-a1ca-8c9b43e9f626": 11,
@@ -27,6 +28,17 @@
     }
   },
   "issues": {
+    "0a66f2d4-cf0c-4d3f-8901-b213db1bea15": {
+      "uuid": "0a66f2d4-cf0c-4d3f-8901-b213db1bea15",
+      "display_id": 18,
+      "title": "Full migration save/load does not resume Zen2/Zen3 boot (prefetch abort at 0x10c after -incoming)",
+      "description": "qemu-tools #1039: migrate exec:cat + -incoming on base and patched builds: VM runs but PC=0x10c (prefetch-abort vector) with no psp_* trace. Pre-existing. Find which region/CPU state is not restored (mtree, SRAM/ROM diff, cp15 regs). Matters for vmstate completeness of the snapshot gate; libafl_qemu fast snapshot may differ.",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-20T04:26:40.926131313Z",
+      "updated_at": "2026-10-20T04:26:40.926131313Z"
+    },
     "25996a88-7702-44e8-bef5-560dd4aa3872": {
       "uuid": "25996a88-7702-44e8-bef5-560dd4aa3872",
       "display_id": 10,
@@ -472,8 +484,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T04:15:48.430452485Z",
+    "timestamp": "2026-10-20T04:26:40.926131313Z",
     "agent_id": "U0Ke",
-    "agent_seq": 51
+    "agent_seq": 52
   }
 }
