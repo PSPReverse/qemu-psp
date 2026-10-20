@@ -1,6 +1,6 @@
 {
   "next_display_id": 18,
-  "next_comment_id": 23,
+  "next_comment_id": 24,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -300,11 +300,20 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-20T03:31:34.259472650Z",
-      "updated_at": "2026-10-20T03:42:38.590096975Z",
+      "updated_at": "2026-10-20T04:15:48.430452485Z",
       "labels": [
         "kaizen"
       ],
       "comments": {
+        "14dc9a64-546c-4ec7-abec-41cbf3e2b5a5": {
+          "display_id": 23,
+          "author": "U0Ke",
+          "content": "pushed claude/psp-fidelity-11 = 535e9f6a (vmstate+reset+alias re-apply for SMN slots and x86 mapper); tracecmp Zen2 IDENTICAL (#1036). Restore-compare of mapper state pending (qemu-tools trying migrate+incoming).",
+          "created_at": "2026-10-20T04:15:48.197662418Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAm+WkLAK0aMvIyQDRAuGxW+Vxr7OxDJ1ryOMGwikOegqUf9sTULVqxnzSbOD9R3FPp1FanifpoFKyQkKDs8LfCg=="
+        },
         "cb7fd61d-837e-43d7-a4b5-7d5e92c56908": {
           "display_id": 21,
           "author": "U0Ke",
@@ -463,8 +472,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T03:42:54.112887518Z",
+    "timestamp": "2026-10-20T04:15:48.430452485Z",
     "agent_id": "U0Ke",
-    "agent_seq": 50
+    "agent_seq": 51
   }
 }
