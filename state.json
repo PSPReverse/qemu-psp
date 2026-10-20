@@ -1,5 +1,5 @@
 {
-  "next_display_id": 16,
+  "next_display_id": 17,
   "next_comment_id": 16,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
@@ -8,6 +8,7 @@
     "6966aa00-4422-424b-8a3b-883159ab4dc2": 12,
     "6eec7cb1-0df7-4d1b-9c31-9a1a2509f5f0": 13,
     "8a40d963-789f-422c-b1e3-69b0c6209bd8": 15,
+    "b3772f79-6f4a-4b63-be7e-0431217d6eb6": 16,
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": 4,
     "b92e6fb1-afb6-4a74-9216-8f58ac01a9d0": 5,
     "bb4047d3-70c1-40ba-9d34-6e7cd774d47f": 8,
@@ -153,6 +154,17 @@
       "labels": [
         "kaizen"
       ]
+    },
+    "b3772f79-6f4a-4b63-be7e-0431217d6eb6": {
+      "uuid": "b3772f79-6f4a-4b63-be7e-0431217d6eb6",
+      "display_id": 16,
+      "title": "Zen2 off-chip config past timer park: new stop at sts 0x10d + x86_misc unimplemented accesses",
+      "description": "qemu-tools #955: with counter_hz=100000000 (psp-fidelity-7) Zen2 off-chip gets past the timer park (+477 lines, x86 mapper slot 0x8 programmed reg0=0x3fff7f reg1=0x12 reg2=0x3c6, mapper_magic3 writes, 10+10 x86_misc unimplemented r/w), ends at sts 0x10d / misc 0x3010058, parks again. Next: list the x86_misc unimplemented addresses, model as faithful placeholders, find what 0x10d waits on (Zen2, not the paused Zen3 0x107 line).",
+      "status": "open",
+      "priority": "medium",
+      "created_by": "U0Ke",
+      "created_at": "2026-10-20T00:35:45.379041679Z",
+      "updated_at": "2026-10-20T00:35:45.379041679Z"
     },
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": {
       "uuid": "b475fd5b-f80e-4399-b2e4-e2d1e4155495",
@@ -364,8 +376,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T00:17:30.366830477Z",
+    "timestamp": "2026-10-20T00:35:45.379041679Z",
     "agent_id": "U0Ke",
-    "agent_seq": 39
+    "agent_seq": 40
   }
 }
