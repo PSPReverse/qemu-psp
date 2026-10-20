@@ -426,7 +426,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     /* TODO: Try to decompress page wise until we can't map the hosts memory
      * anymore */
     plen_out = CCP_ZLIB_CHUNK_SIZE;
-    hdst = cpu_physical_memory_map(dst, &plen_out, false);
+    hdst = cpu_physical_memory_map(dst, &plen_out, true);
 
     // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
     // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n",
@@ -448,7 +448,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         if (status == CCP_ZLIB_MORE_DATA_PENDING) {
             plen_out = CCP_ZLIB_CHUNK_SIZE;
             hdst = cpu_physical_memory_map(dst + s->zlib_state.total_out,
-                                           &plen_out, false);
+                                           &plen_out, true);
             // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n",
             // plen_out); qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from
             // %p to %p\n", (void*)dst+s->zlib_state.total_out,
