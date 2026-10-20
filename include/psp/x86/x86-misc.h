@@ -21,6 +21,9 @@ typedef struct PSPX86MiscState {
     /* <public> */
     MemoryRegion iomem;
     PspGeneration generation;
+    /* I/O port 0x61 placeholder state, see psp_x86_misc_read/write */
+    uint8_t port61_ctl;
+    bool port61_refresh;
 } PSPX86MiscState;
 
 #endif // X86_MISC_H
