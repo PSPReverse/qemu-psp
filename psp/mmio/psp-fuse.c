@@ -33,9 +33,18 @@ static uint64_t psp_fuse_read(void* opaque, hwaddr offset, unsigned int size)
     return r;
 }
 
-/* No know write operations at this point */
-static const MemoryRegionOps timer_mem_ops = {
+static void psp_fuse_write(void *opaque, hwaddr offset, uint64_t value,
+                           unsigned int size)
+{
+    qemu_log_mask(LOG_GUEST_ERROR,
+                  "%s: write to read-only fuse offset 0x%" HWADDR_PRIx "\n",
+                  __func__, offset);
+    trace_psp_fuse_write(offset, value, size);
+}
+
+static const MemoryRegionOps psp_fuse_mem_ops = {
     .read = psp_fuse_read,
+    .write = psp_fuse_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
     .impl.min_access_size = 1,
     .impl.max_access_size = 4,
@@ -45,7 +54,7 @@ static void psp_fuse_realize(DeviceState* dev, Error** errp)
 {
     PSPFuseState* s = PSP_FUSE(dev);
 
-    memory_region_init_io(&s->iomem, OBJECT(dev), &timer_mem_ops, s,
+    memory_region_init_io(&s->iomem, OBJECT(dev), &psp_fuse_mem_ops, s,
                           TYPE_PSP_FUSE, PSP_FUSE_SIZE);
     sysbus_init_mmio(SYS_BUS_DEVICE(s), &s->iomem);
 }
