@@ -645,10 +645,10 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 
     key_mtype = CCP5_CMD_KEY_MEM(desc);
     src_mtype = CCP5_CMD_SRC_MEM(desc);
-    dst_mtype = CCP5_CMD_SRC_MEM(desc);
+    dst_mtype = CCP5_CMD_DST_MEM(desc);
     key_addr = CCP5_CMD_KEY_LO(desc) | ((hwaddr)(CCP5_CMD_KEY_HI(desc)) << 32);
     src_addr = CCP5_CMD_SRC_LO(desc) | ((hwaddr)(CCP5_CMD_SRC_HI(desc)) << 32);
-    dst_addr = CCP5_CMD_DST_LO(desc) | ((hwaddr)(CCP5_CMD_DST_LO(desc)) << 32);
+    dst_addr = CCP5_CMD_DST_LO(desc) | ((hwaddr)(CCP5_CMD_DST_HI(desc)) << 32);
 
     switch (func.aes.mode) {
 
