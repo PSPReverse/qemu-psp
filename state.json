@@ -1,6 +1,6 @@
 {
   "next_display_id": 19,
-  "next_comment_id": 24,
+  "next_comment_id": 25,
   "display_id_map": {
     "0a66f2d4-cf0c-4d3f-8901-b213db1bea15": 18,
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
@@ -37,10 +37,21 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-20T04:26:40.926131313Z",
-      "updated_at": "2026-10-20T04:26:54.481490716Z",
+      "updated_at": "2026-10-20T04:31:09.264161030Z",
       "labels": [
         "kaizen"
-      ]
+      ],
+      "comments": {
+        "e459537c-246d-4455-9ed9-bf51dff3db8a": {
+          "display_id": 24,
+          "author": "U0Ke",
+          "content": "qemu-tools #1041: SRAM, ROM, core regs, mtree all identical after load; fails at first fetch after cont (PC->0x10c). Suspects: cp15/MMU state (SCTLR/TTBR0/TTBCR/DACR) not rebuilt, stale TLB/TB, or MMIO-applied alias not re-applied. Needs gdb cp15 diff before-save vs after-load. Not a campaign blocker.",
+          "created_at": "2026-10-20T04:31:09.258119167Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABA62xtXuvbf5uIzSwTp/5ckgAye6a3lhtTy8/Kh4xOzXlMQ8Qi8cw3Gqgalu//5DMP3UvOpVQzfnlfZiybOj8SAg=="
+        }
+      }
     },
     "25996a88-7702-44e8-bef5-560dd4aa3872": {
       "uuid": "25996a88-7702-44e8-bef5-560dd4aa3872",
@@ -487,8 +498,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T04:26:54.481490716Z",
+    "timestamp": "2026-10-20T04:31:09.264161030Z",
     "agent_id": "U0Ke",
-    "agent_seq": 53
+    "agent_seq": 54
   }
 }
