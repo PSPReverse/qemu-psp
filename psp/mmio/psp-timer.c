@@ -22,6 +22,8 @@
 
 #include "hw/irq.h"
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -49,6 +51,46 @@ static void psp_timer_expire(void* opaque)
     qemu_set_irq(s->expiry_irq, 1);
     psp_timer_arm(s);
 }
+
+static void psp_timer_reset_hold(Object *obj, ResetType type)
+{
+    PSPTimerState *s = PSP_TIMER(obj);
+
+    s->psp_timer_control = 0;
+    s->psp_timer_count = 0;
+    s->psp_timer_period = 0;
+    memset(s->psp_timer_misc, 0, sizeof(s->psp_timer_misc));
+    timer_del(&s->expiry_timer);
+}
+
+/*
+ * Only the opt-in expiry timer is re-armed. The new deadline is one period
+ * from the restore point, not from the instant the state was saved, so the
+ * expiry phase is not preserved across a snapshot.
+ */
+static int psp_timer_post_load(void *opaque, int version_id)
+{
+    PSPTimerState *s = PSP_TIMER(opaque);
+
+    if (s->expiry_irq_id >= 0) {
+        psp_timer_arm(s);
+    }
+    return 0;
+}
+
+static const VMStateDescription psp_timer_vmstate = {
+    .name = TYPE_PSP_TIMER,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .post_load = psp_timer_post_load,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32(psp_timer_control, PSPTimerState),
+        VMSTATE_UINT32(psp_timer_count, PSPTimerState),
+        VMSTATE_UINT32(psp_timer_period, PSPTimerState),
+        VMSTATE_UINT32_ARRAY(psp_timer_misc, PSPTimerState, 4),
+        VMSTATE_END_OF_LIST()
+    }
+};
 
 static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
 {
@@ -177,7 +219,12 @@ static const Property psp_timer_properties[] = {
 
 static void psp_timer_class_init(ObjectClass* oc, const void* data)
 {
-    device_class_set_props(DEVICE_CLASS(oc), psp_timer_properties);
+    DeviceClass *dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
+
+    device_class_set_props(dc, psp_timer_properties);
+    dc->vmsd = &psp_timer_vmstate;
+    rc->phases.hold = psp_timer_reset_hold;
 }
 
 static const TypeInfo psp_timer_info = {
