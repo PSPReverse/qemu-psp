@@ -1,6 +1,6 @@
 {
   "next_display_id": 17,
-  "next_comment_id": 16,
+  "next_comment_id": 17,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -164,10 +164,21 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-20T00:35:45.379041679Z",
-      "updated_at": "2026-10-20T00:36:03.844701252Z",
+      "updated_at": "2026-10-20T00:48:57.250030425Z",
       "labels": [
         "kaizen"
-      ]
+      ],
+      "comments": {
+        "337a2ab4-2881-42f3-83b4-9e0a9b8b1d44": {
+          "display_id": 16,
+          "author": "U0Ke",
+          "content": "pushed claude/psp-fidelity-8 = c9c862b6 (port 0x61 placeholder, timer 0x14/0x18/0x1c read-back). qemu-tools #961: divergence from fidelity-7 is exactly the patch; 0x61 loop persists (not what 0x10d waits on); park after sts 0x10d is outside psp_*/ccp_* tracing. Next: PC samples at the park (qemu-tools gdb), hypothesis: waits for x86 BIOS reply.",
+          "created_at": "2026-10-20T00:48:54.730124869Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAw0jkIvStm3+8zui5JHhI5hhgxNLZaz/NMi42HQS+Y+I3lAeAUvfZEoR2Ww/COMfvX9mgDHeVONfQlcXiN86CBA=="
+        }
+      }
     },
     "b475fd5b-f80e-4399-b2e4-e2d1e4155495": {
       "uuid": "b475fd5b-f80e-4399-b2e4-e2d1e4155495",
@@ -379,8 +390,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T00:36:03.844701252Z",
+    "timestamp": "2026-10-20T00:48:57.250030425Z",
     "agent_id": "U0Ke",
-    "agent_seq": 41
+    "agent_seq": 42
   }
 }
