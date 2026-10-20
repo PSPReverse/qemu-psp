@@ -5,6 +5,7 @@ ccp_config_read(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%"PRIx32
 ccp_config_write(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%"PRIx32
 ccp_passthrough(const char * src_type, uint64_t src, const char * dest_type, uint64_t dest, uint32_t len) "src_type=%s src=0x%"PRIx64" dest_type=%s dest=0x%"PRIx64" len=0x%"PRIx32
 ccp_perform_sha_256(uint32_t len, uint64_t src) "len=0x%"PRIx32" src=0x%"PRIx64
+ccp_aes(unsigned int mode, unsigned int type, bool encrypt, uint64_t src, unsigned int src_mtype, uint64_t dst, unsigned int dst_mtype, uint32_t len) "mode=%u type=%u encrypt=%d src=0x%"PRIx64" src_mtype=%u dst=0x%"PRIx64" dst_mtype=%u len=0x%"PRIx32
 ccp_zlib(uint64_t src, uint64_t dst, uint32_t len, unsigned int src_type, unsigned int dst_type, bool init, bool eom) "src=0x%"PRIx64" dest=0x%"PRIx64" len=0x%"PRIx32" src_type=%d dst_type=%d init=%d eom=%d"
 ccp_sha(uint64_t src, uint32_t len, uint64_t sha_len, bool init, bool eom, uint32_t ctx_id) "src=0x%"PRIx64" len=0x%"PRIx32" sha_len=0x%"PRIx64" init=%d eom=%d ctx_id=0x%"PRIu32
 ccp_rsa(uint32_t src, uint32_t len, uint64_t rsa_dst, uint32_t rsa_dst_mtype, uint16_t rsa_mode, uint16_t rsa_size, bool eom, bool init) "src=0x%"PRIx32" len=0x%"PRIx32" rsa_dst=0x%"PRIx64" rsa_dst_mtype=%"PRIu32" rsa_mode=%"PRIu16" rsa_size=%"PRIu16" eom=%d init=%d"
