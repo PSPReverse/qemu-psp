@@ -61,6 +61,54 @@ static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
     trace_psp_x86_mapper_state_write(slot_id, reg_id, val);
 }
 
+/*
+ * Registers are 32 bits wide. A 4-byte access goes to the register as is.
+ * A smaller access is placed in its byte lane, as the placeholder registers in
+ * psp-misc.c do. An access that crosses the end of a register is not emulated.
+ */
+static uint64_t reg_read(PSPX86MapperState *s, hwaddr offset, unsigned int size,
+                         uint32_t slot_id, PSPX86RegId reg_id)
+{
+    unsigned int lane = offset % sizeof(uint32_t);
+
+    if (size == sizeof(uint32_t)) {
+        return internal_state_read(s, slot_id, reg_id);
+    }
+    if (lane + size > sizeof(uint32_t)) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "PSP X86 Error: Read of size %u at 0x%" HWADDR_PRIx
+                      " crosses a register\n",
+                      size, offset);
+        return 0;
+    }
+    return (internal_state_read(s, slot_id, reg_id) >> (lane * 8)) &
+           MAKE_64BIT_MASK(0, size * 8);
+}
+
+static void reg_write(PSPX86MapperState *s, hwaddr offset, uint64_t value,
+                      unsigned int size, uint32_t slot_id, PSPX86RegId reg_id)
+{
+    unsigned int lane = offset % sizeof(uint32_t);
+    unsigned int shift = lane * 8;
+    uint32_t mask;
+
+    if (size == sizeof(uint32_t)) {
+        internal_state_write(s, slot_id, reg_id, value);
+        return;
+    }
+    if (lane + size > sizeof(uint32_t)) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "PSP X86 Error: Write of size %u at 0x%" HWADDR_PRIx
+                      " crosses a register\n",
+                      size, offset);
+        return;
+    }
+    mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
+    internal_state_write(s, slot_id, reg_id,
+                         (internal_state_read(s, slot_id, reg_id) & ~mask) |
+                             (((uint32_t)value << shift) & mask));
+}
+
 static void ctrl_write(void* opaque, hwaddr offset, uint64_t value,
                        unsigned int size)
 {
@@ -68,14 +116,7 @@ static void ctrl_write(void* opaque, hwaddr offset, uint64_t value,
     uint32_t slot_id = offset / (4 * sizeof(uint32_t));
     uint32_t reg_id = (offset % (4 * sizeof(uint32_t))) / 4;
 
-    if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "PSP X86 Error: Unimplemented register access size %d\n",
-                      size);
-        return;
-    }
-
-    internal_state_write(s, slot_id, reg_id, value);
+    reg_write(s, offset, value, size, slot_id, reg_id);
 }
 
 static uint64_t ctrl_read(void* opaque, hwaddr offset, unsigned int size)
@@ -84,14 +125,7 @@ static uint64_t ctrl_read(void* opaque, hwaddr offset, unsigned int size)
     uint32_t slot_id = offset / (4 * sizeof(uint32_t));
     uint32_t reg_id = (offset % (4 * sizeof(uint32_t))) / 4;
 
-    if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "PSP X86 Error: Unimplemented register access size %d\n",
-                      size);
-        return 0;
-    }
-
-    return internal_state_read(s, slot_id, reg_id);
+    return reg_read(s, offset, size, slot_id, reg_id);
 }
 
 static void magic1_write(void* opaque, hwaddr offset, uint64_t value,
@@ -99,69 +133,33 @@ static void magic1_write(void* opaque, hwaddr offset, uint64_t value,
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(opaque);
     uint32_t slot_id = offset / sizeof(uint32_t);
-    uint32_t reg_id = X86_UNKNOWN4;
 
-    if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "PSP X86 Error: Unimplemented register"
-                      " access size %d\n",
-                      size);
-        return;
-    }
-
-    internal_state_write(s, slot_id, reg_id, value);
+    reg_write(s, offset, value, size, slot_id, X86_UNKNOWN4);
 }
 
 static uint64_t magic1_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(opaque);
     uint32_t slot_id = offset / sizeof(uint32_t);
-    uint32_t reg_id = X86_UNKNOWN4;
 
-    if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "PSP X86 Error: Unimplemented register"
-                      " access size %d\n",
-                      size);
-        return 0;
-    }
-
-    return internal_state_read(s, slot_id, reg_id);
+    return reg_read(s, offset, size, slot_id, X86_UNKNOWN4);
 }
 
 static void magic2_write(void* opaque, hwaddr offset, uint64_t value,
                          unsigned int size)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(opaque);
-
     uint32_t slot_id = offset / sizeof(uint32_t);
-    uint32_t reg_id = X86_UNKNOWN5;
 
-    if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "PSP X86 Error: Unimplemented register access size %d\n",
-                      size);
-        return;
-    }
-
-    internal_state_write(s, slot_id, reg_id, value);
+    reg_write(s, offset, value, size, slot_id, X86_UNKNOWN5);
 }
 
 static uint64_t magic2_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(opaque);
-
     uint32_t slot_id = offset / sizeof(uint32_t);
-    uint32_t reg_id = X86_UNKNOWN5;
 
-    if (size != sizeof(uint32_t)) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "PSP X86 Error: Unimplemented register access size %d\n",
-                      size);
-        return 0;
-    }
-
-    return internal_state_read(s, slot_id, reg_id);
+    return reg_read(s, offset, size, slot_id, X86_UNKNOWN5);
 }
 
 static const MemoryRegionOps x86_ctlr1_ops = {
