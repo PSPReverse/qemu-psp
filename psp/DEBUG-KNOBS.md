@@ -81,8 +81,6 @@ caller must hold the big QEMU lock (not checked for all of them).
 
 | Symbol | Type | Location | Semantics |
 |---|---|---|---|
-| `aspfuzz_timer_count_0`, `aspfuzz_timer_control_0` | `uint64_t` | `psp-timer.c:33-34` | Shadow of timer1 (MMIO 0x03010400). On each MMIO access the device adopts a differing harness value (`:68-79` read path, `:149-160` write path) and publishes its own value at the end of the access (`:129-133`, `:206-210`). |
-| `aspfuzz_timer_count_1`, `aspfuzz_timer_control_1` | `uint64_t` | `psp-timer.c:35-36` | Same, for every other timer instance (timer2 at 0x03010424). |
 | `aspfuzz_smn_slots[32]` | `uint32_t[32]` | `psp-smn.c:35` | SMN slot address table. Written by guest slot programming (`:133`), read by `aspfuzz_smn_update_slot`. |
 | `aspfuzz_smn_state` | `PSPSmnState*` | `psp-smn.c:36` | Set on every slot update (`:132`). |
 | `global_smn_as` | `AddressSpace*` | `psp-smn.c:47` | Not prefixed, but used only by the `aspfuzz_smn_*` functions. |
