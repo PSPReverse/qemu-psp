@@ -1,6 +1,6 @@
 {
   "next_display_id": 16,
-  "next_comment_id": 14,
+  "next_comment_id": 15,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -253,8 +253,17 @@
       "priority": "medium",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:08:08.697638444Z",
-      "updated_at": "2026-10-19T22:12:14.106487883Z",
+      "updated_at": "2026-10-20T00:13:38.750670576Z",
       "comments": {
+        "04414c32-c4a6-41d2-831a-ea60a0d23f7d": {
+          "display_id": 14,
+          "author": "U0Ke",
+          "content": "librarian #944: FCH SPI block (base 0xfec10000) reset values at 127.0.0.1:8860/fch-spi-regs-rome-ppr.json (Rome PPR, Milan unverified). Not touched by the current Zen3 boot trace (checked fid6.log). Use as placeholders if a later stage accesses it.",
+          "created_at": "2026-10-20T00:13:38.745672054Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAnzXWAYYqbRMshX5BTPfsJiLCS0vmPZ6ZdrLSi91+k9qu5Y8IHBpDE8X9ILUbYPQgwv1Vu+zqW4pgboqzs9VgBw=="
+        },
         "258facbb-ae92-449a-86f9-3d1493430a1d": {
           "display_id": 5,
           "author": "U0Ke",
@@ -346,8 +355,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T00:11:54.793659120Z",
+    "timestamp": "2026-10-20T00:13:38.750670576Z",
     "agent_id": "U0Ke",
-    "agent_seq": 37
+    "agent_seq": 38
   }
 }
