@@ -146,10 +146,22 @@ static inline void ccp_rsa_encrypt(CcpV5RsaPubKey* key, uint8_t* m,
     mpz_t result;
     mpz_t message;
 
+    /*
+     * The modulus comes from guest memory. GMP raises SIGFPE (killing QEMU)
+     * for a zero modulus. Hardware behaviour for that case is unknown, so
+     * return all zeros.
+     */
+    if (mpz_sgn(key->mod) == 0) {
+        memset(res, 0, key->rsa_len);
+        return;
+    }
+
     mpz_init(result);
     mpz_init(message);
     mpz_import(message, key->rsa_len, -1, 1, 0, 0, m);
 
+    /* mpz_export() writes nothing when the result is 0 */
+    memset(res, 0, key->rsa_len);
     mpz_powm(result, message, key->exp, key->mod);
 
     mpz_export(res, NULL, -1, key->rsa_len, 0, 0, result);

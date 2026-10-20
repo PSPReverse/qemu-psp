@@ -687,11 +687,11 @@ static bool ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     hwaddr rsa_dst;
     CcpV5RsaPubKey rsa_pubkey;
 
-    uint8_t rsa_exp[512]; /* Only 2048 & 4096 for now */
-    uint8_t rsa_mod[512]; /* Only 2048 & 4096 for now */
-    uint8_t rsa_msg[512]; /* Assuming it is a signature with length equal to the
-                             modulus */
-    uint8_t rsa_result[512];
+    uint8_t rsa_exp[512] = { 0 }; /* Only 2048 & 4096 for now */
+    uint8_t rsa_mod[512] = { 0 }; /* Only 2048 & 4096 for now */
+    /* Assuming it is a signature with length equal to the modulus */
+    uint8_t rsa_msg[512] = { 0 };
+    uint8_t rsa_result[512] = { 0 };
 
     func.raw = CCP5_CMD_FUNCTION(desc);
     init = CCP5_CMD_INIT(desc);
