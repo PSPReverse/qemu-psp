@@ -21,6 +21,8 @@
 #include "psp/mmio/psp-sts.h"
 
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
 #include "trace.h"
@@ -69,6 +71,23 @@ static void psp_sts_init(Object* obj)
     sysbus_init_mmio(sbd, &s->iomem);
 }
 
+static void psp_sts_reset_hold(Object *obj, ResetType type)
+{
+    PSPStsState *s = PSP_STS(obj);
+
+    s->psp_sts_val = 0;
+}
+
+static const VMStateDescription psp_sts_vmstate = {
+    .name = TYPE_PSP_STS,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32(psp_sts_val, PSPStsState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const Property properties[] = {
     DEFINE_PROP_BOOL("in_x86_space", PSPStsState, in_x86_space, false),
 };
@@ -76,7 +95,11 @@ static const Property properties[] = {
 static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
+
     device_class_set_props(dc, properties);
+    dc->vmsd = &psp_sts_vmstate;
+    rc->phases.hold = psp_sts_reset_hold;
 }
 
 static const TypeInfo psp_sts_info = {
