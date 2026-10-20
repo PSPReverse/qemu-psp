@@ -12,6 +12,8 @@
 
 #include "system/address-spaces.h"
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
 #include "trace.h"
@@ -33,15 +35,20 @@ static uint32_t internal_state_read(PSPX86MapperState* s, uint32_t slot_id,
     return ret;
 }
 
+static void psp_x86_set_mapping(PSPX86MapperState *s, uint32_t slot_id,
+                                PSPX86Addr x86_addr)
+{
+    s->psp_x86_slots[slot_id].x86_addr = x86_addr;
+    memory_region_set_alias_offset(&s->psp_x86_containers[slot_id], x86_addr);
+}
+
 static void psp_x86_map_slot(PSPX86MapperState* s, uint32_t slot_id)
 {
     PSPX86Slot* slot = &s->psp_x86_slots[slot_id];
 
-    slot->x86_addr = (slot->ctrl_regs[X86BASE] & 0x3f) << 26 |
-                     ((uint64_t)(slot->ctrl_regs[X86BASE] >> 6)) << 32;
-
-    memory_region_set_alias_offset(&s->psp_x86_containers[slot_id],
-                                   slot->x86_addr);
+    psp_x86_set_mapping(s, slot_id,
+                        (slot->ctrl_regs[X86BASE] & 0x3f) << 26 |
+                            ((uint64_t)(slot->ctrl_regs[X86BASE] >> 6)) << 32);
 }
 
 static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
@@ -162,6 +169,47 @@ static uint64_t magic2_read(void* opaque, hwaddr offset, unsigned int size)
     return reg_read(s, offset, size, slot_id, X86_UNKNOWN5);
 }
 
+static const VMStateDescription psp_x86_slot_vmstate = {
+    .name = "amd_psp.x86.slot",
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT64(x86_addr, PSPX86Slot),
+        VMSTATE_UINT64(psp_addr, PSPX86Slot),
+        VMSTATE_UINT32_ARRAY(ctrl_regs, PSPX86Slot, PSP_X86_REG_COUNT),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
+/*
+ * The x86 address of each slot is restored, and the container alias is
+ * pointed at it again.
+ */
+static int mapper_post_load(void *opaque, int version_id)
+{
+    PSPX86MapperState *s = PSP_X86_MAPPER(opaque);
+
+    for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
+        psp_x86_set_mapping(s, i, s->psp_x86_slots[i].x86_addr);
+    }
+    return 0;
+}
+
+static const VMStateDescription mapper_vmstate = {
+    .name = TYPE_PSP_X86_MAPPER,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .post_load = mapper_post_load,
+    .fields = (const VMStateField[]) {
+        VMSTATE_STRUCT_ARRAY(psp_x86_slots, PSPX86MapperState,
+                             PSP_X86_SLOT_COUNT, 1, psp_x86_slot_vmstate,
+                             PSPX86Slot),
+        VMSTATE_UINT32(magic3.value, PSPX86MapperState),
+        VMSTATE_UINT32(magic3.counter, PSPX86MapperState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const MemoryRegionOps x86_ctlr1_ops = {
     .read = ctrl_read,
     .write = ctrl_write,
@@ -252,6 +300,23 @@ static void realize_mapping_slots(DeviceState* dev)
                                             &s->psp_x86_containers[i], 0);
     }
 }
+/*
+ * Back to the power-on state: no control register set, each container at its
+ * identity offset (see realize_mapping_slots()).
+ */
+static void mapper_reset_hold(Object *obj, ResetType type)
+{
+    PSPX86MapperState *s = PSP_X86_MAPPER(obj);
+
+    for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
+        memset(s->psp_x86_slots[i].ctrl_regs, 0,
+               sizeof(s->psp_x86_slots[i].ctrl_regs));
+        psp_x86_set_mapping(s, i, i * PSP_X86_SLOT_SIZE);
+    }
+    s->magic3.value = 0;
+    s->magic3.counter = 0;
+}
+
 static void mapper_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
@@ -318,7 +383,11 @@ static const Property properties[] = {
 static void mapper_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
+
     dc->realize = mapper_realize;
+    dc->vmsd = &mapper_vmstate;
+    rc->phases.hold = mapper_reset_hold;
     device_class_set_props(dc, properties);
 }
 

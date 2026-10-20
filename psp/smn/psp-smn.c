@@ -22,6 +22,8 @@
 
 #include "system/address-spaces.h"
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
 #include "trace.h"
@@ -121,17 +123,26 @@ static PspSmnConfiguration psp_smn_configuration[] = {
 
 const char* ident = "SMN Control";
 
-static void psp_smn_update_slot(PSPSmnState* smn, uint32_t idx)
+static void psp_smn_set_alias(PSPSmnState *smn, uint32_t idx, hwaddr offset)
 {
-    PSPSmnAddr addr = smn->psp_smn_slots[idx];
     /* TODO documentation */
-    memory_region_set_alias_offset(&smn->psp_smn_containers[idx], addr);
-    trace_psp_smn_update_slot(idx, addr);
+    smn->psp_smn_alias[idx] = offset;
+    memory_region_set_alias_offset(&smn->psp_smn_containers[idx], offset);
+}
 
+static void psp_smn_mirror_slot(PSPSmnState *smn, uint32_t idx)
+{
     //// +++ Begin ASPFuzz code +++
     aspfuzz_smn_state = (void*)smn;
-    aspfuzz_smn_slots[idx] = addr;
+    aspfuzz_smn_slots[idx] = smn->psp_smn_slots[idx];
     //// +++ End ASPFuzz code +++
+}
+
+static void psp_smn_update_slot(PSPSmnState *smn, uint32_t idx)
+{
+    psp_smn_set_alias(smn, idx, smn->psp_smn_slots[idx]);
+    trace_psp_smn_update_slot(idx, smn->psp_smn_slots[idx]);
+    psp_smn_mirror_slot(smn, idx);
 }
 
 static void psp_smn_write(void* opaque, hwaddr offset, uint64_t value,
@@ -190,6 +201,33 @@ static uint64_t psp_smn_read(void* opaque, hwaddr offset, unsigned int size)
     trace_psp_smn_read(offset, phys_base, val, size);
     return val;
 }
+
+/*
+ * The slot registers and the applied alias offsets are restored as they were
+ * saved; the memory core is then pointed at those offsets again.
+ */
+static int psp_smn_post_load(void *opaque, int version_id)
+{
+    PSPSmnState *smn = PSP_SMN(opaque);
+
+    for (int i = 0; i < PSP_SMN_SLOT_COUNT; i++) {
+        psp_smn_set_alias(smn, i, smn->psp_smn_alias[i]);
+        psp_smn_mirror_slot(smn, i);
+    }
+    return 0;
+}
+
+static const VMStateDescription psp_smn_vmstate = {
+    .name = TYPE_PSP_SMN,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .post_load = psp_smn_post_load,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32_ARRAY(psp_smn_slots, PSPSmnState, PSP_SMN_SLOT_COUNT),
+        VMSTATE_UINT64_ARRAY(psp_smn_alias, PSPSmnState, PSP_SMN_SLOT_COUNT),
+        VMSTATE_END_OF_LIST()
+    }
+};
 
 static const MemoryRegionOps smn_ctlr_ops = {
     .read = psp_smn_read,
@@ -306,10 +344,29 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
     psp_smn_realize_slots(s);
 }
 
+/*
+ * Back to the power-on state: no slot programmed, each container at its
+ * identity offset (see psp_smn_realize_slots()).
+ */
+static void psp_smn_reset_hold(Object *obj, ResetType type)
+{
+    PSPSmnState *smn = PSP_SMN(obj);
+
+    for (int i = 0; i < PSP_SMN_SLOT_COUNT; i++) {
+        smn->psp_smn_slots[i] = 0;
+        psp_smn_set_alias(smn, i, i * PSP_SMN_SLOT_SIZE);
+        psp_smn_mirror_slot(smn, i);
+    }
+}
+
 static void psp_smn_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
+
     dc->realize = psp_smn_realize;
+    dc->vmsd = &psp_smn_vmstate;
+    rc->phases.hold = psp_smn_reset_hold;
 }
 
 static const Property psp_smn_properties[] = {

@@ -67,6 +67,11 @@ typedef struct PSPSmnState {
 
     /* Current SMN state */
     PSPSmnAddr psp_smn_slots[32];
+    /*
+     * Offset the containers are aliased at. Equals psp_smn_slots[] once the
+     * guest has programmed a slot, the power-on offset before that.
+     */
+    hwaddr psp_smn_alias[PSP_SMN_SLOT_COUNT];
 
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;
