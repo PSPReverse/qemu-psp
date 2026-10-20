@@ -45,6 +45,12 @@ typedef struct PSPTimerState {
     uint32_t psp_timer_misc[4];
 
     /*
+     * Placeholder read-back for the registers at +0x14/+0x18/+0x1c. Accessed
+     * by the Zen2 off-chip BL; meaning is inferred, not modelled.
+     */
+    uint32_t psp_timer_placeholder[3];
+
+    /*
      * Opt-in: non-zero derives the counter from QEMU_CLOCK_VIRTUAL at this
      * rate (Hz) instead of counting +1 per read; 0 = off.
      */
