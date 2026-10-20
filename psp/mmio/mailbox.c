@@ -23,6 +23,7 @@
 #include "hw/core/cpu.h"
 #include "hw/irq.h"
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qemu/log.h"
 #include "trace.h"
@@ -53,7 +54,6 @@ static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
         return 0;
     }
     trace_psp_mailbox_read(index_to_name(index), s->values[index]);
-    trace_psp_mailbox_read("blub", 5);
     return s->values[index];
 }
 
@@ -163,12 +163,23 @@ static const Property mailbox_properties[] = {
     DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, 0x3c),
 };
 
+static void mailbox_reset_hold(Object *obj, ResetType type)
+{
+    MailboxState *s = MAILBOX(obj);
+
+    s->int_enable = 0;
+    memset(s->values, 0, sizeof(s->values));
+}
+
 static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass *rc = RESETTABLE_CLASS(oc);
+
     dc->realize = realize;
     device_class_set_props(dc, mailbox_properties);
     dc->vmsd = &mailbox_vmstate;
+    rc->phases.hold = mailbox_reset_hold;
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
