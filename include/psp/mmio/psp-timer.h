@@ -44,6 +44,14 @@ typedef struct PSPTimerState {
     /* Read-back for the registers at +0x4/+0x8/+0xc (meaning not modelled) */
     uint32_t psp_timer_misc[4];
 
+    /*
+     * Opt-in: non-zero derives the counter from QEMU_CLOCK_VIRTUAL at this
+     * rate (Hz) instead of counting +1 per read; 0 = off.
+     */
+    uint32_t counter_hz;
+    /* Virtual time at which psp_timer_count was last written (derived mode) */
+    int64_t counter_anchor_ns;
+
     /* Opt-in expiry interrupt: IC source raised every period while enabled;
      * -1 = off (keeps snapshots free of host-clock timers). */
     int32_t expiry_irq_id;

@@ -24,6 +24,7 @@
 #include "hw/qdev-properties.h"
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
+#include "qemu/host-utils.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -60,7 +61,22 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
     s->psp_timer_count = 0;
     s->psp_timer_period = 0;
     memset(s->psp_timer_misc, 0, sizeof(s->psp_timer_misc));
+    s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
     timer_del(&s->expiry_timer);
+}
+
+/*
+ * Counter for counter_hz != 0: the last written value plus elapsed virtual
+ * time scaled to counter_hz. The enable bit is not consulted in this mode.
+ */
+static uint32_t psp_timer_derived_count(PSPTimerState *s)
+{
+    int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+    /* The anchor can be ahead of the clock after a restore; do not wrap */
+    int64_t elapsed = MAX(now - s->counter_anchor_ns, 0);
+
+    return s->psp_timer_count +
+           muldiv64(elapsed, s->counter_hz, NANOSECONDS_PER_SECOND);
 }
 
 /*
@@ -88,6 +104,7 @@ static const VMStateDescription psp_timer_vmstate = {
         VMSTATE_UINT32(psp_timer_count, PSPTimerState),
         VMSTATE_UINT32(psp_timer_period, PSPTimerState),
         VMSTATE_UINT32_ARRAY(psp_timer_misc, PSPTimerState, 4),
+        VMSTATE_INT64(counter_anchor_ns, PSPTimerState),
         VMSTATE_END_OF_LIST()
     }
 };
@@ -126,9 +143,13 @@ static uint64_t psp_timer_read(void* opaque, hwaddr offset, unsigned int size)
         val = s->psp_timer_period;
         break;
     case 0x20:
-        val = s->psp_timer_count;
+        if (s->counter_hz) {
+            val = psp_timer_derived_count(s);
+        } else {
+            val = s->psp_timer_count;
+        }
         trace_psp_timer_counter_read(val);
-        if ((s->psp_timer_control & 0x1) && lane == 0) {
+        if (!s->counter_hz && (s->psp_timer_control & 0x1) && lane == 0) {
             s->psp_timer_count++;
         }
         break;
@@ -180,6 +201,7 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
         break;
     case 0x20:
         s->psp_timer_count = val;
+        s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
         trace_psp_timer_counter_write(val);
         break;
     default:
@@ -215,6 +237,7 @@ static void psp_timer_init(Object* obj)
 
 static const Property psp_timer_properties[] = {
     DEFINE_PROP_INT32("expiry_irq_id", PSPTimerState, expiry_irq_id, -1),
+    DEFINE_PROP_UINT32("counter_hz", PSPTimerState, counter_hz, 0),
 };
 
 static void psp_timer_class_init(ObjectClass* oc, const void* data)
