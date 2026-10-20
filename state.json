@@ -1,6 +1,6 @@
 {
   "next_display_id": 17,
-  "next_comment_id": 19,
+  "next_comment_id": 20,
   "display_id_map": {
     "25996a88-7702-44e8-bef5-560dd4aa3872": 10,
     "25e08e72-0466-4f5b-bd22-eac066255084": 1,
@@ -220,7 +220,18 @@
       "priority": "low",
       "created_by": "U0Ke",
       "created_at": "2026-10-19T18:08:02.959947684Z",
-      "updated_at": "2026-10-19T18:08:02.959947684Z"
+      "updated_at": "2026-10-20T02:48:55.415409041Z",
+      "comments": {
+        "82b5947d-abd0-419f-af9f-34e714dcfa77": {
+          "display_id": 19,
+          "author": "U0Ke",
+          "content": "librarian #1006 (AMD 55758 v1.13 p.60-69): SMN flash window documented only as 0x44000000-0x44FFFFFF; 44/45/46/47xxxxxx are four 16 MB SPI regions selected by XOR of addr bits 24/25 (SPI Addr32_Ctrl3 page bit, alt-image strap). Our 0x47000000 = alias of 0x44000000 is a MODEL ASSUMPTION (valid while all four regions hold the same 16 MiB). SMU base 0x03c00000 undocumented. Not documented anywhere: PSP-private map, IC, CCP, timers, x86 slots, MP0 C2PMSG addrs, fuse bank. Reference: 127.0.0.1:8860/milan-psp-reference.md (local only).",
+          "created_at": "2026-10-20T02:48:51.127537765Z",
+          "kind": "note",
+          "signed_by": "SHA256:Y1ZrkdS/o97t7PXkS80W5ZYUNe8ubeitSkb4nkIfO/w",
+          "signature": "U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgXcBX7oYU7Fg6jKYGVQ2WUaWWvcqSeCObd7wL9xk6BGQAAAARY3Jvc3NsaW5rLWNvbW1lbnQAAAAAAAAABnNoYTUxMgAAAFMAAAALc3NoLWVkMjU1MTkAAABAcHuUPb40pMZ89owqDNijT1ChRUqJkHzjFaZZFtxYN04scQt8wGdOHjrQfftzJzrd9e5TssR7m/raZKLOCJETDA=="
+        }
+      }
     },
     "bb4047d3-70c1-40ba-9d34-6e7cd774d47f": {
       "uuid": "bb4047d3-70c1-40ba-9d34-6e7cd774d47f",
@@ -408,8 +419,8 @@
   },
   "next_milestone_id": 1,
   "watermark": {
-    "timestamp": "2026-10-20T02:40:08.696089824Z",
+    "timestamp": "2026-10-20T02:48:55.415409041Z",
     "agent_id": "U0Ke",
-    "agent_seq": 44
+    "agent_seq": 45
   }
 }
