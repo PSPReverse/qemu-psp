@@ -463,54 +463,68 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     return err;
 }
 
-/* TODO: Check all map/unmap for whether the mapping actually succeeded */
-static void ccp_copy_to_host(CcpV5State* s, void* hdst, hwaddr src,
+/*
+ * @return false if the access could not be completed (the guest range is
+ * unmapped or only partly mapped, or it exceeds the LSB); the caller fails the
+ * descriptor.
+ */
+static bool ccp_copy_to_host(CcpV5State *s, void *hdst, hwaddr src,
                              ccp_memtype stype, size_t len)
 {
-    void* hsrc = NULL;
+    void *hsrc = NULL;
     hwaddr plen = len;
 
     if (stype == CCP_MEMTYPE_LOCAL) {
         hsrc = cpu_physical_memory_map(src, &plen, false);
-        assert(plen == len);
-        memcpy(hdst, hsrc, len);
-        if (hsrc) {
-            cpu_physical_memory_unmap(hsrc, len, false, plen);
+        if (!hsrc) {
+            return false;
         }
+        if (plen != len) {
+            cpu_physical_memory_unmap(hsrc, plen, false, 0);
+            return false;
+        }
+        memcpy(hdst, hsrc, len);
+        cpu_physical_memory_unmap(hsrc, len, false, plen);
     } else if (stype == CCP_MEMTYPE_SB) {
         if (!ccp_lsb_range_ok(s, src, len)) {
             qemu_log_mask(LOG_GUEST_ERROR,
                           "CCP Error: Access exceeds LSB size\n");
-            return;
+            return false;
         }
         hsrc = s->lsb.u.lsb + src;
         memcpy(hdst, hsrc, len);
     }
+    return true;
 }
 
-static void ccp_copy_to_guest(CcpV5State* s, hwaddr dst, void* hsrc,
+/* @return false if the access could not be completed, see ccp_copy_to_host */
+static bool ccp_copy_to_guest(CcpV5State *s, hwaddr dst, void *hsrc,
                               ccp_memtype dtype, size_t len)
 {
-    void* hdst = NULL;
+    void *hdst = NULL;
     hwaddr plen = len;
 
     if (dtype == CCP_MEMTYPE_LOCAL) {
-        /* TODO: Check for error */
         hdst = cpu_physical_memory_map(dst, &plen, true);
-        assert(plen == len);
-        memcpy(hdst, hsrc, plen);
-        if (hdst) {
-            cpu_physical_memory_unmap(hdst, plen, true, plen);
+        if (!hdst) {
+            return false;
         }
+        if (plen != len) {
+            cpu_physical_memory_unmap(hdst, plen, true, 0);
+            return false;
+        }
+        memcpy(hdst, hsrc, len);
+        cpu_physical_memory_unmap(hdst, len, true, len);
     } else if (dtype == CCP_MEMTYPE_SB) {
         if (!ccp_lsb_range_ok(s, dst, len)) {
             qemu_log_mask(LOG_GUEST_ERROR,
                           "CCP Error: Access exceeds LSB size\n");
-            return;
+            return false;
         }
         hdst = s->lsb.u.lsb + dst;
         memcpy(hdst, hsrc, len);
     }
+    return true;
 }
 
 static void ccp_aes_log_func(ccp_function func)
@@ -592,6 +606,7 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 
     uint8_t* src_buf = malloc(len);
     uint8_t* dst_buf = malloc(len);
+    bool failed = false;
 
     ccp_aes_log_func(func);
 
@@ -607,20 +622,26 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     case CCP_AES_MODE_ECB:
         switch (func.aes.type) {
         case CCP_AES_TYPE_128:
-            ccp_copy_to_host(s, key_local, key_addr, key_mtype, 16);
-            ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len);
+            if (!ccp_copy_to_host(s, key_local, key_addr, key_mtype, 16) ||
+                !ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len)) {
+                failed = true;
+                break;
+            }
 
             ccp_aes128ecb(dst_buf, src_buf, len, key_local, func.aes.encrypt);
 
-            ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
+            failed = !ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
             break;
         case CCP_AES_TYPE_256:
-            ccp_copy_to_host(s, key_local, key_addr, key_mtype, 32);
-            ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len);
+            if (!ccp_copy_to_host(s, key_local, key_addr, key_mtype, 32) ||
+                !ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len)) {
+                failed = true;
+                break;
+            }
 
             ccp_aes256ecb(dst_buf, src_buf, len, key_local, func.aes.encrypt);
 
-            ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
+            failed = !ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
             break;
         default:
             qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES TYPE %d\n",
@@ -634,7 +655,7 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 
     free(src_buf);
     free(dst_buf);
-    return false;
+    return failed;
 }
 
 static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
@@ -690,7 +711,8 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     }
 }
 
-static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+/* @return true if the descriptor failed, see ccp_aes */
+static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 {
     uint16_t rsa_size;
     uint16_t rsa_mode;
@@ -739,16 +761,23 @@ static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         /* TODO: Use guest memory ?*/
 
         /* Copy RSA exponent */
-        ccp_copy_to_host(s, rsa_exp, rsa_key_addr, rsa_key_mtype, rsa_size);
+        if (!ccp_copy_to_host(s, rsa_exp, rsa_key_addr, rsa_key_mtype,
+                              rsa_size)) {
+            return true;
+        }
 
         /* Copy RSA modulus
          * "rsa_src" contains the modulus, follwed by the message
          */
-        ccp_copy_to_host(s, rsa_mod, rsa_src, rsa_src_mtype, rsa_size);
+        if (!ccp_copy_to_host(s, rsa_mod, rsa_src, rsa_src_mtype, rsa_size)) {
+            return true;
+        }
 
         /* Copy RSA message (signature) */
-        ccp_copy_to_host(s, rsa_msg, rsa_src + rsa_size, rsa_src_mtype,
-                         rsa_size);
+        if (!ccp_copy_to_host(s, rsa_msg, rsa_src + rsa_size, rsa_src_mtype,
+                              rsa_size)) {
+            return true;
+        }
 
         ccp_rsa_init_key(&rsa_pubkey, rsa_mod, rsa_exp);
 
@@ -756,8 +785,10 @@ static void ccp_rsa(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
         ccp_rsa_clear_key(&rsa_pubkey);
 
-        ccp_copy_to_guest(s, rsa_dst, rsa_result, rsa_dst_mtype, rsa_size);
+        return !ccp_copy_to_guest(s, rsa_dst, rsa_result, rsa_dst_mtype,
+                                  rsa_size);
     }
+    return false;
 }
 
 /*
@@ -784,8 +815,7 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         ccp_sha(s, id, desc);
         break;
     case CCP_ENGINE_RSA:
-        ccp_rsa(s, id, desc);
-        break;
+        return ccp_rsa(s, id, desc);
     case CCP_ENGINE_PASSTHRU:
         decode_ccp_passthrough(s, id, desc);
         break;
