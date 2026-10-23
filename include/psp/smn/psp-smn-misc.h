@@ -24,6 +24,14 @@
 #define PSP_SMN_MISC(obj)                                                      \
     OBJECT_CHECK(PSPSmnMiscState, (obj), TYPE_PSP_SMN_MISC)
 
+/*
+ * RAM-like SMN window the Zen3 off-chip BL stages the BL_PUBLIC_KEY header
+ * and key in (window slot 0, SMN 0x30500000). Size covers the 0x1800 buffer
+ * the BL passes to its directory lookup.
+ */
+#define PSP_SMN_SCRATCH_BASE 0x30500000
+#define PSP_SMN_SCRATCH_SIZE 0x2000
+
 typedef struct PSPSmnMiscState {
     /* <private> */
     SysBusDevice parent;
@@ -34,6 +42,7 @@ typedef struct PSPSmnMiscState {
      * Placeholder read/write-back register at SMN 0x02d01380, all generations
      */
     uint32_t placeholder_2d01380;
+    uint8_t scratch[PSP_SMN_SCRATCH_SIZE];
 } PSPSmnMiscState;
 
 #endif
