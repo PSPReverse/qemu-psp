@@ -20,9 +20,12 @@
 
 #include "psp/mmio/mailbox.h"
 
-#include "hw/core/cpu.h"
 #include "hw/irq.h"
 #include "hw/qdev-properties.h"
+#include "hw/resettable.h"
+#include "migration/vmstate.h"
+#include "qapi/error.h"
+#include "qemu/bitops.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -52,12 +55,11 @@ static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
         return 0;
     }
     trace_psp_mailbox_read(index_to_name(index), s->values[index]);
-    trace_psp_mailbox_read("blub", 5);
-    return s->values[index];
+    return extract32(s->values[index], (offset & 3) * 8, size * 8);
 }
 
-static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
-                                 unsigned int size, MemTxAttrs attrs)
+static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
+                          unsigned int size)
 {
     MailboxState* s = MAILBOX(opaque);
 
@@ -66,25 +68,23 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
         qemu_log_mask(LOG_GUEST_ERROR,
                       "%s: out-of-range mailbox write @ offset 0x%" HWADDR_PRIx "\n",
                       __func__, offset);
-        return MEMTX_OK;
+        return;
     }
-    s->values[index] = value;
+    s->values[index] = deposit32(s->values[index], (offset & 3) * 8, size * 8,
+                                 value);
     trace_psp_mailbox_write(index_to_name(index), s->values[index]);
-    trace_psp_mailbox_write_attrs(index, value, attrs.unspecified, attrs.secure,
-                                  attrs.requester_id);
     /*
-     * Debug doorbell: only for writes NOT issued by the PSP core. The fuzz
-     * harness injects word 0 from a host thread (no vCPU context); the
-     * firmware's own response writes run inside the vCPU and must not
-     * re-raise the source. Memory attrs cannot tell them apart (both look
-     * like secure CPU accesses) and current_cpu is not reliable under the
-     * fuzzing bridge, so test whether the vCPU is inside guest execution.
+     * Doorbell: a word 0 write without the reply bit is a host command, so
+     * raise the source. The firmware's reply sets bit 31 and is written after
+     * it has acknowledged the source, so it must not raise it again. Writer
+     * identity is not observable here; the bit is how the protocol tells a
+     * command from a reply (seen in session-mode traces on Zen2).
      */
-    if (index == 0 && s->doorbell_irq_id >= 0 && s->int_enable &&
-        !(first_cpu && first_cpu->running)) {
+    if (index == 0 && s->doorbell_irq_id >= 0 &&
+        (s->int_enable & MAILBOX_INT_ENABLE_SECOS) &&
+        !(s->values[0] & MAILBOX_WORD0_REPLY)) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
-    return MEMTX_OK;
 }
 
 static uint64_t mailbox_ctrl_read(void* opaque, hwaddr offset,
@@ -111,24 +111,36 @@ static const MemoryRegionOps mailbox_ctrl_ops = {
     .endianness = DEVICE_LITTLE_ENDIAN,
     .impl.min_access_size = 4,
     .impl.max_access_size = 4,
+    .valid.min_access_size = 4,
+    .valid.max_access_size = 4,
 };
 
 static const MemoryRegionOps mailbox_mem_ops = {
     .read = mailbox_read,
-    .write_with_attrs = mailbox_write,
+    .write = mailbox_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
     .valid.min_access_size = 1,
     .valid.max_access_size = 4,
 };
 
-static void mailbox_init(Object* obj)
+static void mailbox_reset_hold(Object* obj, ResetType type)
 {
     MailboxState* s = MAILBOX(obj);
 
-    s->values[0] = 0;
-    s->values[1] = 0;
-    s->values[2] = 0;
+    memset(s->values, 0, sizeof(s->values));
+    s->int_enable = 0;
 }
+
+static const VMStateDescription mailbox_vmstate = {
+    .name = TYPE_MAILBOX,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT32_ARRAY(values, MailboxState, 3),
+        VMSTATE_UINT32(int_enable, MailboxState),
+        VMSTATE_END_OF_LIST()
+    },
+};
 
 static void realize(DeviceState* dev, Error** errp)
 {
@@ -137,6 +149,11 @@ static void realize(DeviceState* dev, Error** errp)
 
     memory_region_init_io(&s->iomem, OBJECT(dev), &mailbox_mem_ops, s,
                           TYPE_MAILBOX, 4 * 3);
+
+    if (s->doorbell_irq_id < -1 || s->doorbell_irq_id >= 128) {
+        error_setg(errp, "doorbell_irq_id must be -1 or below 128");
+        return;
+    }
 
     sysbus_init_mmio(sbd, &s->iomem);
 
@@ -148,20 +165,24 @@ static void realize(DeviceState* dev, Error** errp)
 }
 
 static const Property mailbox_properties[] = {
-    DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id, 0x3c),
+    DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id,
+                      MAILBOX_DOORBELL_GEN_DEFAULT),
 };
 
 static void class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
+    ResettableClass* rc = RESETTABLE_CLASS(oc);
+
     dc->realize = realize;
+    dc->vmsd = &mailbox_vmstate;
+    rc->phases.hold = mailbox_reset_hold;
     device_class_set_props(dc, mailbox_properties);
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
     .parent = TYPE_SYS_BUS_DEVICE,
     .class_init = class_init,
-    .instance_init = mailbox_init,
     .instance_size = sizeof(MailboxState),
 
 };

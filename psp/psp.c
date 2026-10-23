@@ -212,15 +212,26 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
                        qdev_get_gpio_in(DEVICE(&s->irq), 0x15));
 
     /* Map Mailbox> */
+    /*
+     * Only Zen2 SecOS is known to take the host doorbell (IC source 0x3c);
+     * -global driver=amd_psp.mailbox,property=doorbell_irq_id,value=N picks
+     * a source on any generation, -1 disables it.
+     */
+    if (s->mailbox.doorbell_irq_id == MAILBOX_DOORBELL_GEN_DEFAULT) {
+        qdev_prop_set_int32(DEVICE(&s->mailbox), "doorbell_irq_id",
+                            PspNameToGen(DEVICE_GET_CLASS(dev)->desc) == ZEN2
+                                ? 0x3c : -1);
+    }
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->mailbox), errp)) {
         return;
     }
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->mailbox), 0, PSP_MAILBOX_BASE);
     sysbus_mmio_map(SYS_BUS_DEVICE(&s->mailbox), 1, PSP_MAILBOX_CTRL_BASE);
-    /* x86-side writes raise IC source doorbell_irq_id (default 0x3c) once the
-     * firmware has armed 0x0301069c; -global driver=amd_psp.mailbox,
-     * property=doorbell_irq_id,value=N overrides, -1 disables. */
-    if (s->mailbox.doorbell_irq_id >= 0 && s->mailbox.doorbell_irq_id < 128) {
+    /*
+     * Host command writes raise IC source doorbell_irq_id once the firmware
+     * has armed 0x0301069c.
+     */
+    if (s->mailbox.doorbell_irq_id >= 0) {
         sysbus_connect_irq(SYS_BUS_DEVICE(&s->mailbox), 0,
                            qdev_get_gpio_in(DEVICE(&s->irq),
                                             s->mailbox.doorbell_irq_id));
