@@ -13,6 +13,17 @@
 #define TYPE_MAILBOX "amd_psp.mailbox"
 #define MAILBOX(obj) OBJECT_CHECK(MailboxState, (obj), TYPE_MAILBOX)
 
+#define MAILBOX_DOORBELL_GEN_DEFAULT (-2)
+
+/* Word 0 bit 31: set by the firmware in its reply, clear in a host command */
+#define MAILBOX_WORD0_REPLY BIT(31)
+
+/*
+ * Bits of the 0x0301069c enable that arm the host doorbell: SecOS writes
+ * 0xff000000 there, the Zen3 off-chip BL writes 0xfc000 for its own use.
+ */
+#define MAILBOX_INT_ENABLE_SECOS 0xff000000
+
 typedef struct MailboxState {
     /*< private >*/
     SysBusDevice parent_obj;
@@ -27,8 +38,10 @@ typedef struct MailboxState {
     MemoryRegion ctrl_iomem;
     uint32_t int_enable;
 
-    /* IC source raised on an x86-side write to word 0 (default 0x3c, the
-     * command-mailbox id per psp-etl #658); -1 = none */
+    /*
+     * IC source raised when the host writes a command to word 0. -1: none,
+     * MAILBOX_DOORBELL_GEN_DEFAULT: resolved by the SoC from its generation.
+     */
     int32_t doorbell_irq_id;
     qemu_irq doorbell_irq;
 } MailboxState;

@@ -14,7 +14,6 @@ psp_fuse_write(uint64_t off, uint64_t value, unsigned int size) "offset=0x%"PRIx
 
 # mailbox.c
 psp_mailbox_write(const char *target, uint32_t value) "target=%s, value=0x%"PRIx32
-psp_mailbox_write_attrs(uint32_t index, uint32_t value, bool unspecified, bool secure, uint32_t requester) "index=%u value=0x%"PRIx32" attrs.unspecified=%d secure=%d requester_id=0x%"PRIx32
 psp_mailbox_ctrl_write(uint32_t value) "0x0301069c write value=0x%"PRIx32
 psp_mailbox_ctrl_read(uint32_t value) "0x0301069c read value=0x%"PRIx32
 psp_mailbox_read(const char *target, uint32_t value) "target=%s, value=0x%"PRIx32
