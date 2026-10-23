@@ -31,8 +31,6 @@ typedef struct PSPSmnSmuState {
     SysBusDevice parent_obj;
 
     MemoryRegion psp_smn_smu;
-
-    char fw_buf[PSP_SMN_SMU_FW_SIZE];
 } PSPSmnSmuState;
 
 #endif
