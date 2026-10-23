@@ -20,61 +20,15 @@
 
 #include "psp/smn/psp-smn-smu.h"
 
-#include "qemu/log.h"
-#include "trace.h"
-
-static uint64_t psp_smn_smu_read(void* opaque, hwaddr offset, unsigned size)
-{
-    PSPSmnSmuState* s = PSP_SMN_SMU(opaque);
-
-    if (size != sizeof(uint8_t)) {
-        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Unsupported read size\n");
-        return 0;
-    }
-
-    if (offset >= PSP_SMN_SMU_FW_SIZE) {
-        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Offset %#lx too large.\n",
-                      offset);
-        return 0;
-    }
-
-    return s->fw_buf[offset];
-}
-
-static void psp_smn_smu_write(void* opaque, hwaddr offset, uint64_t val,
-                              unsigned size)
-{
-    PSPSmnSmuState* s = PSP_SMN_SMU(opaque);
-
-    if (size != sizeof(uint8_t)) {
-        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Unsupported read size\n");
-        return;
-    }
-
-    if (offset >= PSP_SMN_SMU_FW_SIZE) {
-        qemu_log_mask(LOG_UNIMP, "PSP SMN SMU: Error. Offset %#lx too large.\n",
-                      offset);
-        return;
-    }
-
-    s->fw_buf[offset] = val;
-}
-
-static const MemoryRegionOps psp_smn_smu_mem_ops = {
-    .read = psp_smn_smu_read,
-    .write = psp_smn_smu_write,
-    .endianness = DEVICE_LITTLE_ENDIAN,
-    .impl.min_access_size = 1,
-    .impl.max_access_size = 1,
-};
+#include "qapi/error.h"
 
 static void psp_smn_smu_init(Object* obj)
 {
     PSPSmnSmuState* s = PSP_SMN_SMU(obj);
     SysBusDevice* sbd = SYS_BUS_DEVICE(obj);
 
-    memory_region_init_io(&s->psp_smn_smu, obj, &psp_smn_smu_mem_ops, s,
-                          TYPE_PSP_SMN_SMU, PSP_SMN_SMU_FW_SIZE);
+    memory_region_init_ram(&s->psp_smn_smu, obj, TYPE_PSP_SMN_SMU,
+                           PSP_SMN_SMU_FW_SIZE, &error_abort);
     sysbus_init_mmio(sbd, &s->psp_smn_smu);
 }
 
