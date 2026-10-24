@@ -1168,6 +1168,37 @@
             '*node-affinity': ['uint16'] } }
 
 ##
+# @PspTodoPolicy:
+#
+# What a hit of an AMD PSP emulator gap (PSP_TODO) does.  Every hit is
+# counted.
+#
+# @ignore: only count the hit
+#
+# @log: log the hit with the unimp log mask
+#
+# @stop: log the hit, set the stop flag, kick the vCPU out of its
+#     execution loop and, in LibAFL library builds, make the run
+#     return to the harness
+#
+# Since: 10.2 (AMD PSP fork, not in upstream QEMU)
+##
+{ 'enum': 'PspTodoPolicy',
+  'data': [ 'ignore', 'log', 'stop' ] }
+
+##
+# @PspTodoProperties:
+#
+# Properties for the psp-todo object.
+#
+# @policy: what a PSP_TODO hit does (default: log)
+#
+# Since: 10.2 (AMD PSP fork, not in upstream QEMU)
+##
+{ 'struct': 'PspTodoProperties',
+  'data': { '*policy': 'PspTodoPolicy' } }
+
+##
 # @ObjectType:
 #
 # Features:
@@ -1220,6 +1251,7 @@
     'pef-guest',
     { 'name': 'pr-manager-helper',
       'if': 'CONFIG_LINUX' },
+    'psp-todo',
     'qtest',
     'rng-builtin',
     'rng-egd',
@@ -1297,6 +1329,7 @@
                                       'if': 'CONFIG_POSIX' },
       'pr-manager-helper':          { 'type': 'PrManagerHelperProperties',
                                       'if': 'CONFIG_LINUX' },
+      'psp-todo':                   'PspTodoProperties',
       'qtest':                      'QtestProperties',
       'rng-builtin':                'RngProperties',
       'rng-egd':                    'RngEgdProperties',

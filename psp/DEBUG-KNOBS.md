@@ -79,6 +79,10 @@ caller must hold the big QEMU lock (not checked for all of them).
 | `aspfuzz_write_catcher_activate` | `int32_t (hwaddr addr, hwaddr size)` | `write-catcher.c:19` | Global set at realize (`:128`), never cleared. The device is not instantiated by any code in this tree (grep), so the global stays NULL. | `-1` if unset; else `0`. |
 | `aspfuzz_write_catcher_reset` | `int32_t (void)` | `write-catcher.c:30` | As above. | `-1` if unset; else `0`. |
 | `aspfuzz_write_catcher_status` | `int32_t (bool get_read, hwaddr* addr, vaddr* pc)` | `write-catcher.c:45` | As above. | `-1` if unset; else `0`. |
+| `aspfuzz_todo_reset` | `int32_t (void)` | `psp-todo.c` | None; lock-free, no BQL needed (same for the other `aspfuzz_todo_*`). Clears the per-iteration bitmap and the stop flag; the per-site totals are kept. See section 4. | `0` |
+| `aspfuzz_todo_stop_requested` | `int32_t (void)` | `psp-todo.c` | Reads the stop flag set by a hit with `policy=stop` (acquire; the hit sets it with a full barrier, so the bitmap and totals of that hit are visible too). | `1` if such a hit happened since the last `aspfuzz_todo_reset()`; else `0`. |
+| `aspfuzz_todo_status` | `int32_t (uint64_t* bitmap, uint32_t words, uint32_t* nsites)` | `psp-todo.c` | Bit `i % 64` of `bitmap[i / 64]` is site `i`. `*nsites` receives the number of sites even if `words` is too small, so `words == 0` queries it. Words past the last site are zeroed. | Number of sites hit since the last reset; `-1` if `nsites` is NULL, `bitmap` is NULL with `words > 0`, or `words * 64 < *nsites`. |
+| `aspfuzz_todo_site` | `int32_t (uint32_t idx, const char** name, const char** ret_doc, uint64_t* count)` | `psp-todo.c` | NULL outputs are skipped. Strings are static. `count` is the total since startup. | `-1` if `idx >= nsites`; else `0`. |
 
 ### Data symbols
 
@@ -92,11 +96,55 @@ caller must hold the big QEMU lock (not checked for all of them).
 Concurrent writes to the data symbols from a host thread are not synchronised anywhere in
 the code (unverified whether the harness serialises them).
 
-## 4. Unverified or inconsistent items
+## 4. Emulator gaps (`PSP_TODO`)
 
-- Nothing above was executed. All `-global` and `qom-set` examples are from the code, not
-  from a run. Hex values for `-global` (`0x...`) are accepted by QEMU's numeric parser, but
-  this was not tested; decimal equivalents are used where it matters.
+`PSP_TODO(site, ret_doc, fmt, ...)` (`include/psp/psp-todo.h`) marks a path where the model
+knowingly does not do what the hardware does. `site` is a unique name such as
+`ccp.engine.unknown`, `ret_doc` says what the guest sees while the gap is ignored. Every hit
+adds 1 to the site's total, sets the site's bit in the per-iteration bitmap and emits the
+`psp_todo_hit` trace event; the policy decides the rest. Totals, bitmap and stop flag are
+host-side statics, not in vmstate, so snapshot restores do not touch them. The harness reads
+them with the `aspfuzz_todo_*` functions in section 3. Only `ccp.engine.unknown`
+(`ccp_execute`) uses it so far.
+
+Sites are numbered at startup from the `psp_todo_sites` linker section, so indexes are stable
+for a given binary and include sites never hit. There is no fixed maximum. This needs the
+`__start_`/`__stop_` symbols of an ELF linker: Mach-O rejects the section name, and with other
+formats no site gets an index, so hits are only counted. A name used by more than one
+`PSP_TODO()` is reported on stderr at startup, before `main()`; such sites keep separate
+indexes.
+
+| Property | Object | Default | Effect | Example | Code |
+|---|---|---|---|---|---|
+| `policy` | `psp-todo` (`-object`, at most one) | `log`, also without the object | `ignore`: count only. `log`: also log with `-d unimp`. `stop`: also log, set the stop flag, `cpu_exit()` the current vCPU (every vCPU when not on a vCPU thread) and, in `AS_LIB` builds (`--as-shared-lib`, `--as-static-lib`), call `qemu_system_return_request()` as a LibAFL exit does, so the main loop stops the VM and the run returns to the harness. Only the first stop hit after `aspfuzz_todo_reset()` requests the return; later ones only count and kick. Never blocks or aborts. Changeable at runtime with `qom-set /objects/<id> policy <value>`. | `-object psp-todo,id=todo,policy=stop` | `psp-todo.c` `psp_todo_hit`, `psp_todo_kick`; schema `PspTodoProperties` in `qapi/qom.json` |
+
+What the harness (ASPFuzz) must do with `policy=stop`: after every run, call
+`aspfuzz_todo_stop_requested()`. The return requested by a stop hit carries no LibAFL exit
+reason: `libafl_get_exit_reason()` returns NULL unless a LibAFL exit happened in the same
+run, which LibAFL may report as an unexpected exit. If the flag is 1, the harness must
+classify the run as EmulatorGap, not as a crash or an unexpected exit, and can take the sites
+from `aspfuzz_todo_status()`. Call `aspfuzz_todo_reset()` before the next iteration, or the
+next stop hit requests no return. A first stop hit while the VM is stopped (for example caused
+by a harness write to device memory) makes the next run return at once. Without `AS_LIB` (for
+example `build-nix`) there is no return: the vCPU re-enters its loop after `cpu_exit()` and the
+guest keeps running; only the flag and the log line remain. None of this is verified end to
+end: the sandbox it was written in had neither a LibAFL build nor firmware.
+
+With the `log` trace backend, `-d unimp` together with `-trace psp_todo_hit` prints every hit
+twice: once as the trace event, once as the `PSP_TODO` log line.
+
+Executed in `build-nix` (no `AS_LIB`): hits through qtest MMIO (no vCPU thread) and through
+guest code under TCG (vCPU thread) with `policy=stop`, `log` and `ignore`; the guest reads the
+same queue status (0) as before. A preloaded test library calling the `aspfuzz_todo_*`
+functions from a host thread saw the stop flag set only with `policy=stop`, and
+`aspfuzz_todo_reset()` clear it and the bitmap while keeping the total. The `AS_LIB` return
+path was compiled but not run, and no duplicate site name exists to exercise that report.
+
+## 5. Unverified or inconsistent items
+
+- Nothing in sections 1 to 3 was executed. All `-global` and `qom-set` examples are from the
+  code, not from a run. Hex values for `-global` (`0x...`) are accepted by QEMU's numeric
+  parser, but this was not tested; decimal equivalents are used where it matters.
 - The `-global` examples assume the default machine path and driver names as listed. The
   live `/machine/soc/irq` path was not checked with `info qom-tree`.
 - `aspfuzz_irq_inject` takes the BQL only when `bql_locked()` is false, so it is safe from
