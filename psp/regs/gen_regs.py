@@ -6,7 +6,9 @@ usage: gen_regs.py --output psp-regs.c.inc [--tsv psp-regs.tsv] FILE.json...
 
 Every file named in REQUIRED_FILES must be given exactly once. Each file is
 a JSON object {"spaces": {SPACE: [{"offset": HEX, "value": HEX,
-"source": SOURCE, "note": S}]}}. A generation file may also name a "parent"
+"source": SOURCE, "note": S}]}}. An entry with "rw": true (psp_misc and
+smn_misc only) is read/write-back storage whose "value" is the reset value. A
+generation file may also name a "parent"
 generation. A generation sees its own entries, then its parent chain, then
 generic.json; tables are flattened here, so the runtime does one lookup. A
 "value" of null in a generation file masks an inherited value.
@@ -50,7 +52,10 @@ OFFSET_LIMIT = 1 << 64
 # Where a value comes from. Nothing is "measured" unless it was read on real
 # hardware; "unknown" marks entries migrated without provenance.
 SOURCES = {"measured", "inferred", "code-reading", "unknown"}
-ENTRY_KEYS = {"offset", "value", "source", "note"}
+ENTRY_KEYS = {"offset", "value", "source", "note", "rw"}
+# Spaces whose device keeps storage for "rw" entries, and how many slots.
+RW_SPACES = {"smn_misc", "psp_misc"}
+MAX_RW_SLOTS = 32
 WINDOW_KEYS = {"offset", "size", "source", "note"}
 SMN_SIZE = (1 << 32) - 1
 HEX_LOOSE = re.compile(r"0[xX][0-9a-fA-F]+")
@@ -178,7 +183,14 @@ def load(path, is_generation):
                     fail(path, f"{where}: offset 0x{offset:x} comes after "
                                f"0x{prev:x}; sort the {space} list by offset")
             prev = offset
-            result[space].append((offset, value, e["source"], e.get("note", "")))
+            rw = e.get("rw", False)
+            if not isinstance(rw, bool):
+                fail(path, f"{where}: 'rw' must be true or false")
+            if rw and (value is None or space not in RW_SPACES):
+                fail(path, f"{where}: 'rw' needs a value and one of the "
+                           f"spaces {sorted(RW_SPACES)}")
+            result[space].append((offset, value, e["source"],
+                                  e.get("note", ""), rw))
     return parent, result, windows
 
 
@@ -200,28 +212,33 @@ def flatten(data, parents, paths):
         flat[stem] = {}
         ancestors = chain(stem, parents, paths)
         for space in SPACES:
-            inherited = {o: (v, src, note)
-                         for o, v, src, note in data[GENERIC][space]}
+            inherited = {o: (v, src, note, rw)
+                         for o, v, src, note, rw in data[GENERIC][space]}
             for anc in reversed(ancestors):
-                for offset, value, src, note in data[anc][space]:
+                for offset, value, src, note, rw in data[anc][space]:
                     if value is None:
                         inherited.pop(offset, None)
                     else:
-                        inherited[offset] = (value, src, note)
+                        inherited[offset] = (value, src, note, rw)
             merged = dict(inherited)
-            for offset, value, src, note in data[stem][space]:
+            for offset, value, src, note, rw in data[stem][space]:
                 if value is None:
                     if offset not in inherited:
                         fail(paths[stem], f"{space} offset 0x{offset:x} masks "
                                           f"a value that is not inherited")
                     del merged[offset]
-                elif offset in inherited and inherited[offset][0] == value:
+                elif (offset in inherited and inherited[offset][0] == value
+                      and inherited[offset][3] == rw):
                     fail(paths[stem], f"{space} offset 0x{offset:x} repeats "
                                       f"the inherited value 0x{value:x}; "
                                       f"delete it")
                 else:
-                    merged[offset] = (value, src, note)
+                    merged[offset] = (value, src, note, rw)
             flat[stem][space] = sorted(merged.items())
+            slots = sum(1 for _, (_, _, _, rw) in flat[stem][space] if rw)
+            if slots > MAX_RW_SLOTS:
+                fail(paths[stem], f"{space} has {slots} rw entries, at most "
+                                  f"{MAX_RW_SLOTS} fit the device state")
     return flat
 
 
@@ -259,9 +276,11 @@ def render(flat, wins):
                 continue
             name = table_name(stem, space)
             out.append(f"static const PspRegEntry {name}[] = {{")
-            for offset, (value, _, _) in rows:
+            slot = 0
+            for offset, (value, _, _, rw) in rows:
                 out.append(f"    {{UINT64_C(0x{offset:x}), "
-                           f"UINT64_C(0x{value:x})}},")
+                           f"UINT64_C(0x{value:x}), {slot if rw else -1}}},")
+                slot += rw
             out.append("};")
             out.append("")
 
@@ -283,6 +302,7 @@ def render(flat, wins):
                 yield f"[{enum}] = {{NULL, 0}},"
 
     out.append(f"QEMU_BUILD_BUG_ON(PSP_GENERATION_MAX != {len(GENERATIONS)});")
+    out.append(f"QEMU_BUILD_BUG_ON(PSP_REGS_MAX_RW_SLOTS != {MAX_RW_SLOTS});")
     out.append("")
     out.append("static const PspRamWindowTable "
                "psp_regs_ram_by_gen[PSP_GENERATION_MAX] = {")
@@ -307,18 +327,18 @@ def render(flat, wins):
 
 def render_tsv(flat, wins):
     """One row per resolved entry; offsets and values as 0x hex strings."""
-    out = ["space\tgeneration\toffset\tvalue\tsource\tnote"]
+    out = ["space\tgeneration\toffset\tvalue\tsource\tnote\taccess"]
     for stem in GENERATIONS:
         for space in SPACES:
-            for offset, (value, src, note) in flat[stem][space]:
+            for offset, (value, src, note, rw) in flat[stem][space]:
                 note = " ".join(note.split())
                 out.append(f"{space}\t{stem}\t0x{offset:x}\t0x{value:x}"
-                           f"\t{src}\t{note}")
+                           f"\t{src}\t{note}\t{'rw' if rw else 'ro'}")
     for stem in GENERATIONS:
         for offset, size, src, note in wins[stem]:
             note = " ".join(note.split())
             out.append(f"ram_window\t{stem}\t0x{offset:x}\t0x{size:x}"
-                       f"\t{src}\t{note}")
+                       f"\t{src}\t{note}\tram")
     return "\n".join(out) + "\n"
 
 

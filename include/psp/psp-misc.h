@@ -22,13 +22,10 @@
 #include "hw/sysbus.h"
 
 #include "psp/generations.h"
+#include "psp/psp-regs.h"
 
 #define TYPE_PSP_MISC "amd_psp.misc"
 #define PSP_MISC(obj) OBJECT_CHECK(PSPMiscState, (obj), TYPE_PSP_MISC)
-
-/* Registers that are accessed but not modelled (psp-misc.c) */
-#define PSP_MISC_ZEN3_PLACEHOLDER_COUNT 10
-#define PSP_MISC_PLACEHOLDER_COUNT 6
 
 typedef struct PSPMiscState {
     SysBusDevice parent_obj;
@@ -43,11 +40,8 @@ typedef struct PSPMiscState {
     /* Which Generation is being emulated*/
     PspGeneration generation;
 
-    /* Zen3 placeholder registers, see psp_misc_placeholder_slot() */
-    uint32_t zen3_placeholder[PSP_MISC_ZEN3_PLACEHOLDER_COUNT];
-
-    /* Placeholder registers on all generations */
-    uint32_t placeholder[PSP_MISC_PLACEHOLDER_COUNT];
+    /* Storage of the "rw" entries of psp/regs, see psp_regs_find() */
+    uint32_t rw[PSP_REGS_MAX_RW_SLOTS];
 
 } PSPMiscState;
 

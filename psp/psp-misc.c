@@ -36,53 +36,19 @@
  */
 
 /*
- * Registers that the boot path accesses but nothing models yet. They are
- * plain read/write-back storage, reset to 0 (what an unmodelled read returned
- * before). The stored values are placeholders, not hardware behaviour.
+ * Find the register covering the access at addr. Constants match their exact
+ * offset; "rw" entries (read/write-back storage) also match a narrow access
+ * inside their word.
  */
-static const hwaddr psp_misc_zen3_placeholder_addr[] = {
-    0x3010004, 0x3010058, 0x3260028, 0x32000dc, 0x3200054,
-    0x320021c, 0x320022c, 0x30109a4, 0x301070c, 0x3010a44,
-};
-
-_Static_assert(ARRAY_SIZE(psp_misc_zen3_placeholder_addr) ==
-                   PSP_MISC_ZEN3_PLACEHOLDER_COUNT,
-               "zen3 placeholder table and state size must match");
-
-/*
- * Placeholders on every generation, by design: the fuzzer needs them on Zen2
- * too. A read after a write returns the written value on all generations.
- * No value in psp_regs_lookup() changes, because that lookup takes
- * precedence. 0x3210044 is not in this table: it holds a pointer, and the
- * firmware's 0x70..0x73 interrupt handler stores 1 << (id - 0x70) at the
- * address it points to. That target is not modelled.
- */
-static const hwaddr psp_misc_placeholder_addr[] = {
-    0x3200a00, 0x3200a04, 0x3200a08,
-    0x30109f0, 0x30109f4, 0x30109f8,
-};
-
-_Static_assert(ARRAY_SIZE(psp_misc_placeholder_addr) ==
-                   PSP_MISC_PLACEHOLDER_COUNT,
-               "placeholder table and state size must match");
-
-/* @return storage for the placeholder word at addr (4-byte aligned), or NULL */
-static uint32_t *psp_misc_placeholder_slot(PSPMiscState *misc, hwaddr addr)
+static bool psp_misc_find(PSPMiscState* misc, hwaddr addr, PspRegHit* hit)
 {
-    if (misc->generation == ZEN3) {
-        for (size_t i = 0; i < ARRAY_SIZE(psp_misc_zen3_placeholder_addr);
-             i++) {
-            if (psp_misc_zen3_placeholder_addr[i] == addr) {
-                return &misc->zen3_placeholder[i];
-            }
-        }
+    if (psp_regs_find(misc->generation, PSP_REG_SPACE_PSP_MISC, addr, hit)) {
+        return true;
     }
-    for (size_t i = 0; i < ARRAY_SIZE(psp_misc_placeholder_addr); i++) {
-        if (psp_misc_placeholder_addr[i] == addr) {
-            return &misc->placeholder[i];
-        }
-    }
-    return NULL;
+    return (addr & 3) &&
+           psp_regs_find(misc->generation, PSP_REG_SPACE_PSP_MISC,
+                         addr & ~(hwaddr)3, hit) &&
+           hit->rw_slot >= 0;
 }
 
 static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
@@ -90,11 +56,13 @@ static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
 {
     PSPMiscState* misc = PSP_MISC(opaque);
     hwaddr phys_abs = misc->iomem.addr + offset;
-    uint32_t *slot = psp_misc_placeholder_slot(misc, phys_abs & ~(hwaddr)3);
-    unsigned shift = (phys_abs & 3) * 8;
-    uint32_t mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
+    PspRegHit hit;
 
-    if (slot) {
+    if (psp_misc_find(misc, phys_abs, &hit) && hit.rw_slot >= 0) {
+        uint32_t* slot = &misc->rw[hit.rw_slot];
+        unsigned shift = (phys_abs & 3) * 8;
+        uint32_t mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
+
         *slot = (*slot & ~mask) | (((uint32_t)value << shift) & mask);
         trace_psp_misc_write(offset, value, size);
     } else {
@@ -128,22 +96,19 @@ static bool psp_misc_system_ticks_word(hwaddr addr, unsigned int size,
 static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPMiscState* misc = PSP_MISC(opaque);
-    hwaddr phys_abs;
-    hwaddr phys_base;
-    uint64_t value;
-    uint32_t *slot;
+    hwaddr phys_abs = misc->iomem.addr + offset;
+    uint64_t value = 0;
+    PspRegHit hit;
 
-    phys_base = misc->iomem.addr;
-    phys_abs = phys_base + offset;
-    value = 0;
-
-    slot = psp_misc_placeholder_slot(misc, phys_abs & ~(hwaddr)3);
-    if (psp_misc_system_ticks_word(phys_abs, size, &value) ||
-        psp_regs_lookup(misc->generation, PSP_REG_SPACE_PSP_MISC, phys_abs,
-                        &value)) {
+    if (psp_misc_system_ticks_word(phys_abs, size, &value)) {
         trace_psp_misc_read(offset, value, size);
-    } else if (slot) {
-        value = (*slot >> ((phys_abs & 3) * 8)) & MAKE_64BIT_MASK(0, size * 8);
+    } else if (psp_misc_find(misc, phys_abs, &hit)) {
+        if (hit.rw_slot >= 0) {
+            value = (misc->rw[hit.rw_slot] >> ((phys_abs & 3) * 8)) &
+                    MAKE_64BIT_MASK(0, size * 8);
+        } else {
+            value = hit.value;
+        }
         trace_psp_misc_read(offset, value, size);
     } else {
         trace_psp_misc_read_unimplemented(offset, size);
@@ -196,8 +161,7 @@ static void psp_misc_reset_hold(Object *obj, ResetType type)
 {
     PSPMiscState *s = PSP_MISC(obj);
 
-    memset(s->zen3_placeholder, 0, sizeof(s->zen3_placeholder));
-    memset(s->placeholder, 0, sizeof(s->placeholder));
+    psp_regs_rw_reset(s->generation, PSP_REG_SPACE_PSP_MISC, s->rw);
 }
 
 static const VMStateDescription psp_misc_vmstate = {
@@ -205,10 +169,7 @@ static const VMStateDescription psp_misc_vmstate = {
     .version_id = 1,
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
-        VMSTATE_UINT32_ARRAY(zen3_placeholder, PSPMiscState,
-                             PSP_MISC_ZEN3_PLACEHOLDER_COUNT),
-        VMSTATE_UINT32_ARRAY(placeholder, PSPMiscState,
-                             PSP_MISC_PLACEHOLDER_COUNT),
+        VMSTATE_UINT32_ARRAY(rw, PSPMiscState, PSP_REGS_MAX_RW_SLOTS),
         VMSTATE_END_OF_LIST()
     }
 };

@@ -9,30 +9,40 @@
 #include "qapi/error.h"
 #include "trace.h"
 
+/*
+ * Find the register covering the access at offset. Constants match their
+ * exact offset; "rw" entries (read/write-back storage) also match a narrow
+ * access inside their word.
+ */
+static bool psp_smn_misc_find(PSPSmnMiscState* s, hwaddr offset,
+                              PspRegHit* hit)
+{
+    if (psp_regs_find(s->generation, PSP_REG_SPACE_SMN_MISC, offset, hit)) {
+        return true;
+    }
+    return (offset & 3) &&
+           psp_regs_find(s->generation, PSP_REG_SPACE_SMN_MISC,
+                         offset & ~(hwaddr)3, hit) &&
+           hit->rw_slot >= 0;
+}
+
 static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
                                   unsigned int size)
 {
     PSPSmnMiscState* s = opaque;
+    PspRegHit hit;
     uint64_t val;
 
-    /* Placeholder, see psp_smn_misc_write(). Not measured. */
-    if ((offset & ~(hwaddr)3) == 0x2d01380) {
-        val = (s->placeholder_2d01380 >> ((offset & 3) * 8)) &
-              MAKE_64BIT_MASK(0, size * 8);
-        trace_psp_smn_misc_read(offset, val);
-        return val;
-    }
-
-    if (!psp_regs_lookup(s->generation, PSP_REG_SPACE_SMN_MISC, offset, &val)) {
-        /* Zen3 off-chip BL reads this bank. Not modelled: placeholder 0. */
-        if (s->generation == ZEN3 && offset >= 0x5d138 && offset <= 0x5d154) {
-            trace_psp_smn_misc_read(offset, 0);
-            return 0;
-        }
+    if (!psp_smn_misc_find(s, offset, &hit)) {
         trace_psp_smn_misc_read_unimplemented(offset);
         return 0;
     }
-
+    if (hit.rw_slot >= 0) {
+        val = (s->rw[hit.rw_slot] >> ((offset & 3) * 8)) &
+              MAKE_64BIT_MASK(0, size * 8);
+    } else {
+        val = hit.value;
+    }
     trace_psp_smn_misc_read(offset, val);
     return val;
 }
@@ -41,14 +51,14 @@ static void psp_smn_misc_write(void* opaque, hwaddr offset, uint64_t value,
                                unsigned int size)
 {
     PSPSmnMiscState* s = opaque;
+    PspRegHit hit;
 
-    /* Placeholder: the value is stored unmodelled and read back. */
-    if ((offset & ~(hwaddr)3) == 0x2d01380) {
+    if (psp_smn_misc_find(s, offset, &hit) && hit.rw_slot >= 0) {
+        uint32_t* slot = &s->rw[hit.rw_slot];
         uint32_t shift = (offset & 3) * 8;
         uint32_t mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
 
-        s->placeholder_2d01380 = (s->placeholder_2d01380 & ~mask) |
-                                 (((uint32_t)value << shift) & mask);
+        *slot = (*slot & ~mask) | (((uint32_t)value << shift) & mask);
         trace_psp_smn_misc_write(offset, value);
         return;
     }
@@ -80,7 +90,7 @@ static void psp_smn_misc_reset_hold(Object* obj, ResetType type)
 {
     PSPSmnMiscState* s = PSP_SMN_MISC(obj);
 
-    s->placeholder_2d01380 = 0;
+    psp_regs_rw_reset(s->generation, PSP_REG_SPACE_SMN_MISC, s->rw);
 }
 
 static const VMStateDescription psp_smn_misc_vmstate = {
@@ -88,7 +98,7 @@ static const VMStateDescription psp_smn_misc_vmstate = {
     .version_id = 1,
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
-        VMSTATE_UINT32(placeholder_2d01380, PSPSmnMiscState),
+        VMSTATE_UINT32_ARRAY(rw, PSPSmnMiscState, PSP_REGS_MAX_RW_SLOTS),
         VMSTATE_END_OF_LIST()
     }
 };

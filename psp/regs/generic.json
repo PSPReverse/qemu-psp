@@ -192,6 +192,13 @@
         "source": "unknown"
       },
       {
+        "offset": "0x2d01380",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not measured: read/write-back storage, the value written is read back."
+      },
+      {
         "offset": "0x3b10024",
         "value": "0x1",
         "source": "unknown",
@@ -419,6 +426,27 @@
         "note": "TODO this should depend on dbg flag: https://github.com/PSPReverse/PSPEmu/blob/78e4be24e882ae67867063c894fbfb2ecbe50f3f/psp-dev-mmio-unknown.c#L67"
       },
       {
+        "offset": "0x30109f0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the boot path accesses and nothing models yet. On every generation because the fuzzer needs it on Zen2 too."
+      },
+      {
+        "offset": "0x30109f4",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the boot path accesses and nothing models yet. On every generation because the fuzzer needs it on Zen2 too."
+      },
+      {
+        "offset": "0x30109f8",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the boot path accesses and nothing models yet. On every generation because the fuzzer needs it on Zen2 too."
+      },
+      {
         "offset": "0x3200048",
         "value": "0xbc0b0552",
         "source": "unknown",
@@ -435,6 +463,27 @@
         "value": "0x300",
         "source": "unknown",
         "note": "Zen2"
+      },
+      {
+        "offset": "0x3200a00",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the boot path accesses and nothing models yet. On every generation because the fuzzer needs it on Zen2 too."
+      },
+      {
+        "offset": "0x3200a04",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the boot path accesses and nothing models yet. On every generation because the fuzzer needs it on Zen2 too."
+      },
+      {
+        "offset": "0x3200a08",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the boot path accesses and nothing models yet. On every generation because the fuzzer needs it on Zen2 too."
       },
       {
         "offset": "0x3b10034",

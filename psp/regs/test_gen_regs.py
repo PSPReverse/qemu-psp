@@ -120,11 +120,11 @@ class GenRegsTest(unittest.TestCase):
         rows = [r.split("\t") for r in
                 open(self.tsv_path).read().splitlines()]
         self.assertEqual(rows[0], ["space", "generation", "offset", "value",
-                                   "source", "note"])
-        self.assertTrue(all(len(r) == 6 for r in rows))
+                                   "source", "note", "access"])
+        self.assertTrue(all(len(r) == 7 for r in rows))
         zen3 = [r for r in rows if r[1] == "zen3"]
         self.assertEqual([r[2] for r in zen3], ["0x10", "0x20"])
-        self.assertEqual(zen3[0][4:], ["inferred", "multi word note"])
+        self.assertEqual(zen3[0][4:], ["inferred", "multi word note", "ro"])
         self.assertEqual(len([r for r in rows if r[1] == "zen"]), 1)
 
     @staticmethod
@@ -166,6 +166,35 @@ class GenRegsTest(unittest.TestCase):
         self.docs["zen2"]["ram_windows"] = [self.window("0x1080", "0x10")]
         p, _ = self.run_gen()
         self.assertIn("overlaps", p.stderr)
+
+    def test_rw_entries_get_slots_in_offset_order(self):
+        rw = entry("0x30", "0x7")
+        rw["rw"] = True
+        self.docs["generic"]["spaces"]["psp_misc"] = [
+            entry("0x10", "0x1"), rw, dict(entry("0x40", "0x0"), rw=True)]
+        p, text = self.run_gen(tsv=True)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        m = re.search(r"psp_regs_zen3_psp_misc\[\] = \{(.*?)\};", text, re.S)
+        self.assertEqual(re.findall(r"\{UINT64_C\(0x[0-9a-f]+\), "
+                                    r"UINT64_C\(0x[0-9a-f]+\), (-?\d+)\}",
+                                    m.group(1)), ["-1", "0", "1"])
+        rows = [r.split("\t") for r in open(self.tsv_path).read().splitlines()
+                if r.startswith("psp_misc\tzen3")]
+        self.assertEqual([r[6] for r in rows], ["ro", "rw", "rw"])
+
+    def test_rw_restrictions(self):
+        self.docs["generic"]["spaces"]["x86_misc"] = [
+            dict(entry("0x10", "0x1"), rw=True)]
+        p, _ = self.run_gen()
+        self.assertIn("'rw' needs a value", p.stderr)
+        self.docs["generic"]["spaces"] = {"psp_misc": [
+            dict(entry("0x%x" % (4 * i), "0x0"), rw=True) for i in range(33)]}
+        p, _ = self.run_gen()
+        self.assertIn("rw entries, at most 32", p.stderr)
+        self.docs["generic"]["spaces"] = {"psp_misc": [
+            dict(entry("0x10", "0x1"), rw="yes")]}
+        p, _ = self.run_gen()
+        self.assertIn("'rw' must be true or false", p.stderr)
 
     def test_source_is_required_and_checked(self):
         self.docs["generic"]["spaces"]["smn_misc"] = [
