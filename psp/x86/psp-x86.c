@@ -103,8 +103,15 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     memory_region_add_subregion(&s->mr, SECURE_DRAM_BASE, &s->secure_dram);
 
     /* Init regular DRAM */
+    if (s->regular_dram_size == 0 || s->regular_dram_size > REGULAR_DRAM_SIZE ||
+        !QEMU_IS_ALIGNED(s->regular_dram_size, qemu_real_host_page_size())) {
+        error_setg(errp,
+                   "property 'regular_dram_size' must be a page-aligned size "
+                   "in (0, 0x%x]", REGULAR_DRAM_SIZE);
+        return;
+    }
     memory_region_init_ram(&s->regular_dram, OBJECT(dev), "x86.regular_dram",
-                           REGULAR_DRAM_SIZE, &error_abort);
+                           s->regular_dram_size, &error_abort);
     memory_region_add_subregion(&s->mr, REGULAR_DRAM_BASE, &s->regular_dram);
 
     /* Map PSP Status port */
@@ -148,6 +155,8 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
 static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86State, generation,
                        PSP_GENERATION_MAX),
+    DEFINE_PROP_UINT64("regular_dram_size", PSPX86State, regular_dram_size,
+                       REGULAR_DRAM_SIZE),
 };
 
 static void psp_x86_class_init(ObjectClass* oc, const void* data)

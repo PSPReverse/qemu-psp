@@ -86,9 +86,12 @@ static void psp_zen_machine_common_init(MachineClass* mc)
      * The PSP does not have ram, however the generic-loader device apparently
      * validates this value, so we set it here to an sufficiently large value
      * TODO: Verify that this has not other, unwanted side-effects.
+     *
+     * No default_ram_id: the size is only a limit for the loader, and an id
+     * would make QEMU allocate a RAM block that no address space maps but
+     * that a snapshot copies in full.
      */
     mc->default_ram_size = 1 * GiB;
-    mc->default_ram_id = "psp-ram";
 }
 
 static void psp_zen_machine_init(ObjectClass* oc, const void* data)
