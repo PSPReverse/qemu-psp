@@ -24,7 +24,7 @@ class GenRegsTest(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.docs = {s: {"spaces": {}} for s in STEMS}
 
-    def run_gen(self):
+    def run_gen(self, tsv=False):
         paths = []
         for stem, doc in self.docs.items():
             path = os.path.join(self.tmp.name, stem + ".json")
@@ -32,8 +32,10 @@ class GenRegsTest(unittest.TestCase):
                 json.dump(doc, f)
             paths.append(path)
         out = os.path.join(self.tmp.name, "out.inc")
-        p = subprocess.run([sys.executable, GEN, "--output", out, *paths],
-                           capture_output=True, text=True)
+        self.tsv_path = os.path.join(self.tmp.name, "out.tsv")
+        extra = ["--tsv", self.tsv_path] if tsv else []
+        p = subprocess.run([sys.executable, GEN, "--output", out, *extra,
+                            *paths], capture_output=True, text=True)
         text = open(out).read() if p.returncode == 0 else ""
         return p, text
 
@@ -106,6 +108,24 @@ class GenRegsTest(unittest.TestCase):
         self.docs["generic"]["spaces"]["smn_misc"] = [entry("0x10", None)]
         p, _ = self.run_gen()
         self.assertIn("only a generation file can mask", p.stderr)
+
+    def test_tsv_has_one_resolved_row_per_entry(self):
+        e = entry("0x10", "0x1", "inferred")
+        e["note"] = "multi\tword\nnote"
+        self.docs["generic"]["spaces"]["smn_misc"] = [e]
+        self.docs["zen2"]["spaces"]["smn_misc"] = [entry("0x20", "0x3")]
+        self.docs["zen3"]["parent"] = "zen2"
+        p, _ = self.run_gen(tsv=True)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        rows = [r.split("\t") for r in
+                open(self.tsv_path).read().splitlines()]
+        self.assertEqual(rows[0], ["space", "generation", "offset", "value",
+                                   "source", "note"])
+        self.assertTrue(all(len(r) == 6 for r in rows))
+        zen3 = [r for r in rows if r[1] == "zen3"]
+        self.assertEqual([r[2] for r in zen3], ["0x10", "0x20"])
+        self.assertEqual(zen3[0][4:], ["inferred", "multi word note"])
+        self.assertEqual(len([r for r in rows if r[1] == "zen"]), 1)
 
     def test_source_is_required_and_checked(self):
         self.docs["generic"]["spaces"]["smn_misc"] = [
