@@ -7,6 +7,7 @@
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
+#include "qemu/cutils.h"
 #include "trace.h"
 
 /*
@@ -26,13 +27,31 @@ static bool psp_smn_misc_find(PSPSmnMiscState* s, hwaddr offset,
            hit->rw_slot >= 0;
 }
 
+/* Index of the override covering the word of offset, or -1 */
+static int psp_smn_misc_override(PSPSmnMiscState* s, hwaddr offset)
+{
+    for (uint32_t i = 0; i < s->n_overrides; i++) {
+        if (s->override_offset[i] == (offset & ~(hwaddr)3)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
                                   unsigned int size)
 {
     PSPSmnMiscState* s = opaque;
     PspRegHit hit;
     uint64_t val;
+    int ov = psp_smn_misc_override(s, offset);
 
+    if (ov >= 0) {
+        val = (s->override_value[ov] >> ((offset & 3) * 8)) &
+              MAKE_64BIT_MASK(0, size * 8);
+        trace_psp_smn_misc_read_override(offset, val);
+        return val;
+    }
     if (!psp_smn_misc_find(s, offset, &hit)) {
         trace_psp_smn_misc_read_unimplemented(offset);
         return 0;
@@ -73,11 +92,61 @@ static const MemoryRegionOps misc_mem_ops = {
     .impl.max_access_size = 4,
 };
 
+/*
+ * Parse the overrides property: comma-separated offset=value pairs, numbers
+ * C-style as accepted by qemu_strtou64 with base 0 (0x hex, leading 0 octal,
+ * else decimal), offsets 4-byte aligned and unique, values 32-bit.
+ */
+static bool psp_smn_misc_parse_overrides(PSPSmnMiscState* s, Error** errp)
+{
+    g_auto(GStrv) pairs = NULL;
+
+    s->n_overrides = 0;
+    if (s->overrides == NULL || *s->overrides == '\0') {
+        return true;
+    }
+    pairs = g_strsplit(s->overrides, ",", -1);
+    for (char** p = pairs; *p != NULL; p++) {
+        const char* end;
+        uint64_t offset, value;
+
+        if (s->n_overrides == PSP_SMN_MISC_MAX_OVERRIDES) {
+            error_setg(errp, "overrides: more than %d pairs",
+                       PSP_SMN_MISC_MAX_OVERRIDES);
+            return false;
+        }
+        if (qemu_strtou64(*p, &end, 0, &offset) < 0 || *end != '=' ||
+            qemu_strtou64(end + 1, NULL, 0, &value) < 0) {
+            error_setg(errp, "overrides: '%s' is not offset=value", *p);
+            return false;
+        }
+        if (offset > UINT32_MAX || (offset & 3) || value > UINT32_MAX) {
+            error_setg(errp,
+                       "overrides: '%s' needs a 4-byte aligned 32-bit offset "
+                       "and a 32-bit value",
+                       *p);
+            return false;
+        }
+        if (psp_smn_misc_override(s, offset) >= 0) {
+            error_setg(errp, "overrides: offset 0x%" PRIx64 " given twice",
+                       offset);
+            return false;
+        }
+        s->override_offset[s->n_overrides] = offset;
+        s->override_value[s->n_overrides] = value;
+        s->n_overrides++;
+    }
+    return true;
+}
+
 static void psp_smn_misc_realize(DeviceState* dev, Error** errp)
 {
     PSPSmnMiscState* s = PSP_SMN_MISC(dev);
     if (s->generation >= PSP_GENERATION_MAX) {
         error_setg(errp, "property 'psp_smn_misc_generation' not specified or invalid");
+        return;
+    }
+    if (!psp_smn_misc_parse_overrides(s, errp)) {
         return;
     }
     /* Init mmio */
@@ -106,6 +175,7 @@ static const VMStateDescription psp_smn_misc_vmstate = {
 static const Property psp_smn_misc_properties[] = {
     DEFINE_PROP_UINT32("psp_smn_misc_generation", PSPSmnMiscState, generation,
                        PSP_GENERATION_MAX),
+    DEFINE_PROP_STRING("overrides", PSPSmnMiscState, overrides),
 };
 
 static void psp_smn_misc_class_init(ObjectClass* oc, const void* data)
