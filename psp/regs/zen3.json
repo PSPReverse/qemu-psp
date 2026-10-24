@@ -2,6 +2,18 @@
   "spaces": {
     "smn_misc": [
       {
+        "offset": "0x51050",
+        "value": "0x0",
+        "source": "inferred",
+        "note": "Environment marker the ABL reads; 0xb1aab1aa and 0x4e554e55/0x51e051e0 mean simulation/emulation, any other value means real silicon. Looks like a mailbox an external debug script writes, 0 on hardware (the value is certain to be no marker, exact 0 is a guess)."
+      },
+      {
+        "offset": "0x5a08c",
+        "value": "0x10",
+        "source": "inferred",
+        "note": "Platform strap, bits 4:2 = 4 (socket SP3 by the ABL's use of the field); the generic value is the Zen2 one."
+      },
+      {
         "offset": "0x5d138",
         "value": "0x0",
         "source": "unknown",
