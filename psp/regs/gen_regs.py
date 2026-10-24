@@ -6,10 +6,14 @@ usage: gen_regs.py --output psp-regs.c.inc FILE.json...
 
 Every file named in REQUIRED_FILES must be given exactly once. Each file is
 a JSON object {"spaces": {SPACE: [{"offset": HEX, "value": HEX,
-"source": SOURCE, "note": S}]}}.
+"source": SOURCE, "note": S}]}}. A generation file may also name a "parent"
+generation. A generation sees its own entries, then its parent chain, then
+generic.json; tables are flattened here, so the runtime does one lookup. A
+"value" of null in a generation file masks an inherited value.
 HEX must be canonical (lowercase, no leading zeros). Lists must be sorted by
 offset with no duplicates. "note" is optional but must not be empty. Values
-are 32-bit. A generation entry must not repeat a generic entry.
+are 32-bit. An entry must not repeat the value it would inherit, and a mask
+must hide a value that is inherited.
 """
 
 import argparse
@@ -68,7 +72,7 @@ def parse_hex(path, where, text):
     return value
 
 
-def load(path):
+def load(path, is_generation):
     try:
         with open(path, encoding="utf-8") as f:
             doc = json.load(f, object_pairs_hook=no_duplicate_keys)
@@ -76,13 +80,20 @@ def load(path):
         fail(path, f"invalid JSON: {e}")
     if not isinstance(doc, dict):
         fail(path, "top level must be an object")
-    extra = sorted(set(doc) - {"spaces"})
+    extra = sorted(set(doc) - {"spaces", "parent"})
     if extra or "spaces" not in doc:
-        fail(path, f"top level must have exactly the key 'spaces' "
-                   f"(found {sorted(doc)})")
+        fail(path, f"top level must have the key 'spaces' and may have "
+                   f"'parent' (found {sorted(doc)})")
     if not isinstance(doc["spaces"], dict):
         fail(path, "'spaces' must be an object")
 
+    parent = doc.get("parent")
+    if parent is not None:
+        if not is_generation:
+            fail(path, "generic.json cannot have a parent")
+        if parent not in GENERATIONS:
+            fail(path, f"unknown parent {parent!r}, expected one of "
+                       f"{sorted(GENERATIONS)}")
     result = {space: [] for space in SPACES}
     for space, entries in doc["spaces"].items():
         if space not in SPACES:
@@ -108,11 +119,17 @@ def load(path):
                 fail(path, f"{where}: 'note' must be a non-empty string, "
                            f"or omit the key")
             offset = parse_hex(path, where + ".offset", e["offset"])
-            value = parse_hex(path, where + ".value", e["value"])
+            if e["value"] is None:
+                if not is_generation:
+                    fail(path, f"{where}: only a generation file can mask "
+                               f"a value with null")
+                value = None
+            else:
+                value = parse_hex(path, where + ".value", e["value"])
             if offset >= max_offset:
                 fail(path, f"{where}: offset 0x{offset:x} is outside the "
                            f"{space} space (must be < 0x{max_offset:x})")
-            if value >= VALUE_LIMIT:
+            if value is not None and value >= VALUE_LIMIT:
                 fail(path, f"{where}: value 0x{value:x} is wider than 32 "
                            f"bits")
             if prev is not None:
@@ -124,33 +141,64 @@ def load(path):
                                f"0x{prev:x}; sort the {space} list by offset")
             prev = offset
             result[space].append((offset, value))
-    return result
+    return parent, result
 
 
-def check_redundant(data, paths):
-    generic = {space: dict(rows) for space, rows in data[GENERIC].items()}
+def chain(stem, parents, paths):
+    """Return stem's ancestors, nearest first, ending before generic."""
+    seen = [stem]
+    while parents[seen[-1]] is not None:
+        nxt = parents[seen[-1]]
+        if nxt in seen:
+            fail(paths[stem], "parent cycle: " + " -> ".join(seen + [nxt]))
+        seen.append(nxt)
+    return seen[1:]
+
+
+def flatten(data, parents, paths):
+    """Resolve inheritance and masks into one sorted table per generation."""
+    flat = {}
     for stem in GENERATIONS:
-        for space, rows in data[stem].items():
-            for offset, value in rows:
-                if generic[space].get(offset) == value:
+        flat[stem] = {}
+        ancestors = chain(stem, parents, paths)
+        for space in SPACES:
+            inherited = dict(data[GENERIC][space])
+            for anc in reversed(ancestors):
+                for offset, value in data[anc][space]:
+                    if value is None:
+                        inherited.pop(offset, None)
+                    else:
+                        inherited[offset] = value
+            merged = dict(inherited)
+            for offset, value in data[stem][space]:
+                if value is None:
+                    if offset not in inherited:
+                        fail(paths[stem], f"{space} offset 0x{offset:x} masks "
+                                          f"a value that is not inherited")
+                    del merged[offset]
+                elif inherited.get(offset) == value:
                     fail(paths[stem], f"{space} offset 0x{offset:x} repeats "
-                                      f"generic.json with the same value "
-                                      f"0x{value:x}; delete it")
+                                      f"the inherited value 0x{value:x}; "
+                                      f"delete it")
+                else:
+                    merged[offset] = value
+            flat[stem][space] = sorted(merged.items())
+    return flat
 
 
 def table_name(stem, space):
     return f"psp_regs_{stem}_{space}"
 
 
-def render(data):
+def render(flat):
     out = [
         "/* Generated by psp/regs/gen_regs.py from the JSON files in",
         " * psp/regs. Do not edit. Included by psp-regs.c. */",
         "",
     ]
-    for stem in [GENERIC, *GENERATIONS]:
+    for stem in GENERATIONS:
         for space in SPACES:
-            rows = data[stem][space]
+            rows = flat[stem][space]
             if not rows:
                 continue
             name = table_name(stem, space)
@@ -163,18 +211,13 @@ def render(data):
 
     def cells(stem):
         for space, (enum, _) in SPACES.items():
-            rows = data[stem][space]
+            rows = flat[stem][space]
             if rows:
                 yield f"[{enum}] = {{{table_name(stem, space)}, {len(rows)}}},"
             else:
                 yield f"[{enum}] = {{NULL, 0}},"
 
     out.append(f"QEMU_BUILD_BUG_ON(PSP_GENERATION_MAX != {len(GENERATIONS)});")
-    out.append("")
-    out.append("static const PspRegTable "
-               "psp_regs_generic[PSP_REG_SPACE_MAX] = {")
-    out.extend("    " + c for c in cells(GENERIC))
-    out.append("};")
     out.append("")
     out.append("static const PspRegTable "
                "psp_regs_by_gen[PSP_GENERATION_MAX][PSP_REG_SPACE_MAX] = {")
@@ -206,11 +249,14 @@ def main():
         sys.exit("gen_regs.py: missing register file(s): "
                  + ", ".join(f"{m}.json" for m in missing))
 
-    data = {stem: load(paths[stem]) for stem in REQUIRED_FILES}
-    check_redundant(data, paths)
+    loaded = {stem: load(paths[stem], stem != GENERIC)
+              for stem in REQUIRED_FILES}
+    parents = {stem: loaded[stem][0] for stem in REQUIRED_FILES}
+    data = {stem: loaded[stem][1] for stem in REQUIRED_FILES}
+    flat = flatten(data, parents, paths)
 
     with open(args.output, "w", encoding="utf-8") as f:
-        f.write(render(data))
+        f.write(render(flat))
 
 
 if __name__ == "__main__":
