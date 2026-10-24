@@ -32,6 +32,7 @@
 
 #include "psp/ccp/ccpv5-linux.h"
 #include "psp/ccp/ccpv5-nettle.h"
+#include "psp/psp-todo.h"
 /* TODO: Restrict access to specific MemoryRegions only.
  *       Verify correct use of cpu_physical_memory_map/unmap */
 
@@ -834,8 +835,8 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 
 /*
  * @return true if the request used an unimplemented engine (XTS-AES, DES3 or
- * ECC) and was not executed. Unknown engines are logged and return false, so
- * the queue reports them as successful.
+ * ECC) and was not executed. Unknown engines are reported with PSP_TODO and
+ * return false, so the queue reports them as successful.
  */
 static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
@@ -867,8 +868,9 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (ECC)\n");
         return true;
     default:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unknown engine! val 0x%x\n",
-                      CCP5_CMD_ENGINE(desc));
+        PSP_TODO("ccp.engine.unknown",
+                 "descriptor skipped, reported as successful",
+                 "CCP Error: Unknown engine! val 0x%x", CCP5_CMD_ENGINE(desc));
         break;
     }
     return false;

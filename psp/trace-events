@@ -12,3 +12,6 @@ psp_irq_write_bitfield(uint64_t off, uint64_t value, unsigned int size) "offset=
 psp_irq_enable_write(uint32_t group, uint32_t old, uint32_t value, uint32_t newly_enabled, uint32_t newly_disabled) "ENABLE group=%u old=0x%"PRIx32" new=0x%"PRIx32" +en=0x%"PRIx32" -en=0x%"PRIx32
 psp_irq_set_bit(uint64_t val) "Set bit 0x%"PRIx64""
 psp_irq_clear_bit(uint64_t val) "Cleared bit 0x%"PRIx64""
+
+# psp-todo.c
+psp_todo_hit(const char *site, const char *msg, const char *ret_doc) "%s: %s (guest sees: %s)"
