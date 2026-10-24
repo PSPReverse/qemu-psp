@@ -3552,6 +3552,8 @@ typedef struct {
     MemoryRegion *mr;
     hwaddr addr;
     size_t len;
+    /* Attributes of the mapping, used again for the write-back on unmap */
+    MemTxAttrs attrs;
     uint8_t buffer[];
 } BounceBuffer;
 
@@ -3746,6 +3748,7 @@ void *address_space_map(AddressSpace *as,
         bounce->mr = mr;
         bounce->addr = addr;
         bounce->len = l;
+        bounce->attrs = attrs;
 
         if (!is_write) {
             flatview_read(fv, addr, attrs,
@@ -3790,7 +3793,7 @@ void address_space_unmap(AddressSpace *as, void *buffer, hwaddr len,
     assert(bounce->magic == BOUNCE_BUFFER_MAGIC);
 
     if (is_write) {
-        address_space_write(as, bounce->addr, MEMTXATTRS_UNSPECIFIED,
+        address_space_write(as, bounce->addr, bounce->attrs,
                             bounce->buffer, access_len);
     }
 

@@ -3080,6 +3080,9 @@ void *address_space_map(AddressSpace *as, hwaddr addr,
  *
  * Will also mark the memory as dirty if @is_write == %true.  @access_len gives
  * the amount of memory that was actually read or written by the caller.
+ * If the mapping used a bounce buffer (the target was not directly
+ * accessible RAM), a write mapping is written back to the target here, with
+ * the @attrs that were passed to address_space_map().
  *
  * @as: #AddressSpace used
  * @buffer: host pointer as returned by address_space_map()
