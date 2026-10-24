@@ -22,5 +22,7 @@ it would inherit. `gen_regs.py` flattens this at build time into one sorted
 table per generation, so `psp_regs_lookup` does a single binary search. A
 read only hits an entry when it starts at exactly the entry's offset; a
 byte read of the middle of a registered word misses. A miss returns false
-and the caller reports it as unimplemented. Run `python3
+and the caller reports it as unimplemented. `gen_regs.py --tsv FILE` also writes the flattened tables for other tools: one
+row per resolved entry with the columns space, generation, offset, value,
+source, note (offsets and values as 0x hex strings). Run `python3
 psp/regs/test_gen_regs.py` after changing the generator.

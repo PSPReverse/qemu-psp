@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 """Generate psp-regs.c.inc from the register tables in psp/regs.
 
-usage: gen_regs.py --output psp-regs.c.inc FILE.json...
+usage: gen_regs.py --output psp-regs.c.inc [--tsv psp-regs.tsv] FILE.json...
 
 Every file named in REQUIRED_FILES must be given exactly once. Each file is
 a JSON object {"spaces": {SPACE: [{"offset": HEX, "value": HEX,
@@ -140,7 +140,7 @@ def load(path, is_generation):
                     fail(path, f"{where}: offset 0x{offset:x} comes after "
                                f"0x{prev:x}; sort the {space} list by offset")
             prev = offset
-            result[space].append((offset, value))
+            result[space].append((offset, value, e["source"], e.get("note", "")))
     return parent, result
 
 
@@ -162,26 +162,27 @@ def flatten(data, parents, paths):
         flat[stem] = {}
         ancestors = chain(stem, parents, paths)
         for space in SPACES:
-            inherited = dict(data[GENERIC][space])
+            inherited = {o: (v, src, note)
+                         for o, v, src, note in data[GENERIC][space]}
             for anc in reversed(ancestors):
-                for offset, value in data[anc][space]:
+                for offset, value, src, note in data[anc][space]:
                     if value is None:
                         inherited.pop(offset, None)
                     else:
-                        inherited[offset] = value
+                        inherited[offset] = (value, src, note)
             merged = dict(inherited)
-            for offset, value in data[stem][space]:
+            for offset, value, src, note in data[stem][space]:
                 if value is None:
                     if offset not in inherited:
                         fail(paths[stem], f"{space} offset 0x{offset:x} masks "
                                           f"a value that is not inherited")
                     del merged[offset]
-                elif inherited.get(offset) == value:
+                elif offset in inherited and inherited[offset][0] == value:
                     fail(paths[stem], f"{space} offset 0x{offset:x} repeats "
                                       f"the inherited value 0x{value:x}; "
                                       f"delete it")
                 else:
-                    merged[offset] = value
+                    merged[offset] = (value, src, note)
             flat[stem][space] = sorted(merged.items())
     return flat
 
@@ -203,7 +204,7 @@ def render(flat):
                 continue
             name = table_name(stem, space)
             out.append(f"static const PspRegEntry {name}[] = {{")
-            for offset, value in rows:
+            for offset, (value, _, _) in rows:
                 out.append(f"    {{UINT64_C(0x{offset:x}), "
                            f"UINT64_C(0x{value:x})}},")
             out.append("};")
@@ -230,9 +231,22 @@ def render(flat):
     return "\n".join(out)
 
 
+def render_tsv(flat):
+    """One row per resolved entry; offsets and values as 0x hex strings."""
+    out = ["space\tgeneration\toffset\tvalue\tsource\tnote"]
+    for stem in GENERATIONS:
+        for space in SPACES:
+            for offset, (value, src, note) in flat[stem][space]:
+                note = " ".join(note.split())
+                out.append(f"{space}\t{stem}\t0x{offset:x}\t0x{value:x}"
+                           f"\t{src}\t{note}")
+    return "\n".join(out) + "\n"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--output", required=True)
+    ap.add_argument("--tsv", help="also write the flattened tables as TSV")
     ap.add_argument("inputs", nargs="+")
     args = ap.parse_args()
 
@@ -257,6 +271,9 @@ def main():
 
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(render(flat))
+    if args.tsv:
+        with open(args.tsv, "w", encoding="utf-8") as f:
+            f.write(render_tsv(flat))
 
 
 if __name__ == "__main__":
