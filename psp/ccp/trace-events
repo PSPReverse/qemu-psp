@@ -3,6 +3,7 @@ ccp_ctrl_read(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%"PRIx32
 ccp_ctrl_write(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%"PRIx32
 ccp_config_read(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%"PRIx32
 ccp_config_write(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%"PRIx32
+ccp_trng_draw(uint32_t val) "value=0x%"PRIx32
 ccp_passthrough(const char * src_type, uint64_t src, const char * dest_type, uint64_t dest, uint32_t len) "src_type=%s src=0x%"PRIx64" dest_type=%s dest=0x%"PRIx64" len=0x%"PRIx32
 ccp_perform_sha_256(uint32_t len, uint64_t src) "len=0x%"PRIx32" src=0x%"PRIx64
 ccp_aes(unsigned int mode, unsigned int type, bool encrypt, uint64_t src, unsigned int src_mtype, uint64_t dst, unsigned int dst_mtype, uint32_t len) "mode=%u type=%u encrypt=%d src=0x%"PRIx64" src_mtype=%u dst=0x%"PRIx64" dst_mtype=%u len=0x%"PRIx32

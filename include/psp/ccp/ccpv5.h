@@ -56,6 +56,8 @@
 #define CCP_CFG_INT_STATUS_DONE BIT(17)
 #define CCP_G_Q_MASK_OFFSET 0x0
 #define CCP_G_Q_PRIO_OFFSET 0x4
+/* Random number output, see ccp_trng_next() */
+#define CCP_G_TRNG_OFFSET 0xc
 
 /* Queue registers */
 /* The HALT bit, which indicates whether the queue is currently processing
@@ -125,6 +127,10 @@ typedef struct CcpV5State {
 
     /* Exposed after zlib extraction finishes */
     uint32_t zlib_bytes_written;
+    /* Random number register: seed property, stream state, last word drawn */
+    uint64_t trng_seed;
+    uint64_t trng_state;
+    uint32_t trng_last;
 } CcpV5State;
 
 #endif
