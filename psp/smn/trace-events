@@ -6,5 +6,6 @@ psp_smn_update_slot(uint32_t idx, uint64_t addr) "slot=0x%"PRIx32" addr=0x%"PRIx
 # psp-smn-misc.c
 psp_smn_misc_read(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%"PRIx64
 psp_smn_misc_read_unimplemented(uint64_t off) "offset=0x%"PRIx64" value=0x0 (default)"
+psp_smn_misc_read_override(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%"PRIx64
 psp_smn_misc_write(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%"PRIx64
 psp_smn_misc_write_unimplemented(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%"PRIx64

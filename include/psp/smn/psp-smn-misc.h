@@ -25,6 +25,8 @@
 #define PSP_SMN_MISC(obj)                                                      \
     OBJECT_CHECK(PSPSmnMiscState, (obj), TYPE_PSP_SMN_MISC)
 
+#define PSP_SMN_MISC_MAX_OVERRIDES 32
+
 typedef struct PSPSmnMiscState {
     /* <private> */
     SysBusDevice parent;
@@ -33,6 +35,12 @@ typedef struct PSPSmnMiscState {
     PspGeneration generation;
     /* Storage of the "rw" entries of psp/regs, see psp_regs_find() */
     uint32_t rw[PSP_REGS_MAX_RW_SLOTS];
+
+    /* Debug: "offset=value,..." read values that win over table and rw */
+    char* overrides;
+    uint32_t override_offset[PSP_SMN_MISC_MAX_OVERRIDES];
+    uint32_t override_value[PSP_SMN_MISC_MAX_OVERRIDES];
+    uint32_t n_overrides;
 } PSPSmnMiscState;
 
 #endif
