@@ -6,28 +6,14 @@
 #include "hw/qdev-properties.h"
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
-#include "qemu/bswap.h"
 #include "qapi/error.h"
 #include "trace.h"
-
-static bool psp_smn_misc_in_scratch(PSPSmnMiscState* s, hwaddr offset,
-                                    unsigned int size)
-{
-    return s->generation == ZEN3 && offset >= PSP_SMN_SCRATCH_BASE &&
-           offset + size <= PSP_SMN_SCRATCH_BASE + PSP_SMN_SCRATCH_SIZE;
-}
 
 static uint64_t psp_smn_misc_read(void* opaque, hwaddr offset,
                                   unsigned int size)
 {
     PSPSmnMiscState* s = opaque;
     uint64_t val;
-
-    if (psp_smn_misc_in_scratch(s, offset, size)) {
-        val = ldn_le_p(&s->scratch[offset - PSP_SMN_SCRATCH_BASE], size);
-        trace_psp_smn_misc_read(offset, val);
-        return val;
-    }
 
     /* Placeholder, see psp_smn_misc_write(). Not measured. */
     if ((offset & ~(hwaddr)3) == 0x2d01380) {
@@ -55,11 +41,6 @@ static void psp_smn_misc_write(void* opaque, hwaddr offset, uint64_t value,
                                unsigned int size)
 {
     PSPSmnMiscState* s = opaque;
-
-    if (psp_smn_misc_in_scratch(s, offset, size)) {
-        stn_le_p(&s->scratch[offset - PSP_SMN_SCRATCH_BASE], size, value);
-        return;
-    }
 
     /* Placeholder: the value is stored unmodelled and read back. */
     if ((offset & ~(hwaddr)3) == 0x2d01380) {
@@ -100,7 +81,6 @@ static void psp_smn_misc_reset_hold(Object* obj, ResetType type)
     PSPSmnMiscState* s = PSP_SMN_MISC(obj);
 
     s->placeholder_2d01380 = 0;
-    memset(s->scratch, 0, sizeof(s->scratch));
 }
 
 static const VMStateDescription psp_smn_misc_vmstate = {
@@ -109,7 +89,6 @@ static const VMStateDescription psp_smn_misc_vmstate = {
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(placeholder_2d01380, PSPSmnMiscState),
-        VMSTATE_BUFFER(scratch, PSPSmnMiscState),
         VMSTATE_END_OF_LIST()
     }
 };

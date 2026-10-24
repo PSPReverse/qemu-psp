@@ -10,6 +10,11 @@ typedef struct PspRegEntry {
     uint64_t value;
 } PspRegEntry;
 
+typedef struct PspRamWindowTable {
+    const PspRamWindow* windows;
+    size_t count;
+} PspRamWindowTable;
+
 /* entries is sorted by offset. NULL with count 0 for an empty table. */
 typedef struct PspRegTable {
     const PspRegEntry* entries;
@@ -49,4 +54,12 @@ bool psp_regs_lookup(PspGeneration gen, PspRegSpace space, uint64_t offset,
     assert(space < PSP_REG_SPACE_MAX);
 
     return psp_regs_table_lookup(&psp_regs_by_gen[gen][space], offset, val);
+}
+
+const PspRamWindow* psp_regs_ram_windows(PspGeneration gen, size_t* count)
+{
+    assert(gen < PSP_GENERATION_MAX);
+
+    *count = psp_regs_ram_by_gen[gen].count;
+    return psp_regs_ram_by_gen[gen].windows;
 }

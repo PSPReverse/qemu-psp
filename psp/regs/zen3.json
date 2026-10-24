@@ -59,5 +59,13 @@
         "note": "Line status register (THRE|TEMT) of the FCH MMIO UART at 0xfedc9000, polled before each debug byte like the legacy COM ports."
       }
     ]
-  }
+  },
+  "ram_windows": [
+    {
+      "offset": "0x30500000",
+      "size": "0x2000",
+      "source": "code-reading",
+      "note": "Staging buffer for the BL public key: the off-chip BL copies the key header here and reads it back, so it must behave as RAM. Size covers the 0x1800-byte buffer it passes to its directory lookup."
+    }
+  ]
 }

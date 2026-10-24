@@ -28,6 +28,7 @@
 #include "qemu/log.h"
 #include "trace.h"
 
+#include "psp/psp-regs.h"
 #include "psp/psp.h"
 #include "psp/util.h"
 
@@ -73,7 +74,6 @@ typedef struct PspSmnClass {
     SysBusDeviceClass parent_class;
     /*< public >*/
     hwaddr flash;
-    hwaddr smu;
     PspGeneration gen;
 } PspSmnClass;
 
@@ -85,7 +85,6 @@ typedef struct PspSmnClass {
 typedef struct PspSmnConfiguration {
     const char* desc;
     hwaddr flash;
-    hwaddr smu;
 } PspSmnConfiguration;
 
 static PspSmnConfiguration psp_smn_configuration[] = {
@@ -93,31 +92,26 @@ static PspSmnConfiguration psp_smn_configuration[] = {
         {
             .desc = "psp smn zen",
             .flash = 0x0a000000,
-            .smu = 0x03c00000,
         },
     [ZEN_PLUS] =
         {
             .desc = "psp smn zen+",
             .flash = 0x0a000000,
-            .smu = 0x03c00000,
         },
     [ZEN2] =
         {
             .desc = "psp smn zen2",
             .flash = 0x44000000,
-            .smu = 0x03c00000,
         },
     [ZEN3] =
         {
             .desc = "psp smn zen3",
             .flash = 0x44000000,
-            .smu = 0x03c00000,
         },
     [ZENTESLA] =
         {
             .desc = "psp smn zentesla",
             .flash = 0x0a000000,
-            .smu = 0x03c00000,
         },
 };
 
@@ -253,8 +247,6 @@ static void psp_smn_init(Object* obj)
                             TYPE_PSP_SMN_MISC);
     object_initialize_child(obj, "smn_flash", &s->psp_smn_flash,
                             TYPE_PSP_SMN_FLASH);
-
-    object_initialize_child(obj, "smn_smu", &s->psp_smn_smu, TYPE_PSP_SMN_SMU);
 }
 
 /**
@@ -301,7 +293,6 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
                          c->gen);
     CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_misc), errp);
     CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_flash), errp);
-    CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smu), errp);
 
     /* The SMN address space. Independent from the PSP address space */
     memory_region_init(&s->psp_smn_space, OBJECT(dev), "smn-memory",
@@ -336,9 +327,18 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
                                             &s->psp_smn_flash_alias, 0);
     }
 
-    PSPSmnSmuState* smu = &s->psp_smn_smu;
-    memory_region_add_subregion_overlap(&s->psp_smn_space, c->smu,
-                                        &smu->psp_smn_smu, 0);
+    /* RAM windows from the JSON register tables in psp/regs */
+    size_t nwin;
+    const PspRamWindow* win = psp_regs_ram_windows(c->gen, &nwin);
+    assert(nwin <= PSP_SMN_MAX_RAM_WINDOWS);
+    for (size_t i = 0; i < nwin; i++) {
+        g_autofree char* name = g_strdup_printf("smn-ram-%" PRIx64,
+                                                win[i].offset);
+        memory_region_init_ram(&s->psp_smn_ram[i], OBJECT(dev), name,
+                               win[i].size, errp);
+        memory_region_add_subregion_overlap(&s->psp_smn_space, win[i].offset,
+                                            &s->psp_smn_ram[i], 10);
+    }
 
     /* Setup the initial SMN to PSP MemoryRegion alias. */
     psp_smn_realize_slots(s);
@@ -380,7 +380,6 @@ static void psp_smn_common_class_init(ObjectClass* oc, enum PspGeneration gen)
 
     dc->desc = psp_smn_configuration[gen].desc;
     sc->flash = psp_smn_configuration[gen].flash;
-    sc->smu = psp_smn_configuration[gen].smu;
     sc->gen = gen;
     device_class_set_props(dc, psp_smn_properties);
 }

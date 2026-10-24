@@ -24,7 +24,6 @@
 
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
-#include "psp/smn/psp-smn-smu.h"
 
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */
@@ -41,6 +40,8 @@
 #define PSP_SMN(obj) OBJECT_CHECK(PSPSmnState, (obj), TYPE_PSP_SMN)
 
 typedef uint32_t PSPSmnAddr;
+
+#define PSP_SMN_MAX_RAM_WINDOWS 4
 
 typedef struct PSPSmnState {
     SysBusDevice parent_obj;
@@ -76,7 +77,8 @@ typedef struct PSPSmnState {
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;
 
-    PSPSmnSmuState psp_smn_smu;
+    /* RAM windows of the SMN address space, see psp/regs */
+    MemoryRegion psp_smn_ram[PSP_SMN_MAX_RAM_WINDOWS];
 
 } PSPSmnState;
 #endif
