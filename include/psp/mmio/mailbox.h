@@ -43,6 +43,8 @@ typedef struct MailboxState {
      * MAILBOX_DOORBELL_GEN_DEFAULT: resolved by the SoC from its generation.
      */
     int32_t doorbell_irq_id;
+    /* Raise it on every word 0 write: no bit 31 or enable matching */
+    bool doorbell_always;
     qemu_irq doorbell_irq;
 } MailboxState;
 
