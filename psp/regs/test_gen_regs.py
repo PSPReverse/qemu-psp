@@ -127,6 +127,46 @@ class GenRegsTest(unittest.TestCase):
         self.assertEqual(zen3[0][4:], ["inferred", "multi word note"])
         self.assertEqual(len([r for r in rows if r[1] == "zen"]), 1)
 
+    @staticmethod
+    def window(offset, size, source="unknown"):
+        return {"offset": offset, "size": size, "source": source}
+
+    def test_ram_windows_are_collected_per_generation(self):
+        self.docs["generic"]["ram_windows"] = [self.window("0x1000", "0x100")]
+        self.docs["zen2"]["ram_windows"] = [self.window("0x2000", "0x10")]
+        self.docs["zen3"]["parent"] = "zen2"
+        self.docs["zen3"]["ram_windows"] = [self.window("0x3000", "0x20")]
+        p, text = self.run_gen(tsv=True)
+        self.assertEqual(p.returncode, 0, p.stderr)
+        def offs(gen):
+            m = re.search(r"psp_regs_ram_%s\[\] = \{(.*?)\};" % gen, text,
+                          re.S)
+            return re.findall(r"UINT64_C\((0x[0-9a-f]+)\), UINT64_C\(0x",
+                              m.group(1))
+        self.assertEqual(offs("zen"), ["0x1000"])
+        self.assertEqual(offs("zen2"), ["0x1000", "0x2000"])
+        self.assertEqual(offs("zen3"), ["0x1000", "0x2000", "0x3000"])
+        rows = [r for r in open(self.tsv_path).read().splitlines()
+                if r.startswith("ram_window\tzen3")]
+        self.assertEqual(len(rows), 3)
+
+    def test_ram_window_errors(self):
+        self.docs["generic"]["ram_windows"] = [self.window("0x1000", "0x0")]
+        p, _ = self.run_gen()
+        self.assertIn("needs 0 < size", p.stderr)
+        self.docs["generic"]["ram_windows"] = [self.window("0xfffffff0",
+                                                           "0x100")]
+        p, _ = self.run_gen()
+        self.assertIn("needs 0 < size", p.stderr)
+        self.docs["generic"]["ram_windows"] = [self.window("0x2000", "0x10"),
+                                               self.window("0x1000", "0x10")]
+        p, _ = self.run_gen()
+        self.assertIn("sorted by offset", p.stderr)
+        self.docs["generic"]["ram_windows"] = [self.window("0x1000", "0x100")]
+        self.docs["zen2"]["ram_windows"] = [self.window("0x1080", "0x10")]
+        p, _ = self.run_gen()
+        self.assertIn("overlaps", p.stderr)
+
     def test_source_is_required_and_checked(self):
         self.docs["generic"]["spaces"]["smn_misc"] = [
             {"offset": "0x10", "value": "0x1"}]

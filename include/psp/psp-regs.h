@@ -15,6 +15,14 @@ typedef enum PspRegSpace {
     PSP_REG_SPACE_MAX,
 } PspRegSpace;
 
+typedef struct PspRamWindow {
+    uint64_t offset;
+    uint64_t size;
+} PspRamWindow;
+
+/** RAM windows of the SMN address space of @gen, sorted by offset. */
+const PspRamWindow* psp_regs_ram_windows(PspGeneration gen, size_t* count);
+
 /**
  * @brief Look up a constant register value.
  *
