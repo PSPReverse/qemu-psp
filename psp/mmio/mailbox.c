@@ -58,21 +58,24 @@ static uint64_t mailbox_read(void* opaque, hwaddr offset, unsigned int size)
     return extract32(s->values[index], (offset & 3) * 8, size * 8);
 }
 
-static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
-                          unsigned int size)
+static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
+                                 unsigned int size, MemTxAttrs attrs)
 {
     MailboxState* s = MAILBOX(opaque);
+    bool armed;
 
     hwaddr index = offset / 4;
     if (index >= 3) {
         qemu_log_mask(LOG_GUEST_ERROR,
                       "%s: out-of-range mailbox write @ offset 0x%" HWADDR_PRIx "\n",
                       __func__, offset);
-        return;
+        return MEMTX_OK;
     }
     s->values[index] = deposit32(s->values[index], (offset & 3) * 8, size * 8,
                                  value);
-    trace_psp_mailbox_write(index_to_name(index), s->values[index]);
+    trace_psp_mailbox_write(index_to_name(index), s->values[index],
+                            attrs.unspecified, attrs.secure, attrs.user,
+                            attrs.debug, attrs.requester_id);
     /*
      * Doorbell: a word 0 write without the reply bit is a host command, so
      * raise the source. The firmware's reply sets bit 31 and is written after
@@ -81,13 +84,24 @@ static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
      * command from a reply (seen in session-mode traces on Zen2). With
      * doorbell_always every word 0 write raises it, replies and the enable
      * register included, which can leave the source pending after a reply.
+     *
+     * With doorbell_from_x86_only the writer decides instead of the bit: the
+     * PSP core's TCG accesses carry filled-in attributes, while writes from
+     * outside the guest (qtest, the harness through cpu_physical_memory_write
+     * or address_space_write with MEMTXATTRS_UNSPECIFIED) do not. So only an
+     * external write raises the source, with or without bit 31.
      */
-    if (index == 0 && s->doorbell_irq_id >= 0 &&
-        (s->doorbell_always ||
-         ((s->int_enable & MAILBOX_INT_ENABLE_SECOS) &&
-          !(s->values[0] & MAILBOX_WORD0_REPLY)))) {
+    if (index != 0 || s->doorbell_irq_id < 0) {
+        return MEMTX_OK;
+    }
+    armed = s->int_enable & MAILBOX_INT_ENABLE_SECOS;
+    if (s->doorbell_always ||
+        (s->doorbell_from_x86_only && armed && attrs.unspecified) ||
+        (!s->doorbell_from_x86_only && armed &&
+         !(s->values[0] & MAILBOX_WORD0_REPLY))) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
+    return MEMTX_OK;
 }
 
 static uint64_t mailbox_ctrl_read(void* opaque, hwaddr offset,
@@ -120,7 +134,7 @@ static const MemoryRegionOps mailbox_ctrl_ops = {
 
 static const MemoryRegionOps mailbox_mem_ops = {
     .read = mailbox_read,
-    .write = mailbox_write,
+    .write_with_attrs = mailbox_write,
     .endianness = DEVICE_LITTLE_ENDIAN,
     .valid.min_access_size = 1,
     .valid.max_access_size = 4,
@@ -169,6 +183,8 @@ static void realize(DeviceState* dev, Error** errp)
 
 static const Property mailbox_properties[] = {
     DEFINE_PROP_BOOL("doorbell_always", MailboxState, doorbell_always, false),
+    DEFINE_PROP_BOOL("doorbell_from_x86_only", MailboxState,
+                     doorbell_from_x86_only, false),
     DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id,
                       MAILBOX_DOORBELL_GEN_DEFAULT),
 };

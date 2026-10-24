@@ -45,6 +45,11 @@ typedef struct MailboxState {
     int32_t doorbell_irq_id;
     /* Raise it on every word 0 write: no bit 31 or enable matching */
     bool doorbell_always;
+    /*
+     * Raise it on an armed word 0 write from outside the guest (attributes
+     * unspecified) instead of keying on bit 31; PSP core writes never do
+     */
+    bool doorbell_from_x86_only;
     qemu_irq doorbell_irq;
 } MailboxState;
 
