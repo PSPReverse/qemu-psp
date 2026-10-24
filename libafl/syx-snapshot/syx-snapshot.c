@@ -20,9 +20,41 @@
  * Saved ramblock
  */
 typedef struct SyxSnapshotRAMBlock {
-    uint8_t* ram;         // RAM block
+    uint8_t** pages;      // One pointer per page; uniform pages are shared
     uint64_t used_length; // Length of the ram block
 } SyxSnapshotRAMBlock;
+
+/**
+ * Pages whose bytes are all equal (zero-filled RAM, 0xff-erased flash) are not
+ * copied per page but share one buffer per byte value, so the root snapshot
+ * only costs memory for pages that hold data.
+ */
+static uint8_t* uniform_pages[256];
+
+static uint8_t* uniform_page(uint8_t value)
+{
+    if (!uniform_pages[value]) {
+        uniform_pages[value] = g_malloc(syx_snapshot_state.page_size);
+        memset(uniform_pages[value], value, syx_snapshot_state.page_size);
+    }
+    return uniform_pages[value];
+}
+
+static inline const uint8_t* root_page(const SyxSnapshotRAMBlock* rb,
+                                       ram_addr_t offset)
+{
+    return rb->pages[offset / syx_snapshot_state.page_size];
+}
+
+static bool page_is_uniform(const uint8_t* page, uint64_t size)
+{
+    for (uint64_t i = 1; i < size; i++) {
+        if (page[i] != page[0]) {
+            return false;
+        }
+    }
+    return true;
+}
 
 /**
  * A root snapshot representation.
@@ -211,8 +243,16 @@ void syx_snapshot_free(SyxSnapshot* snapshot)
 static void destroy_ramblock_snapshot(gpointer root_snapshot)
 {
     SyxSnapshotRAMBlock* snapshot_rb = root_snapshot;
+    uint64_t nb_pages = DIV_ROUND_UP(snapshot_rb->used_length,
+                                     syx_snapshot_state.page_size);
 
-    g_free(snapshot_rb->ram);
+    for (uint64_t i = 0; i < nb_pages; i++) {
+        uint8_t* page = snapshot_rb->pages[i];
+        if (page != uniform_pages[page[0]]) {
+            g_free(page);
+        }
+    }
+    g_free(snapshot_rb->pages);
     g_free(snapshot_rb);
 }
 
@@ -244,8 +284,23 @@ static SyxSnapshotRoot* syx_snapshot_root_new(DeviceSnapshotKind kind,
 
         SyxSnapshotRAMBlock* snapshot_rb = g_new(SyxSnapshotRAMBlock, 1);
         snapshot_rb->used_length = block->used_length;
-        snapshot_rb->ram = g_new(uint8_t, block->used_length);
-        memcpy(snapshot_rb->ram, block->host, block->used_length);
+
+        uint64_t page_size = syx_snapshot_state.page_size;
+        uint64_t nb_pages = DIV_ROUND_UP(block->used_length, page_size);
+        snapshot_rb->pages = g_new(uint8_t*, nb_pages);
+
+        for (uint64_t i = 0; i < nb_pages; i++) {
+            uint64_t len = MIN(page_size, block->used_length - i * page_size);
+            const uint8_t* src = block->host + i * page_size;
+
+            if (len == page_size && page_is_uniform(src, page_size)) {
+                snapshot_rb->pages[i] = uniform_page(src[0]);
+            } else {
+                // a partial last page is padded with zeroes
+                snapshot_rb->pages[i] = g_malloc0(page_size);
+                memcpy(snapshot_rb->pages[i], src, len);
+            }
+        }
 
         g_hash_table_insert(root->rbs_snapshot,
                             GINT_TO_POINTER(block->idstr_hash), snapshot_rb);
@@ -421,7 +476,8 @@ static void restore_dirty_page_to_increment(gpointer offset_within_rb,
                                 GINT_TO_POINTER(rb->idstr_hash));
         assert(rrb);
 
-        memcpy(rb->host + offset, rrb->ram, syx_snapshot_state.page_size);
+        memcpy(rb->host + offset, root_page(rrb, offset),
+               syx_snapshot_state.page_size);
     }
 }
 
@@ -613,8 +669,8 @@ static void root_restore_rb_page(gpointer offset_within_rb, gpointer _unused,
 
     // safe cast because ram_addr_t is also an alias to void*
     void* host_rb_restore = rb->host + (ram_addr_t)offset_within_rb;
-    void* host_snapshot_rb_restore =
-        (gpointer)snapshot_rb->ram + (ram_addr_t)offset_within_rb;
+    const void* host_snapshot_rb_restore =
+        root_page(snapshot_rb, (ram_addr_t)offset_within_rb);
 
 #ifdef SYX_SNAPSHOT_DEBUG
     SYX_PRINTF("\t[%s] Restore at offset 0x%lx of size %lu...\n", rb->idstr,
@@ -667,11 +723,11 @@ static void root_restore_check_memory_rb(gpointer rb_idstr_hash,
 
         for (uint64_t i = 0; i < rb->used_length;
              i += syx_snapshot_state.page_size) {
-            if (memcmp(rb->host + i, rb_snapshot->ram + i,
+            if (memcmp(rb->host + i, root_page(rb_snapshot, i),
                        syx_snapshot_state.page_size) != 0) {
                 SYX_ERROR("\nFound incorrect page at offset 0x%lx\n", i);
                 for (uint64_t j = 0; j < syx_snapshot_state.page_size; j++) {
-                    if (*(rb->host + i + j) != *(rb_snapshot->ram + i + j)) {
+                    if (*(rb->host + i + j) != root_page(rb_snapshot, i)[j]) {
                         SYX_ERROR("\t- byte at address 0x%lx differs\n", i + j);
                     }
                 }
