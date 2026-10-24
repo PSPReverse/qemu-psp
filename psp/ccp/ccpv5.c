@@ -24,9 +24,11 @@
 
 #include "psp/ccp/ccpv5.h"
 
+#include "hw/qdev-properties.h"
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
+#include "qemu/bitops.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -980,6 +982,30 @@ static void ccp_queue_write(CcpV5State* s, hwaddr offset, uint32_t val,
     return;
 }
 
+/*
+ * Random number output at control offset 0x0c. Inferred from firmware
+ * behaviour, not hardware-verified: the firmware reads it as a random word
+ * and fails when it reads 0 twice in a row. Modelled as a deterministic
+ * splitmix64 stream seeded from trng_seed, so runs are reproducible. Each
+ * draw returns the high half of the next output, skipping words that are 0
+ * or equal to the previous one.
+ */
+static uint32_t ccp_trng_next(CcpV5State* s)
+{
+    uint32_t word;
+
+    do {
+        uint64_t z = (s->trng_state += 0x9e3779b97f4a7c15ULL);
+
+        z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+        z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+        word = (z ^ (z >> 31)) >> 32;
+    } while (word == 0 || word == s->trng_last);
+    s->trng_last = word;
+    trace_ccp_trng_draw(word);
+    return word;
+}
+
 static uint32_t ccp_ctrl_read(CcpV5State* s, hwaddr offset)
 {
     (void)s;
@@ -1056,6 +1082,16 @@ static uint64_t ccp_read(void* opaque, hwaddr offset, unsigned int size)
     uint32_t ret = 0;
     uint32_t id = 0;
 
+    /*
+     * A 32-bit read draws the next random word; a narrow read returns bytes
+     * of the last word drawn (0 before the first draw) without drawing.
+     */
+    if (offset >= CCP_G_TRNG_OFFSET && offset < CCP_G_TRNG_OFFSET + 4) {
+        if (size == sizeof(uint32_t)) {
+            return ccp_trng_next(s);
+        }
+        return extract32(s->trng_last, (offset & 3) * 8, size * 8);
+    }
     if (size != sizeof(uint32_t)) {
         qemu_log_mask(LOG_GUEST_ERROR,
                       "CCP Error: Unsupported read size: "
@@ -1192,10 +1228,12 @@ static int ccp_post_load(void *opaque, int version_id)
  * Not migrated: sha_ctx (raw pointer to a lazily allocated nettle context),
  * zlib_state (z_stream with internal pointers) and dma_timer/dma_timer_qid
  * (QEMUTimer, currently unused). They are dropped in ccp_post_load instead.
+ * Version 2 adds the random number stream; a version 1 stream loads with the
+ * stream as reset left it, and a version 2 stream is refused by older builds.
  */
 static const VMStateDescription ccp_vmstate = {
     .name = TYPE_CCP_V5,
-    .version_id = 1,
+    .version_id = 2,
     .minimum_version_id = 1,
     .post_load = ccp_post_load,
     .fields = (const VMStateField[]) {
@@ -1205,6 +1243,8 @@ static const VMStateDescription ccp_vmstate = {
         VMSTATE_UINT8_ARRAY(lsb.u.lsb, CcpV5State,
                             CCP_LSB_SIZE * CCP_LSB_COUNT),
         VMSTATE_UINT32(zlib_bytes_written, CcpV5State),
+        VMSTATE_UINT64_V(trng_state, CcpV5State, 2),
+        VMSTATE_UINT32_V(trng_last, CcpV5State, 2),
         VMSTATE_END_OF_LIST()
     }
 };
@@ -1215,7 +1255,15 @@ static void ccp_reset_hold(Object *obj, ResetType type)
 
     ccp_drop_stream_state(s);
     s->zlib_bytes_written = 0;
+    s->trng_state = s->trng_seed;
+    s->trng_last = 0;
 }
+
+static const Property ccp_properties[] = {
+    /* Arbitrary fixed default, so the stream is the same on every run */
+    DEFINE_PROP_UINT64("trng_seed", CcpV5State, trng_seed,
+                       0x5053505f54524e47ULL),
+};
 
 static void ccp_class_init(ObjectClass* oc, const void* data)
 {
@@ -1224,6 +1272,7 @@ static void ccp_class_init(ObjectClass* oc, const void* data)
 
     dc->vmsd = &ccp_vmstate;
     rc->phases.hold = ccp_reset_hold;
+    device_class_set_props(dc, ccp_properties);
 }
 
 static const TypeInfo ccp_info = {
