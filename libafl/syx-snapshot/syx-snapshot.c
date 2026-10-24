@@ -25,38 +25,6 @@ typedef struct SyxSnapshotRAMBlock {
 } SyxSnapshotRAMBlock;
 
 /**
- * Pages whose bytes are all equal (zero-filled RAM, 0xff-erased flash) are not
- * copied per page but share one buffer per byte value, so the root snapshot
- * only costs memory for pages that hold data.
- */
-static uint8_t* uniform_pages[256];
-
-static uint8_t* uniform_page(uint8_t value)
-{
-    if (!uniform_pages[value]) {
-        uniform_pages[value] = g_malloc(syx_snapshot_state.page_size);
-        memset(uniform_pages[value], value, syx_snapshot_state.page_size);
-    }
-    return uniform_pages[value];
-}
-
-static inline const uint8_t* root_page(const SyxSnapshotRAMBlock* rb,
-                                       ram_addr_t offset)
-{
-    return rb->pages[offset / syx_snapshot_state.page_size];
-}
-
-static bool page_is_uniform(const uint8_t* page, uint64_t size)
-{
-    for (uint64_t i = 1; i < size; i++) {
-        if (page[i] != page[0]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-/**
  * A root snapshot representation.
  */
 typedef struct SyxSnapshotRoot {
@@ -91,6 +59,39 @@ typedef struct SyxSnapshotIncrement {
 } SyxSnapshotIncrement;
 
 SyxSnapshotState syx_snapshot_state = {0};
+
+/**
+ * Pages whose bytes are all equal (zero-filled RAM, 0xff-erased flash) are not
+ * copied per page but share one buffer per byte value, so the root snapshot
+ * only costs memory for pages that hold data.
+ */
+static uint8_t* uniform_pages[256];
+
+static uint8_t* uniform_page(uint8_t value)
+{
+    if (!uniform_pages[value]) {
+        uniform_pages[value] = g_malloc(syx_snapshot_state.page_size);
+        memset(uniform_pages[value], value, syx_snapshot_state.page_size);
+    }
+    return uniform_pages[value];
+}
+
+static inline const uint8_t* root_page(const SyxSnapshotRAMBlock* rb,
+                                       ram_addr_t offset)
+{
+    return rb->pages[offset / syx_snapshot_state.page_size];
+}
+
+static bool page_is_uniform(const uint8_t* page, uint64_t size)
+{
+    for (uint64_t i = 1; i < size; i++) {
+        if (page[i] != page[0]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static MemoryRegion* mr_to_enable = NULL;
 
 static void destroy_ramblock_snapshot(gpointer root_snapshot);
