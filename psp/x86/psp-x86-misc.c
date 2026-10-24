@@ -5,6 +5,7 @@
 #include "qemu/osdep.h"
 
 #include "hw/qdev-properties.h"
+#include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "trace.h"
 
@@ -169,6 +170,17 @@ static void psp_x86_misc_realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
 }
 
+static const VMStateDescription psp_x86_misc_vmstate = {
+    .name = TYPE_PSP_X86_MISC,
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .fields = (const VMStateField[]) {
+        VMSTATE_UINT8(port61_ctl, PSPX86MiscState),
+        VMSTATE_BOOL(port61_refresh, PSPX86MiscState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MiscState, generation,
                        PSP_GENERATION_MAX),
@@ -178,6 +190,7 @@ static void psp_x86_misc_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_x86_misc_realize;
+    dc->vmsd = &psp_x86_misc_vmstate;
     device_class_set_props(dc, properties);
 }
 
