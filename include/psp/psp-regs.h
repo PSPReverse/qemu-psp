@@ -23,6 +23,26 @@ typedef struct PspRamWindow {
 /** RAM windows of the SMN address space of @gen, sorted by offset. */
 const PspRamWindow* psp_regs_ram_windows(PspGeneration gen, size_t* count);
 
+/* Storage slots a device keeps for "rw" entries, see psp/regs/README.md. */
+#define PSP_REGS_MAX_RW_SLOTS 32
+
+typedef struct PspRegHit {
+    uint64_t value;  /* the constant, or the reset value of an rw entry */
+    int rw_slot;     /* storage slot of an rw entry, -1 for a constant */
+} PspRegHit;
+
+/**
+ * @brief Find the entry at exactly @offset for @gen and @space.
+ *
+ * @return true and fills @hit on a match, false otherwise.
+ */
+bool psp_regs_find(PspGeneration gen, PspRegSpace space, uint64_t offset,
+                   PspRegHit* hit);
+
+/** Set slots[] to the reset values of the rw entries of @gen and @space. */
+void psp_regs_rw_reset(PspGeneration gen, PspRegSpace space,
+                       uint32_t slots[PSP_REGS_MAX_RW_SLOTS]);
+
 /**
  * @brief Look up a constant register value.
  *

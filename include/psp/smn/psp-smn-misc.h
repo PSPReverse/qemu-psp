@@ -19,6 +19,7 @@
 #include "hw/sysbus.h"
 
 #include "psp/generations.h"
+#include "psp/psp-regs.h"
 
 #define TYPE_PSP_SMN_MISC "amd_psp.smn.misc"
 #define PSP_SMN_MISC(obj)                                                      \
@@ -30,10 +31,8 @@ typedef struct PSPSmnMiscState {
     /* <public> */
     MemoryRegion iomem;
     PspGeneration generation;
-    /*
-     * Placeholder read/write-back register at SMN 0x02d01380, all generations
-     */
-    uint32_t placeholder_2d01380;
+    /* Storage of the "rw" entries of psp/regs, see psp_regs_find() */
+    uint32_t rw[PSP_REGS_MAX_RW_SLOTS];
 } PSPSmnMiscState;
 
 #endif

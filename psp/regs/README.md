@@ -22,13 +22,20 @@ it would inherit. `gen_regs.py` flattens this at build time into one sorted
 table per generation, so `psp_regs_lookup` does a single binary search. A
 read only hits an entry when it starts at exactly the entry's offset; a
 byte read of the middle of a registered word misses. A miss returns false
-and the caller reports it as unimplemented. RAM windows: a file may list `"ram_windows"` (`offset`, `size`, `source`,
+and the caller reports it as unimplemented. Read/write-back registers: an entry with `"rw": true` (only in `psp_misc` and
+`smn_misc`, at most 32 per generation and space) is storage the device keeps
+instead of a constant: a read returns what was last written, narrow accesses
+inside the word work, and `value` is the reset value. Use it for registers the
+boot path touches and nothing models yet, and say so in the note.
+
+RAM windows: a file may list `"ram_windows"` (`offset`, `size`, `source`,
 `note`), ranges of the SMN address space that behave as plain RAM. Windows of
 `generic.json`, the parent chain and the file itself are added up and must not
 overlap; the SMN device maps each as RAM, so DMA engines can use them too.
 
 `gen_regs.py --tsv FILE` also writes the flattened tables for other tools: one
 row per resolved entry with the columns space, generation, offset, value,
-source, note (offsets and values as 0x hex strings); RAM windows appear as
+source, note, access (`ro`, `rw` or `ram`; offsets and values as 0x hex
+strings); RAM windows appear as
 `ram_window` rows with the size in the value column. Run `python3
 psp/regs/test_gen_regs.py` after changing the generator.

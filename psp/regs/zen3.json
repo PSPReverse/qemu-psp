@@ -2,6 +2,54 @@
   "spaces": {
     "smn_misc": [
       {
+        "offset": "0x5d138",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d13c",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d140",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d144",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d148",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d14c",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d150",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
+        "offset": "0x5d154",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Fuse-like bank the Zen3 off-chip BL reads; not modelled, reads as 0."
+      },
+      {
         "offset": "0x5d228",
         "value": "0x400000",
         "source": "code-reading",
@@ -50,7 +98,78 @@
         "note": "Per-node status (node << 25 stride) of which the Zen3 off-chip BL requires bit 19; taken to mirror PSP 0x030101c0. Inferred."
       }
     ],
-    "psp_misc": [],
+    "psp_misc": [
+      {
+        "offset": "0x3010004",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x3010058",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x301070c",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x30109a4",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x3010a44",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x3200054",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x32000dc",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x320021c",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x320022c",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x3260028",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      }
+    ],
     "x86_misc": [
       {
         "offset": "0xfedc9014",
