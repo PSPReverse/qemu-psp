@@ -15,9 +15,6 @@
 
 #define MAILBOX_DOORBELL_GEN_DEFAULT (-2)
 
-/* Word 0 bit 31: set by the firmware in its reply, clear in a host command */
-#define MAILBOX_WORD0_REPLY BIT(31)
-
 /*
  * Bits of the 0x0301069c enable that arm the host doorbell: SecOS writes
  * 0xff000000 there, the Zen3 off-chip BL writes 0xfc000 for its own use.
@@ -33,18 +30,17 @@ typedef struct MailboxState {
     uint32_t values[3];
 
     /* Device-side mailbox interrupt enable (0x0301069c): the SecOS mailbox
-     * driver sets 0xff000000 here. Which bits matter is not known, so any
-     * non-zero value arms the doorbell. */
+     * driver sets 0xff000000 here. The doorbell is armed while any bit of
+     * MAILBOX_INT_ENABLE_SECOS is set. */
     MemoryRegion ctrl_iomem;
     uint32_t int_enable;
 
     /*
-     * IC source raised when the host writes a command to word 0. -1: none,
+     * IC source raised when the host writes a command to word 0 (a write from
+     * outside the guest while the enable register arms it). -1: none,
      * MAILBOX_DOORBELL_GEN_DEFAULT: resolved by the SoC from its generation.
      */
     int32_t doorbell_irq_id;
-    /* Raise it on every word 0 write: no bit 31 or enable matching */
-    bool doorbell_always;
     qemu_irq doorbell_irq;
 } MailboxState;
 

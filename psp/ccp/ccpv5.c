@@ -30,13 +30,33 @@
 #include "qapi/error.h"
 #include "qemu/bitops.h"
 #include "qemu/log.h"
+#include "system/address-spaces.h"
 #include "trace.h"
 
 #include "psp/ccp/ccpv5-linux.h"
 #include "psp/ccp/ccpv5-nettle.h"
 #include "psp/psp-todo.h"
 /* TODO: Restrict access to specific MemoryRegions only.
- *       Verify correct use of cpu_physical_memory_map/unmap */
+ *       Verify correct use of ccp_map/cpu_physical_memory_unmap */
+
+/*
+ * Attributes of the CCP's own memory accesses. They are specified
+ * (unspecified == 0), so a device can tell CCP DMA from a write injected from
+ * outside the guest: the mailbox doorbell fires only for the latter. The
+ * requester id has no hardware meaning; it marks CCP DMA in traces.
+ */
+#define CCP_REQUESTER_ID 0xcc
+static const MemTxAttrs ccp_attrs = {.requester_id = CCP_REQUESTER_ID};
+
+/*
+ * cpu_physical_memory_map with ccp_attrs. A bounce buffer (an MMIO target)
+ * writes back with the same attributes on cpu_physical_memory_unmap.
+ */
+static void* ccp_map(hwaddr addr, hwaddr* plen, bool is_write)
+{
+    return address_space_map(&address_space_memory, addr, plen, is_write,
+                             ccp_attrs);
+}
 
 /* Upper bound on descriptors processed per queue run (guest controls head) */
 #define CCP_Q_MAX_DESC_PER_RUN 4096
@@ -157,7 +177,7 @@ static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
     void* ptr = NULL;
 
     if (src_type == CCP_MEMTYPE_LOCAL) {
-        ptr = cpu_physical_memory_map(addr, len, write);
+        ptr = ccp_map(addr, len, write);
         if (ptr == NULL) {
             qemu_log_mask(LOG_GUEST_ERROR,
                           "CCP Error: Couldn't map guest memory during"
@@ -292,7 +312,7 @@ static void ccp_perform_sha_256(CcpV5State* s, hwaddr src, uint32_t len,
     if (s->sha_ctx.raw != NULL) {
         while (bytes_read < len) {
             plen = len - bytes_read;
-            hsrc = cpu_physical_memory_map(src + bytes_read, &plen, false);
+            hsrc = ccp_map(src + bytes_read, &plen, false);
             // qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped %#lx bytes\n",
             // plen); qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped from
             // %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
@@ -343,7 +363,7 @@ static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
     if (s->sha_ctx.raw != NULL) {
         while (bytes_read < len) {
             plen = len - bytes_read;
-            hsrc = cpu_physical_memory_map(src + bytes_read, &plen, false);
+            hsrc = ccp_map(src + bytes_read, &plen, false);
             // qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped %#lx bytes\n",
             // plen); qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped from
             // %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
@@ -416,7 +436,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     }
     // TODO: Iteravily map the input buffer and decompress page wise
     /* Mapping input buffer */
-    hsrc = cpu_physical_memory_map(src, &plen_in, false);
+    hsrc = ccp_map(src, &plen_in, false);
     if (plen_in != len) {
         qemu_log_mask(LOG_GUEST_ERROR,
                       "CCP Error ZLIB: Couldn't map guest input memory\n");
@@ -429,7 +449,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     /* TODO: Try to decompress page wise until we can't map the hosts memory
      * anymore */
     plen_out = CCP_ZLIB_CHUNK_SIZE;
-    hdst = cpu_physical_memory_map(dst, &plen_out, true);
+    hdst = ccp_map(dst, &plen_out, true);
 
     // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
     // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n",
@@ -450,8 +470,7 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         }
         if (status == CCP_ZLIB_MORE_DATA_PENDING) {
             plen_out = CCP_ZLIB_CHUNK_SIZE;
-            hdst = cpu_physical_memory_map(dst + s->zlib_state.total_out,
-                                           &plen_out, true);
+            hdst = ccp_map(dst + s->zlib_state.total_out, &plen_out, true);
             // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n",
             // plen_out); qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from
             // %p to %p\n", (void*)dst+s->zlib_state.total_out,
@@ -491,7 +510,7 @@ static bool ccp_copy_to_host(CcpV5State *s, void *hdst, hwaddr src,
     hwaddr plen = len;
 
     if (stype == CCP_MEMTYPE_LOCAL) {
-        hsrc = cpu_physical_memory_map(src, &plen, false);
+        hsrc = ccp_map(src, &plen, false);
         if (!hsrc) {
             return false;
         }
@@ -521,7 +540,7 @@ static bool ccp_copy_to_guest(CcpV5State *s, hwaddr dst, void *hsrc,
     hwaddr plen = len;
 
     if (dtype == CCP_MEMTYPE_LOCAL) {
-        hdst = cpu_physical_memory_map(dst, &plen, true);
+        hdst = ccp_map(dst, &plen, true);
         if (!hdst) {
             return false;
         }
@@ -914,7 +933,7 @@ static void ccp_process_q(CcpV5State* s, uint32_t id)
 
         /* The mapping may be shortened by the memory layer, so reset it */
         req_len = sizeof(ccp5_desc);
-        desc = cpu_physical_memory_map(tail, &req_len, false);
+        desc = ccp_map(tail, &req_len, false);
         if (!desc || req_len < sizeof(ccp5_desc)) {
             qemu_log_mask(LOG_GUEST_ERROR,
                           "CCP Error: cannot map descriptor at 0x%x\n", tail);
