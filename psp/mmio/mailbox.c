@@ -78,11 +78,14 @@ static void mailbox_write(void* opaque, hwaddr offset, uint64_t value,
      * raise the source. The firmware's reply sets bit 31 and is written after
      * it has acknowledged the source, so it must not raise it again. Writer
      * identity is not observable here; the bit is how the protocol tells a
-     * command from a reply (seen in session-mode traces on Zen2).
+     * command from a reply (seen in session-mode traces on Zen2). With
+     * doorbell_always every word 0 write raises it, replies and the enable
+     * register included, which can leave the source pending after a reply.
      */
     if (index == 0 && s->doorbell_irq_id >= 0 &&
-        (s->int_enable & MAILBOX_INT_ENABLE_SECOS) &&
-        !(s->values[0] & MAILBOX_WORD0_REPLY)) {
+        (s->doorbell_always ||
+         ((s->int_enable & MAILBOX_INT_ENABLE_SECOS) &&
+          !(s->values[0] & MAILBOX_WORD0_REPLY)))) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
 }
@@ -165,6 +168,7 @@ static void realize(DeviceState* dev, Error** errp)
 }
 
 static const Property mailbox_properties[] = {
+    DEFINE_PROP_BOOL("doorbell_always", MailboxState, doorbell_always, false),
     DEFINE_PROP_INT32("doorbell_irq_id", MailboxState, doorbell_irq_id,
                       MAILBOX_DOORBELL_GEN_DEFAULT),
 };
