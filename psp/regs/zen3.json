@@ -4,41 +4,49 @@
       {
         "offset": "0x5d228",
         "value": "0x400000",
+        "source": "code-reading",
         "note": "Zen3 off-chip BL needs bits 29:22 of this fuse word non-zero (a node/die presence mask, meaning inferred) to find its BL public key; returns the smallest non-zero field."
       },
       {
         "offset": "0x5da20",
         "value": "0x1",
+        "source": "code-reading",
         "note": "Zen3 off-chip BL (fn 0xc7c0 via 0xc5dc, bit offset 0x5100): fuse words (1,0) select SoC class 2, required by fn 0x134c8 (byte [0x156fa] >= 2) before the FET walk. Inferred from code, not measured on hardware."
       },
       {
         "offset": "0x6c14c",
         "value": "0x100",
+        "source": "unknown",
         "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
       },
       {
         "offset": "0x6c94c",
         "value": "0x100",
+        "source": "unknown",
         "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
       },
       {
         "offset": "0x6d14c",
         "value": "0x100",
+        "source": "unknown",
         "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
       },
       {
         "offset": "0xc000014",
         "value": "0x2",
+        "source": "code-reading",
         "note": "Per-node status the Zen3 off-chip BL polls without a timeout until bit 1 or 2 is set; bit 1 taken as ready, bit 2 as error. Inferred."
       },
       {
         "offset": "0x303000d8",
         "value": "0x40",
+        "source": "code-reading",
         "note": "Per-node register (node << 25 stride) the Zen3 off-chip BL polls until it reads 0x40. Only node 0 is present. Inferred."
       },
       {
         "offset": "0x304101c0",
         "value": "0x80102",
+        "source": "code-reading",
         "note": "Per-node status (node << 25 stride) of which the Zen3 off-chip BL requires bit 19; taken to mirror PSP 0x030101c0. Inferred."
       }
     ],
@@ -47,6 +55,7 @@
       {
         "offset": "0xfedc9014",
         "value": "0x60",
+        "source": "code-reading",
         "note": "Line status register (THRE|TEMT) of the FCH MMIO UART at 0xfedc9000, polled before each debug byte like the legacy COM ports."
       }
     ]

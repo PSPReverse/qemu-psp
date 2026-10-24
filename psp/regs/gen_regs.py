@@ -5,7 +5,8 @@
 usage: gen_regs.py --output psp-regs.c.inc FILE.json...
 
 Every file named in REQUIRED_FILES must be given exactly once. Each file is
-a JSON object {"spaces": {SPACE: [{"offset": HEX, "value": HEX, "note": S}]}}.
+a JSON object {"spaces": {SPACE: [{"offset": HEX, "value": HEX,
+"source": SOURCE, "note": S}]}}.
 HEX must be canonical (lowercase, no leading zeros). Lists must be sorted by
 offset with no duplicates. "note" is optional but must not be empty. Values
 are 32-bit. A generation entry must not repeat a generic entry.
@@ -37,7 +38,10 @@ SPACES = {
 }
 VALUE_LIMIT = 1 << 32
 OFFSET_LIMIT = 1 << 64
-ENTRY_KEYS = {"offset", "value", "note"}
+# Where a value comes from. Nothing is "measured" unless it was read on real
+# hardware; "unknown" marks entries migrated without provenance.
+SOURCES = {"measured", "inferred", "code-reading", "unknown"}
+ENTRY_KEYS = {"offset", "value", "source", "note"}
 HEX_LOOSE = re.compile(r"0[xX][0-9a-fA-F]+")
 HEX_CANON = re.compile(r"0x(?:0|[1-9a-f][0-9a-f]*)")
 
@@ -90,11 +94,15 @@ def load(path):
         prev = None
         for i, e in enumerate(entries):
             where = f"{space}[{i}]"
-            if not isinstance(e, dict) or not {"offset", "value"} <= set(e):
-                fail(path, f"{where}: needs 'offset' and 'value'")
+            if (not isinstance(e, dict) or
+                    not {"offset", "value", "source"} <= set(e)):
+                fail(path, f"{where}: needs 'offset', 'value' and 'source'")
             if not set(e) <= ENTRY_KEYS:
                 fail(path, f"{where}: unknown key(s) "
                            f"{sorted(set(e) - ENTRY_KEYS)}")
+            if e["source"] not in SOURCES:
+                fail(path, f"{where}: source {e['source']!r} is not one of "
+                           f"{sorted(SOURCES)}")
             note = e.get("note")
             if "note" in e and (not isinstance(note, str) or not note):
                 fail(path, f"{where}: 'note' must be a non-empty string, "
