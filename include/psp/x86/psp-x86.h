@@ -55,6 +55,9 @@ typedef struct PSPX86State {
     /* DRAM exposed to the host software */
     MemoryRegion regular_dram;
 
+    /* Size of regular_dram in bytes; every snapshot copies the whole block */
+    uint64_t regular_dram_size;
+
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
 } PSPX86State;
