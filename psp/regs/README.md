@@ -13,8 +13,14 @@ evidence. `source` is `measured` only for values read on real hardware, else
 `inferred`, `code-reading` or `unknown`. `gen_regs.py` runs at build time and
 emits `psp-regs.c.inc` into the build directory; do not edit it by hand.
 
-Lookup (`psp_regs_lookup`): the device's generation table first, then
-`generic.json`. There is no inheritance between generations (e.g. Zen3 does not
-fall back to Zen2). A read only hits an entry when it starts at exactly the entry's offset; a
-byte read of the middle of a registered word misses. A miss returns false and the caller reports it as
-unimplemented.
+Inheritance: a generation file may name a `"parent"` generation at the top
+level. A generation sees its own entries, then its parent chain, then
+`generic.json`, nearest first. No parent means generic only. A `"value": null`
+entry in a generation file masks an inherited value for that generation; it
+must hide something that is inherited, and an entry must not repeat the value
+it would inherit. `gen_regs.py` flattens this at build time into one sorted
+table per generation, so `psp_regs_lookup` does a single binary search. A
+read only hits an entry when it starts at exactly the entry's offset; a
+byte read of the middle of a registered word misses. A miss returns false
+and the caller reports it as unimplemented. Run `python3
+psp/regs/test_gen_regs.py` after changing the generator.

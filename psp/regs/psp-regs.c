@@ -16,7 +16,7 @@ typedef struct PspRegTable {
     size_t count;
 } PspRegTable;
 
-/* Defines psp_regs_generic and psp_regs_by_gen, see gen_regs.py. */
+/* Defines psp_regs_by_gen, flattened per generation, see gen_regs.py. */
 #include "psp-regs.c.inc"
 
 static bool psp_regs_table_lookup(const PspRegTable* table, uint64_t offset,
@@ -48,6 +48,5 @@ bool psp_regs_lookup(PspGeneration gen, PspRegSpace space, uint64_t offset,
     assert(gen < PSP_GENERATION_MAX);
     assert(space < PSP_REG_SPACE_MAX);
 
-    return psp_regs_table_lookup(&psp_regs_by_gen[gen][space], offset, val) ||
-           psp_regs_table_lookup(&psp_regs_generic[space], offset, val);
+    return psp_regs_table_lookup(&psp_regs_by_gen[gen][space], offset, val);
 }
