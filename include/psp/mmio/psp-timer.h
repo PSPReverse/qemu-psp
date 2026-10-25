@@ -68,6 +68,11 @@ typedef struct PSPTimerState {
     int32_t expiry_irq_id;
     qemu_irq expiry_irq;
     QEMUTimer expiry_timer;
+    /*
+     * Time left on expiry_timer when the state was saved, -1 if not pending.
+     * Saved as a delta: the absolute deadline is in the old clock's frame.
+     */
+    int64_t expiry_remaining_ns;
 
 } PSPTimerState;
 

@@ -159,24 +159,46 @@ static void psp_timer_unrealize(DeviceState *dev)
 }
 
 /*
- * Only the opt-in expiry timer is re-armed. The new deadline is one period
- * from the restore point, not from the instant the state was saved, so the
- * expiry phase is not preserved across a snapshot.
+ * Save the expiry deadline as the time left, so the expiry phase survives a
+ * restore onto a clock that has moved on.
  */
+static int psp_timer_pre_save(void *opaque)
+{
+    PSPTimerState *s = PSP_TIMER(opaque);
+
+    if (timer_pending(&s->expiry_timer)) {
+        s->expiry_remaining_ns = MAX(timer_expire_time_ns(&s->expiry_timer) -
+                                     qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL), 0);
+    } else {
+        s->expiry_remaining_ns = -1;
+    }
+    return 0;
+}
+
 static int psp_timer_post_load(void *opaque, int version_id)
 {
     PSPTimerState *s = PSP_TIMER(opaque);
 
-    if (s->expiry_irq_id >= 0) {
-        psp_timer_arm(s);
+    if (version_id < 2) {
+        /* Version 1 did not save the deadline: re-arm one period out */
+        if (s->expiry_irq_id >= 0) {
+            psp_timer_arm(s);
+        }
+    } else if (s->expiry_remaining_ns >= 0) {
+        timer_mod(&s->expiry_timer,
+                  qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) +
+                  s->expiry_remaining_ns);
+    } else {
+        timer_del(&s->expiry_timer);
     }
     return 0;
 }
 
 static const VMStateDescription psp_timer_vmstate = {
     .name = TYPE_PSP_TIMER,
-    .version_id = 1,
+    .version_id = 2,
     .minimum_version_id = 1,
+    .pre_save = psp_timer_pre_save,
     .post_load = psp_timer_post_load,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(psp_timer_control, PSPTimerState),
@@ -186,6 +208,7 @@ static const VMStateDescription psp_timer_vmstate = {
         VMSTATE_UINT32_ARRAY(psp_timer_placeholder, PSPTimerState, 3),
         VMSTATE_INT64(counter_anchor_ns, PSPTimerState),
         VMSTATE_UINT64(counter_offset_ns, PSPTimerState),
+        VMSTATE_INT64_V(expiry_remaining_ns, PSPTimerState, 2),
         VMSTATE_END_OF_LIST()
     }
 };
