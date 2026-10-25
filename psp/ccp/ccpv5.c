@@ -443,6 +443,8 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         if (hsrc) {
             cpu_physical_memory_unmap(hsrc, plen_in, false, 0);
         }
+        /* The stream was initialised above; end it or its state leaks */
+        ccp_zlib_end(&s->zlib_state);
         return true;
     }
     /* Mapping output buffer */
