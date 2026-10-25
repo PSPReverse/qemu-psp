@@ -319,6 +319,8 @@ static void psp_timer_write(void* opaque, hwaddr offset, uint64_t val,
     case 0x20:
         s->psp_timer_count = val;
         s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
+        /* Advance applied before this write must not be counted again */
+        s->counter_offset_ns = 0;
         trace_psp_timer_counter_write(val);
         break;
     default:

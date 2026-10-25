@@ -59,7 +59,7 @@ typedef struct PSPTimerState {
     int64_t counter_anchor_ns;
     /*
      * Extra virtual time (ns) added to the derived counter by
-     * aspfuzz_timer_advance(); zeroed on reset
+     * aspfuzz_timer_advance(); zeroed on reset and on a write to +0x20
      */
     uint64_t counter_offset_ns;
 
