@@ -107,9 +107,12 @@ typedef struct CcpV5State {
 
     CcpV5Lsb lsb;
 
-    CcpV5ShaCtx sha_ctx;
-    /* SHA type (CCP_SHA_TYPE_*) of sha_ctx; only valid while raw is set */
-    uint32_t sha_ctx_type;
+    /* Live SHA context per LSB slot, see ccp_perform_sha_256() */
+    CcpV5ShaCtx sha_ctx[CCP_LSB_COUNT];
+    /* SHA type (CCP_SHA_TYPE_*) of each sha_ctx; only valid while raw is set */
+    uint32_t sha_ctx_type[CCP_LSB_COUNT];
+    /* A restore or reset dropped the live context of this slot */
+    bool sha_ctx_dropped[CCP_LSB_COUNT];
     CcpV5ZlibState zlib_state;
 
     /* Timer to process QUEUE events "asynchronously" */

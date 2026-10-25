@@ -295,8 +295,9 @@ static void decode_ccp_passthrough(CcpV5State* s, uint32_t id, ccp5_desc* desc)
                             bswap);
 }
 
-static void ccp_perform_sha_256(CcpV5State* s, hwaddr src, uint32_t len,
-                                bool eom, bool init, uint8_t* lsb_ctx)
+static void ccp_perform_sha_256(CcpV5State* s, uint32_t ctx_id, hwaddr src,
+                                uint32_t len, bool eom, bool init,
+                                uint8_t* lsb_ctx)
 {
     /* TODO: use nettle. See:
      * https://www.gnutls.org/manual/html_node/Using-GnuTLS-as-a-cryptographic-library.html#Using-GnuTLS-as-a-cryptographic-library
@@ -306,48 +307,58 @@ static void ccp_perform_sha_256(CcpV5State* s, hwaddr src, uint32_t len,
     void* hsrc;
     hwaddr plen;
     uint32_t bytes_read = 0;
+    CcpV5ShaCtx* ctx = &s->sha_ctx[ctx_id];
 
     /*
-     * The context is shared by both SHA types: restart it on init, or when
-     * the live context belongs to the other type.
+     * Each LSB slot owns its context. Init starts one. A request that
+     * continues a hash without a live context of this type in its slot is
+     * computed over a fresh context, as the CCP model always did; the digest
+     * then covers only the tail, so the gap is reported.
      */
-    if (init || s->sha_ctx.raw == NULL || s->sha_ctx_type != CCP_SHA_TYPE_256) {
-        ccp_clear_sha_ctx(&s->sha_ctx);
-        ccp_init_sha256_ctx(&s->sha_ctx);
-        s->sha_ctx_type = CCP_SHA_TYPE_256;
+    if (!init && (ctx->raw == NULL ||
+                  s->sha_ctx_type[ctx_id] != CCP_SHA_TYPE_256)) {
+        if (s->sha_ctx_dropped[ctx_id]) {
+            PSP_TODO("ccp.sha.ctx_dropped",
+                     "digest covers only the data after the drop, reported as "
+                     "successful",
+                     "CCP SHA256: context in LSB %u was dropped by a snapshot "
+                     "restore or reset", ctx_id);
+        } else {
+            PSP_TODO("ccp.sha.continuation_no_context",
+                     "digest covers only this request, reported as successful",
+                     "CCP SHA256: continuation without a context in LSB %u",
+                     ctx_id);
+        }
+        init = true;
     }
-    if (s->sha_ctx.raw != NULL) {
-        while (bytes_read < len) {
-            plen = len - bytes_read;
-            hsrc = ccp_map(src + bytes_read, &plen, false);
-            // qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped %#lx bytes\n",
-            // plen); qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Mapped from
-            // %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
-            ccp_update_sha256(&s->sha_ctx, plen, hsrc);
-            cpu_physical_memory_unmap(hsrc, plen, false, plen);
-            bytes_read += plen;
-        }
+    if (init) {
+        ccp_clear_sha_ctx(ctx);
+        ccp_init_sha256_ctx(ctx);
+        s->sha_ctx_type[ctx_id] = CCP_SHA_TYPE_256;
+        s->sha_ctx_dropped[ctx_id] = false;
+    }
 
-        // qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA256: Digested %#x bytes\n",
-        // bytes_read);
+    while (bytes_read < len) {
+        plen = len - bytes_read;
+        hsrc = ccp_map(src + bytes_read, &plen, false);
+        ccp_update_sha256(ctx, plen, hsrc);
+        cpu_physical_memory_unmap(hsrc, plen, false, plen);
+        bytes_read += plen;
+    }
 
-        if (eom) {
-            ccp_digest_sha256(&s->sha_ctx, lsb_ctx);
-            /* The CCP seems to store the digest in reversed order -> Do as the
-             * CCP would do, even if it means we reverse it again when the
-             * digest is copied from the lsb to the PSP.
-             */
-            ccp_reverse_buf(lsb_ctx, 32); // 32 -> SHA256 digest size
-        }
-    } else {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP Error SHA256: SHA context not initialized\n");
-        return;
+    if (eom) {
+        ccp_digest_sha256(ctx, lsb_ctx);
+        /* The CCP seems to store the digest in reversed order -> Do as the
+         * CCP would do, even if it means we reverse it again when the
+         * digest is copied from the lsb to the PSP.
+         */
+        ccp_reverse_buf(lsb_ctx, 32); // 32 -> SHA256 digest size
     }
 }
 
-static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
-                                bool eom, bool init, uint8_t* lsb_ctx)
+static void ccp_perform_sha_384(CcpV5State* s, uint32_t ctx_id, hwaddr src,
+                                uint32_t len, bool eom, bool init,
+                                uint8_t* lsb_ctx)
 {
     /* TODO: use nettle. See:
      * https://www.gnutls.org/manual/html_node/Using-GnuTLS-as-a-cryptographic-library.html#Using-GnuTLS-as-a-cryptographic-library
@@ -357,44 +368,52 @@ static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
     void* hsrc;
     hwaddr plen;
     uint32_t bytes_read = 0;
+    CcpV5ShaCtx* ctx = &s->sha_ctx[ctx_id];
 
     /*
-     * The context is shared by both SHA types: restart it on init, or when
-     * the live context belongs to the other type.
+     * Each LSB slot owns its context. Init starts one. A request that
+     * continues a hash without a live context of this type in its slot is
+     * computed over a fresh context, as the CCP model always did; the digest
+     * then covers only the tail, so the gap is reported.
      */
-    if (init || s->sha_ctx.raw == NULL || s->sha_ctx_type != CCP_SHA_TYPE_384) {
-        ccp_clear_sha_ctx(&s->sha_ctx);
-        ccp_init_sha384_ctx(&s->sha_ctx);
-        s->sha_ctx_type = CCP_SHA_TYPE_384;
+    if (!init && (ctx->raw == NULL ||
+                  s->sha_ctx_type[ctx_id] != CCP_SHA_TYPE_384)) {
+        if (s->sha_ctx_dropped[ctx_id]) {
+            PSP_TODO("ccp.sha.ctx_dropped",
+                     "digest covers only the data after the drop, reported as "
+                     "successful",
+                     "CCP SHA384: context in LSB %u was dropped by a snapshot "
+                     "restore or reset", ctx_id);
+        } else {
+            PSP_TODO("ccp.sha.continuation_no_context",
+                     "digest covers only this request, reported as successful",
+                     "CCP SHA384: continuation without a context in LSB %u",
+                     ctx_id);
+        }
+        init = true;
     }
-    if (s->sha_ctx.raw != NULL) {
-        while (bytes_read < len) {
-            plen = len - bytes_read;
-            hsrc = ccp_map(src + bytes_read, &plen, false);
-            // qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped %#lx bytes\n",
-            // plen); qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Mapped from
-            // %#lx to %#lx\n", src + bytes_read, src + bytes_read + plen);
-            ccp_update_sha384(&s->sha_ctx, plen, hsrc);
-            cpu_physical_memory_unmap(hsrc, plen, false, plen);
-            bytes_read += plen;
-        }
+    if (init) {
+        ccp_clear_sha_ctx(ctx);
+        ccp_init_sha384_ctx(ctx);
+        s->sha_ctx_type[ctx_id] = CCP_SHA_TYPE_384;
+        s->sha_ctx_dropped[ctx_id] = false;
+    }
 
-        // qemu_log_mask(LOG_GUEST_ERROR, "CCP SHA384: Digested %#x bytes\n",
-        // bytes_read);
+    while (bytes_read < len) {
+        plen = len - bytes_read;
+        hsrc = ccp_map(src + bytes_read, &plen, false);
+        ccp_update_sha384(ctx, plen, hsrc);
+        cpu_physical_memory_unmap(hsrc, plen, false, plen);
+        bytes_read += plen;
+    }
 
-        if (eom) {
-            ccp_digest_sha384(&s->sha_ctx, lsb_ctx);
-            /* The CCP seems to store the digest in reversed order -> Do as the
-             * CCP would do, even if it means we reverse it again when the
-             * digest is copied from the lsb to the PSP.
-             */
-            ccp_reverse_buf(lsb_ctx, 48); // 48 -> SHA384 digest size
-        }
-
-    } else {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP Error SHA384: SHA context not initialized\n");
-        return;
+    if (eom) {
+        ccp_digest_sha384(ctx, lsb_ctx);
+        /* The CCP seems to store the digest in reversed order -> Do as the
+         * CCP would do, even if it means we reverse it again when the
+         * digest is copied from the lsb to the PSP.
+         */
+        ccp_reverse_buf(lsb_ctx, 48); // 48 -> SHA384 digest size
     }
 }
 
@@ -733,7 +752,8 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     return failed;
 }
 
-static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+/* @return true if the descriptor failed, see ccp_aes */
+static bool ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
     ccp_function func;
     bool init;
@@ -754,7 +774,7 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     if (ctx_id >= CCP_LSB_COUNT) {
         PSP_TODO("ccp.sha.lsb_id", "descriptor skipped, reported as successful",
                  "CCP Error SHA: LSB context id %u out of range", ctx_id);
-        return;
+        return false;
     }
 
     ctx = s->lsb.u.slots[ctx_id].data;
@@ -762,8 +782,7 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     switch (func.sha.type) {
     case CCP_SHA_TYPE_256:
         trace_ccp_sha(src, len, sha_len, init, eom, ctx_id);
-        ccp_perform_sha_256(s, src, len, eom, init, ctx);
-
+        ccp_perform_sha_256(s, ctx_id, src, len, eom, init, ctx);
         break;
     case CCP_SHA_TYPE_384:
         /* The 48-byte digest is written from the context slot onwards. */
@@ -776,14 +795,14 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
             break;
         }
         trace_ccp_sha(src, len, sha_len, init, eom, ctx_id);
-        ccp_perform_sha_384(s, src, len, eom, init, ctx);
-
+        ccp_perform_sha_384(s, ctx_id, src, len, eom, init, ctx);
         break;
     default:
         PSP_TODO("ccp.sha.type", "descriptor skipped, reported as successful",
                  "CCP Error: unimplemented SHA type %d", func.sha.type);
         break;
     }
+    return false;
 }
 
 /* @return true if the descriptor failed, see ccp_aes */
@@ -896,8 +915,7 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
                  "CCP Error: unimplemented engine (DES3)");
         return true;
     case CCP_ENGINE_SHA:
-        ccp_sha(s, id, desc);
-        break;
+        return ccp_sha(s, id, desc);
     case CCP_ENGINE_RSA:
         return ccp_rsa(s, id, desc);
     case CCP_ENGINE_PASSTHRU:
@@ -1225,7 +1243,6 @@ static void ccp_init(Object* obj)
     sysbus_init_irq(sbd, &s->irq);
 
     ccp_init_q(s);
-    s->sha_ctx.raw = NULL;
     s->zlib_bytes_written = 0;
 }
 
@@ -1249,7 +1266,11 @@ static const VMStateDescription ccp_q_vmstate = {
  */
 static void ccp_drop_stream_state(CcpV5State *s)
 {
-    ccp_clear_sha_ctx(&s->sha_ctx);
+    for (int i = 0; i < CCP_LSB_COUNT; i++) {
+        /* Lets a later continuation of this hash be reported as a gap */
+        s->sha_ctx_dropped[i] |= s->sha_ctx[i].raw != NULL;
+        ccp_clear_sha_ctx(&s->sha_ctx[i]);
+    }
     /* Ends the inflate state if one is live; a no-op on a zeroed stream. */
     ccp_zlib_end(&s->zlib_state);
     memset(&s->zlib_state, 0, sizeof(s->zlib_state));
