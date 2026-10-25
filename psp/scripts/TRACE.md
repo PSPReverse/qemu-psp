@@ -1,5 +1,9 @@
 # trace.py
 
+Two tools: `trace.py` (this file) is standalone, speaks the gdbstub protocol itself and needs no
+gdb. `psp_gdb.py` is a set of commands loaded inside gdb (`source psp/scripts/psp_gdb.py`) for
+interactive or scripted gdb sessions; copy-paste recipes are in RECIPES.md.
+
 Stdlib-only call/return tracer for a QEMU gdbstub (GDB Remote Serial Protocol).
 
     python3 psp/scripts/trace.py config.json
