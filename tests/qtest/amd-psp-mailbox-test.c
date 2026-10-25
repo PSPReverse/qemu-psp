@@ -36,6 +36,8 @@
 #define CCP_DESC_SIZE 32
 #define SRAM_DESC 0x1000
 #define SRAM_SRC 0x2000
+#define CCP_ENGINE_SHA 3
+#define CCP_MEMTYPE_SB 1
 
 #define COMMAND 0x00010000
 
@@ -148,6 +150,61 @@ static void test_ccp_copy(void)
     qtest_quit(qts);
 }
 
+/* Run one descriptor on queue 0 and return the queue status */
+static uint32_t ccp_run(QTestState *qts, const uint32_t desc[CCP_DESC_SIZE / 4])
+{
+    for (int i = 0; i < CCP_DESC_SIZE / 4; i++) {
+        qtest_writel(qts, SRAM_DESC + 4 * i, desc[i]);
+    }
+    qtest_writel(qts, CCP_Q0 + CCP_Q_TAIL, SRAM_DESC);
+    qtest_writel(qts, CCP_Q0 + CCP_Q_HEAD, SRAM_DESC + CCP_DESC_SIZE);
+    qtest_writel(qts, CCP_Q0 + CCP_Q_CTRL, CCP_Q_RUN);
+    qtest_readl(qts, CCP_Q0 + CCP_Q_CTRL);
+    return qtest_readl(qts, CCP_Q0 + CCP_Q_STATUS);
+}
+
+/* A SHA-256 over "abcd" with INIT and EOM succeeds and leaves the digest */
+static void test_ccp_sha256(void)
+{
+    static const uint8_t digest[32] = {
+        0x88, 0xd4, 0x26, 0x6f, 0xd4, 0xe6, 0x33, 0x8d,
+        0x13, 0xb8, 0x45, 0xfc, 0xf2, 0x89, 0x57, 0x9d,
+        0x20, 0x9c, 0x89, 0x78, 0x23, 0xb9, 0x21, 0x7d,
+        0xa3, 0xe1, 0x61, 0x93, 0x6f, 0x03, 0x15, 0x89,
+    };
+    QTestState *qts = start();
+    uint32_t sha[CCP_DESC_SIZE / 4] = {
+        /* engine, SHA-256 (function bits 15..), INIT (bit 3), EOM (bit 4) */
+        (CCP_ENGINE_SHA << 20) | 0x18000 | 0x18,
+        4,                          /* length */
+        SRAM_SRC + 0x100,           /* source low */
+        CCP_MEMTYPE_LOCAL << 16,    /* source memory type, LSB context 0 */
+        0x20,                       /* SHA length low */
+    };
+    uint32_t copy[CCP_DESC_SIZE / 4] = {
+        CCP_ENGINE_PASSTHRU << 20,
+        sizeof(digest),
+        0,                          /* LSB offset 0 */
+        CCP_MEMTYPE_SB << 16,
+        SRAM_SRC,                   /* destination low */
+        CCP_MEMTYPE_LOCAL << 16,
+    };
+    uint8_t out[32];
+
+    if (!qts) {
+        return;
+    }
+    qtest_memwrite(qts, SRAM_SRC + 0x100, "abcd", 4);
+    g_assert_cmpuint(ccp_run(qts, sha), ==, 0);
+    g_assert_cmpuint(ccp_run(qts, copy), ==, 0);
+    qtest_memread(qts, SRAM_SRC, out, sizeof(out));
+    /* The CCP stores the digest reversed */
+    for (int i = 0; i < sizeof(out); i++) {
+        g_assert_cmphex(out[i], ==, digest[sizeof(out) - 1 - i]);
+    }
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     g_autoptr(GError) err = NULL;
@@ -174,6 +231,8 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/mailbox/external-write-unarmed",
                    test_external_write_unarmed);
     qtest_add_func("/amd-psp/mailbox/ccp-copy", test_ccp_copy);
+
+    qtest_add_func("/amd-psp/ccp/sha256", test_ccp_sha256);
 
     ret = g_test_run();
     if (flash_path) {
