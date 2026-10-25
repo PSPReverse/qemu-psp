@@ -69,8 +69,9 @@ static void amd_psp_init(Object* obj)
                             ARM_CPU_TYPE_NAME("cortex-a9"));
 
     /*
-     * Based on the reset in target/arm/cpu_tcg.c cortex_a9_initfn
-     * Deactivates all flags except V bit (Hivecs)
+     * Based on the reset in target/arm/cpu_tcg.c cortex_a9_initfn, but
+     * clears all flags, including V (Hivecs). The PC is set explicitly
+     * by the machine's reset handler.
      */
     // s->cpu.reset_sctlr = 0x00c52078;
     s->cpu.reset_sctlr = 0;

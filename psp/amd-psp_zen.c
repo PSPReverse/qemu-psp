@@ -25,6 +25,7 @@
 #include "qapi/error.h"
 #include "qemu/error-report.h"
 #include "qemu/units.h"
+#include "system/reset.h"
 
 #include "psp/psp.h"
 
@@ -55,6 +56,18 @@ static const char* soc_versions[] = {
 DECLARE_OBJ_CHECKERS(AmdPspMachineState, AmdPspMachineClass, AMD_PSP_MACHINE,
                      TYPE_AMD_PSP_MACHINE)
 
+/*
+ * CPU objects are not reset by the device tree, so reset them on every
+ * system reset and start them from the boot vector.
+ */
+static void zen_cpu_reset(void* opaque)
+{
+    ARMCPU* cpu = opaque;
+
+    cpu_reset(CPU(cpu));
+    cpu->env.regs[15] = 0xffff0000;
+}
+
 static void zen_init_common(MachineState* machine)
 {
     AmdPspMachineState* ms = AMD_PSP_MACHINE(machine);
@@ -65,10 +78,7 @@ static void zen_init_common(MachineState* machine)
                             soc_versions[mc->gen]);
     qdev_realize(DEVICE(&ms->soc), NULL, &error_fatal);
 
-    /* Set pc, Is there a more elegent way?
-     * TODO Consider using arm_boot_info from boot.h
-     */
-    ms->soc.cpu.env.regs[15] = 0xffff0000;
+    qemu_register_reset(zen_cpu_reset, &ms->soc.cpu);
     /* TODO trigger on -kernel flag if it is provided */
     /* TODO can we maybe use -pflash flag for off chip bl? */
     /* TODO consider emulating/skipping on-chip-bl if not set */
