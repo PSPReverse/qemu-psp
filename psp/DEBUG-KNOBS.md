@@ -106,11 +106,15 @@ adds 1 to the site's total, sets the site's bit in the per-iteration bitmap and 
 `psp_todo_hit` trace event; the policy decides the rest. Totals, bitmap and stop flag are
 host-side statics, not in vmstate, so snapshot restores do not touch them. The harness reads
 them with the `aspfuzz_todo_*` functions in section 3. So far only the CCP
-(`psp/ccp/ccpv5.c`) uses it for unimplemented engines, modes, types and memtypes, and for
-descriptors it rejects on LSB range or length. A failed guest map (a zero-length request)
-is not a site. A site's `ret_doc` says whether the descriptor
-reports ERROR (`ccp.engine.xts`, `ccp.engine.des3`, `ccp.engine.ecc`) or SUCCESS while the
-work is skipped (all others). Guest-visible status is unchanged by these sites.
+(`psp/ccp/ccpv5.c`) uses it, for unimplemented engines, modes, types and memtypes, for
+passthrough bit ops, for zlib flags and for a short input map, and for SHA continuations
+that have no live context (`ccp.sha.continuation_no_context`, or `ccp.sha.ctx_dropped` after
+a snapshot restore or reset). Input the guest cannot legitimately send (an out-of-range LSB
+range or context id, an invalid memtype, a failed guest map) is not a site: it is logged
+with `-d guest_errors` and, where the descriptor can fail, fails it. A site's `ret_doc`
+says whether the descriptor reports ERROR (`ccp.engine.xts`, `ccp.engine.des3`,
+`ccp.engine.ecc`) or SUCCESS while the work is skipped (all others). Guest-visible status
+is unchanged by these sites.
 
 Sites are numbered at startup from the `psp_todo_sites` linker section, so indexes are stable
 for a given binary and include sites never hit. There is no fixed maximum. This needs the

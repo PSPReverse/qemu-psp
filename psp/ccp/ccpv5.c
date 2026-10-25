@@ -181,16 +181,15 @@ static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
         }
     } else if (src_type == CCP_MEMTYPE_SB) {
         if (!ccp_lsb_range_ok(s, addr, *len)) {
-            /* The access exceeds the LSB size: Cap the len at LSB max. TODO */
-            PSP_TODO("ccp.passthru.lsb_range",
-                     "copy stopped, reported as successful",
-                     "CCP Error: access exceeds LSB size");
+            /* Guest garbage: no firmware copies beyond the LSB */
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error: access exceeds LSB size\n");
             return NULL;
         }
         ptr = s->lsb.u.lsb + addr;
     } else {
-        PSP_TODO("ccp.memtype.invalid", "copy stopped, reported as successful",
-                 "CCP Error: invalid memtype %d", src_type);
+        qemu_log_mask(LOG_GUEST_ERROR, "CCP Error: invalid memtype %d\n",
+                      src_type);
     }
     return ptr;
 }
@@ -459,11 +458,16 @@ static void ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     /* Mapping input buffer */
     hsrc = ccp_map(src, &plen_in, false);
     if (plen_in != len) {
-        PSP_TODO("ccp.zlib.input_map",
-                 "descriptor skipped, reported as successful",
-                 "CCP Error ZLIB: couldn't map guest input memory");
         if (hsrc) {
+            /* A short map is a gap: the input is not mapped iteratively */
+            PSP_TODO("ccp.zlib.input_map",
+                     "descriptor skipped, reported as successful",
+                     "CCP Error ZLIB: guest input memory mapped only %#lx of "
+                     "%#x bytes", (unsigned long)plen_in, len);
             cpu_physical_memory_unmap(hsrc, plen_in, false, 0);
+        } else {
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error ZLIB: couldn't map guest input memory\n");
         }
         /* The stream was initialised above; end it or its state leaks */
         ccp_zlib_end(&s->zlib_state);
@@ -474,6 +478,15 @@ static void ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
      * anymore */
     plen_out = CCP_ZLIB_CHUNK_SIZE;
     hdst = ccp_map(dst, &plen_out, true);
+    if (!hdst) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "CCP Error ZLIB: couldn't map guest output memory\n");
+        if (hsrc) {
+            cpu_physical_memory_unmap(hsrc, plen_in, false, 0);
+        }
+        ccp_zlib_end(&s->zlib_state);
+        return;
+    }
 
     // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n", plen_out);
     // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from %p to %p\n",
@@ -495,6 +508,13 @@ static void ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         if (status == CCP_ZLIB_MORE_DATA_PENDING) {
             plen_out = CCP_ZLIB_CHUNK_SIZE;
             hdst = ccp_map(dst + s->zlib_state.total_out, &plen_out, true);
+            if (!hdst) {
+                qemu_log_mask(LOG_GUEST_ERROR,
+                              "CCP Error ZLIB: couldn't map guest output "
+                              "memory\n");
+                ccp_zlib_end(&s->zlib_state);
+                break;
+            }
             // qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped %lx bytes\n",
             // plen_out); qemu_log_mask(LOG_GUEST_ERROR, "CCP ZLIB: mapped from
             // %p to %p\n", (void*)dst+s->zlib_state.total_out,
@@ -766,9 +786,10 @@ static bool ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     sha_len = CCP5_CMD_SHA_LO(desc) | ((uint64_t)(CCP5_CMD_SHA_HI(desc)) << 32);
     ctx_id = CCP5_CMD_LSB_ID(desc);
     if (ctx_id >= CCP_LSB_COUNT) {
-        PSP_TODO("ccp.sha.lsb_id", "descriptor skipped, reported as successful",
-                 "CCP Error SHA: LSB context id %u out of range", ctx_id);
-        return false;
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "CCP Error SHA: LSB context id %u out of range\n",
+                      ctx_id);
+        return true;
     }
 
     ctx = s->lsb.u.slots[ctx_id].data;
@@ -781,12 +802,10 @@ static bool ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     case CCP_SHA_TYPE_384:
         /* The 48-byte digest is written from the context slot onwards. */
         if (ctx_id * CCP_LSB_SIZE + 48 > sizeof(s->lsb.u.lsb)) {
-            PSP_TODO("ccp.sha384.lsb_range",
-                     "descriptor skipped, reported as successful",
-                     "CCP Error SHA384: LSB context id %u too close to the end "
-                     "of the LSB",
-                     ctx_id);
-            break;
+            qemu_log_mask(LOG_GUEST_ERROR,
+                          "CCP Error SHA384: LSB context id %u too close to "
+                          "the end of the LSB\n", ctx_id);
+            return true;
         }
         trace_ccp_sha(src, len, sha_len, init, eom, ctx_id);
         ccp_perform_sha_384(s, ctx_id, src, len, eom, init, ctx);
