@@ -136,14 +136,8 @@ static void ccp_memcpy(void* dst, void* src, size_t len, ccp_pt_bitwise bwise,
                        ccp_pt_byteswap bswap)
 {
 
-    if (bwise != CCP_PASSTHRU_BITWISE_NOOP) {
-        PSP_TODO("ccp.passthru.bitwise", "copy skipped, reported as successful",
-                 "CCP Error: unimplemented bitwise op: %d", bwise);
-        return;
-    }
-
-    if (bwise == CCP_PASSTHRU_BITWISE_NOOP &&
-        bswap == CCP_PASSTHRU_BYTESWAP_NOOP) {
+    /* The caller has already rejected every bitwise op but NOOP */
+    if (bswap == CCP_PASSTHRU_BYTESWAP_NOOP) {
         /* Normal memcpy */
         memcpy(dst, src, len);
         return;
