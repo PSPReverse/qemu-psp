@@ -3240,6 +3240,12 @@ static bool flatview_access_allowed(MemoryRegion *mr, MemTxAttrs attrs,
     return false;
 }
 
+//// --- Begin LibAFL code ---
+
+void syx_snapshot_dirty_list_add_hostaddr_range(void* host_addr, uint64_t len);
+
+//// --- End LibAFL code ---
+
 static MemTxResult flatview_write_continue_step(MemTxAttrs attrs,
                                                 const uint8_t *buf,
                                                 hwaddr len, hwaddr mr_addr,
@@ -3284,6 +3290,11 @@ static MemTxResult flatview_write_continue_step(MemTxAttrs attrs,
                                                false, true);
 
         memmove(ram_ptr, buf, *l);
+        //// --- Begin LibAFL code ---
+
+        syx_snapshot_dirty_list_add_hostaddr_range(ram_ptr, *l);
+
+        //// --- End LibAFL code ---
         invalidate_and_set_dirty(mr, mr_addr, *l);
 
         return MEMTX_OK;
@@ -3498,12 +3509,6 @@ void cpu_physical_memory_write(hwaddr addr, const void *buf, hwaddr len)
     address_space_write(&address_space_memory, addr,
                         MEMTXATTRS_UNSPECIFIED, buf, len);
 }
-
-//// --- Begin LibAFL code ---
-
-void syx_snapshot_dirty_list_add_hostaddr_range(void* host_addr, uint64_t len);
-
-//// --- End LibAFL code ---
 
 /* used for ROM loading : can write in RAM and ROM */
 MemTxResult address_space_write_rom(AddressSpace *as, hwaddr addr,
@@ -3804,6 +3809,11 @@ void address_space_unmap(AddressSpace *as, void *buffer, hwaddr len,
     mr = memory_region_from_host(buffer, &addr1);
     if (mr != NULL) {
         if (is_write) {
+            //// --- Begin LibAFL code ---
+
+            syx_snapshot_dirty_list_add_hostaddr_range(buffer, access_len);
+
+            //// --- End LibAFL code ---
             invalidate_and_set_dirty(mr, addr1, access_len);
         }
         if (xen_map_cache_enabled()) {
