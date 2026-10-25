@@ -137,8 +137,8 @@ static void ccp_memcpy(void* dst, void* src, size_t len, ccp_pt_bitwise bwise,
 {
 
     if (bwise != CCP_PASSTHRU_BITWISE_NOOP) {
-        qemu_log_mask(LOG_UNIMP, "CCP Error: unimplemeted bitwise op: %d\n",
-                      bwise);
+        PSP_TODO("ccp.passthru.bitwise", "copy skipped, reported as successful",
+                 "CCP Error: unimplemented bitwise op: %d", bwise);
         return;
     }
 
@@ -152,8 +152,9 @@ static void ccp_memcpy(void* dst, void* src, size_t len, ccp_pt_bitwise bwise,
     if (bswap == CCP_PASSTHRU_BYTESWAP_256BIT) {
         /* For now, we only support swap-size aligned ops */
         if (len % 0x20) {
-            qemu_log_mask(LOG_UNIMP, "CCP Error:, unaligned bswap op is not"
-                                     " supported yet\n");
+            PSP_TODO("ccp.passthru.unaligned_bswap",
+                     "copy skipped, reported as successful",
+                     "CCP Error: unaligned bswap op of %zu bytes", len);
             return;
         }
         /* TODO clean up */
@@ -187,11 +188,15 @@ static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
     } else if (src_type == CCP_MEMTYPE_SB) {
         if (!ccp_lsb_range_ok(s, addr, *len)) {
             /* The access exceeds the LSB size: Cap the len at LSB max. TODO */
-            qemu_log_mask(LOG_GUEST_ERROR,
-                          "CCP Error: Access exceeds LSB size \n");
+            PSP_TODO("ccp.passthru.lsb_range",
+                     "copy stopped, reported as successful",
+                     "CCP Error: access exceeds LSB size");
             return NULL;
         }
         ptr = s->lsb.u.lsb + addr;
+    } else {
+        PSP_TODO("ccp.memtype.invalid", "copy stopped, reported as successful",
+                 "CCP Error: invalid memtype %d", src_type);
     }
     return ptr;
 }
@@ -210,16 +215,18 @@ static void perform_ccp_passthrough(CcpV5State* s, uint32_t id, hwaddr dst,
         (bswap != CCP_PASSTHRU_BYTESWAP_NOOP &&
          bswap != CCP_PASSTHRU_BYTESWAP_256BIT)) {
 
-        qemu_log_mask(LOG_UNIMP,
-                      "CCP Error: Unimplemented passthrough bit ops: "
-                      "bitwise 0x%x byteswap 0x%x\n",
-                      bwise, bswap);
+        PSP_TODO("ccp.passthru.bitops",
+                 "descriptor skipped, reported as successful",
+                 "CCP Error: unimplemented passthrough bit ops: bitwise 0x%x "
+                 "byteswap 0x%x",
+                 bwise, bswap);
         return;
     }
 
     if (dst_type == CCP_MEMTYPE_SYSTEM || src_type == CCP_MEMTYPE_SYSTEM) {
-        qemu_log_mask(LOG_UNIMP,
-                      "CCP Error: Unimplemented memtype CCP_MEMTYPE_SYSTEM\n");
+        PSP_TODO("ccp.passthru.system_memtype",
+                 "descriptor skipped, reported as successful",
+                 "CCP Error: unimplemented memtype CCP_MEMTYPE_SYSTEM");
         return;
     }
     do {
@@ -391,7 +398,7 @@ static void ccp_perform_sha_384(CcpV5State* s, hwaddr src, uint32_t len,
     }
 }
 
-static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
+static void ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
     bool init;
     bool eom;
@@ -404,9 +411,6 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     void* hdst;
     hwaddr plen_in;
     hwaddr plen_out;
-    bool err;
-
-    err = false;
 
     src_type = CCP5_CMD_SRC_MEM(desc);
     dst_type = CCP5_CMD_DST_MEM(desc);
@@ -421,31 +425,36 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     trace_ccp_zlib(src, dst, len, src_type, dst_type, init, eom);
 
     if (!init || !eom) {
-        qemu_log_mask(LOG_UNIMP, "CCP Error ZLIB: Only EOM=1 and INIT=1 Zlib "
-                                 "ops are currently supported\n");
-        return true;
+        PSP_TODO("ccp.zlib.flags",
+                 "descriptor skipped, reported as successful",
+                 "CCP Error ZLIB: only INIT=1 and EOM=1 are supported (init "
+                 "%d, eom %d)",
+                 init, eom);
+        return;
     }
 
     if (init) {
         s->zlib_bytes_written = 0;
         if (ccp_zlib_init(&s->zlib_state)) {
-            qemu_log_mask(LOG_UNIMP,
-                          "CCP ZLIB Error: Couldn't initialize zlib state\n");
-            return true;
+            PSP_TODO("ccp.zlib.init",
+                     "descriptor skipped, reported as successful",
+                     "CCP ZLIB Error: couldn't initialize zlib state");
+            return;
         }
     }
     // TODO: Iteravily map the input buffer and decompress page wise
     /* Mapping input buffer */
     hsrc = ccp_map(src, &plen_in, false);
     if (plen_in != len) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP Error ZLIB: Couldn't map guest input memory\n");
+        PSP_TODO("ccp.zlib.input_map",
+                 "descriptor skipped, reported as successful",
+                 "CCP Error ZLIB: couldn't map guest input memory");
         if (hsrc) {
             cpu_physical_memory_unmap(hsrc, plen_in, false, 0);
         }
         /* The stream was initialised above; end it or its state leaks */
         ccp_zlib_end(&s->zlib_state);
-        return true;
+        return;
     }
     /* Mapping output buffer */
     /* TODO: Try to decompress page wise until we can't map the hosts memory
@@ -464,10 +473,10 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
     while (status != CCP_ZLIB_SUCCESS) {
         if (status == CCP_ZLIB_ERROR) {
-            qemu_log_mask(
-                LOG_GUEST_ERROR,
-                "CCP ERROR ZLIB: Inflation failed after %#lx bytes.\n",
-                s->zlib_state.total_out);
+            PSP_TODO("ccp.zlib.inflate",
+                     "output partly written, reported as successful",
+                     "CCP ERROR ZLIB: inflation failed after %#lx bytes",
+                     s->zlib_state.total_out);
             break;
         }
         if (status == CCP_ZLIB_MORE_DATA_PENDING) {
@@ -496,8 +505,6 @@ static bool ccp_zlib(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     if (eom) {
         ccp_zlib_end(&s->zlib_state);
     }
-
-    return err;
 }
 
 /*
@@ -530,6 +537,10 @@ static bool ccp_copy_to_host(CcpV5State *s, void *hdst, hwaddr src,
         }
         hsrc = s->lsb.u.lsb + src;
         memcpy(hdst, hsrc, len);
+    } else {
+        PSP_TODO("ccp.copy.src_memtype",
+                 "bytes not copied, reported as successful",
+                 "CCP Error: unimplemented source memtype %d", stype);
     }
     return true;
 }
@@ -560,6 +571,10 @@ static bool ccp_copy_to_guest(CcpV5State *s, hwaddr dst, void *hsrc,
         }
         hdst = s->lsb.u.lsb + dst;
         memcpy(hdst, hsrc, len);
+    } else {
+        PSP_TODO("ccp.copy.dst_memtype",
+                 "bytes not copied, reported as successful",
+                 "CCP Error: unimplemented destination memtype %d", dtype);
     }
     return true;
 }
@@ -704,13 +719,13 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
             failed = !ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
             break;
         default:
-            qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES TYPE %d\n",
-                          func.aes.type);
+            PSP_TODO("ccp.aes.type", "dst not written, reported as successful",
+                     "CCP Error: unimplemented AES TYPE %d", func.aes.type);
         }
         break;
     default:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES MODE %d\n",
-                      func.aes.mode);
+        PSP_TODO("ccp.aes.mode", "dst not written, reported as successful",
+                 "CCP Error: unimplemented AES MODE %d", func.aes.mode);
     }
 
     g_free(src_buf);
@@ -737,9 +752,8 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     sha_len = CCP5_CMD_SHA_LO(desc) | ((uint64_t)(CCP5_CMD_SHA_HI(desc)) << 32);
     ctx_id = CCP5_CMD_LSB_ID(desc);
     if (ctx_id >= CCP_LSB_COUNT) {
-        qemu_log_mask(LOG_GUEST_ERROR,
-                      "CCP Error SHA: LSB context id %u out of range\n",
-                      ctx_id);
+        PSP_TODO("ccp.sha.lsb_id", "descriptor skipped, reported as successful",
+                 "CCP Error SHA: LSB context id %u out of range", ctx_id);
         return;
     }
 
@@ -754,10 +768,11 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     case CCP_SHA_TYPE_384:
         /* The 48-byte digest is written from the context slot onwards. */
         if (ctx_id * CCP_LSB_SIZE + 48 > sizeof(s->lsb.u.lsb)) {
-            qemu_log_mask(LOG_GUEST_ERROR,
-                          "CCP Error SHA384: LSB context id %u too close to "
-                          "the end of the LSB\n",
-                          ctx_id);
+            PSP_TODO("ccp.sha384.lsb_range",
+                     "descriptor skipped, reported as successful",
+                     "CCP Error SHA384: LSB context id %u too close to the end "
+                     "of the LSB",
+                     ctx_id);
             break;
         }
         trace_ccp_sha(src, len, sha_len, init, eom, ctx_id);
@@ -765,8 +780,8 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
         break;
     default:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented SHA type %d\n",
-                      func.sha.type);
+        PSP_TODO("ccp.sha.type", "descriptor skipped, reported as successful",
+                 "CCP Error: unimplemented SHA type %d", func.sha.type);
         break;
     }
 }
@@ -853,6 +868,9 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
         return !ccp_copy_to_guest(s, rsa_dst, rsa_result, rsa_dst_mtype,
                                   rsa_size);
     }
+    PSP_TODO("ccp.rsa.mode_size", "not executed, reported as successful",
+             "CCP Error: unimplemented RSA mode %u size %u len %u", rsa_mode,
+             rsa_size, len);
     return false;
 }
 
@@ -870,11 +888,12 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     case CCP_ENGINE_AES:
         return ccp_aes(s, id, desc);
     case CCP_ENGINE_XTS_AES_128:
-        qemu_log_mask(LOG_UNIMP,
-                      "CCP Error: Unimplemented engine (AES-XTS-128)\n");
+        PSP_TODO("ccp.engine.xts", "descriptor fails, status ERROR",
+                 "CCP Error: unimplemented engine (AES-XTS-128)");
         return true;
     case CCP_ENGINE_DES3:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (DES3)\n");
+        PSP_TODO("ccp.engine.des3", "descriptor fails, status ERROR",
+                 "CCP Error: unimplemented engine (DES3)");
         return true;
     case CCP_ENGINE_SHA:
         ccp_sha(s, id, desc);
@@ -888,7 +907,8 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         ccp_zlib(s, id, desc);
         break;
     case CCP_ENGINE_ECC:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (ECC)\n");
+        PSP_TODO("ccp.engine.ecc", "descriptor fails, status ERROR",
+                 "CCP Error: unimplemented engine (ECC)");
         return true;
     default:
         PSP_TODO("ccp.engine.unknown",
