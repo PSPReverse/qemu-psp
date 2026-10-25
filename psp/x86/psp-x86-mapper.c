@@ -46,9 +46,22 @@ static void psp_x86_map_slot(PSPX86MapperState* s, uint32_t slot_id)
 {
     PSPX86Slot* slot = &s->psp_x86_slots[slot_id];
 
-    psp_x86_set_mapping(s, slot_id,
-                        (slot->ctrl_regs[X86BASE] & 0x3f) << 26 |
-                            ((uint64_t)(slot->ctrl_regs[X86BASE] >> 6)) << 32);
+    PSPX86Addr x86_addr = (slot->ctrl_regs[X86BASE] & 0x3f) << 26 |
+                          ((uint64_t)(slot->ctrl_regs[X86BASE] >> 6)) << 32;
+
+    /*
+     * The register can encode up to 2^58, the x86 space has 48 bits. An alias
+     * past the end would not be rendered and the access would fall through to
+     * the PSP-side devices below the slot, so drop the unmodelled high bits.
+     */
+    if (x86_addr >= X86_PHYS_ADDR_SPACE_SIZE) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "psp-x86-mapper: slot %u X86BASE 0x%08x is above the "
+                      "48-bit x86 space, masking\n",
+                      slot_id, slot->ctrl_regs[X86BASE]);
+        x86_addr &= X86_PHYS_ADDR_SPACE_SIZE - 1;
+    }
+    psp_x86_set_mapping(s, slot_id, x86_addr);
 }
 
 static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
