@@ -27,6 +27,8 @@
 #include "qapi/error.h"
 #include "qemu/bitops.h"
 #include "qemu/log.h"
+#include "qemu/main-loop.h"
+#include "system/address-spaces.h"
 #include "trace.h"
 
 #include "psp/psp.h"
@@ -153,6 +155,42 @@ static const VMStateDescription mailbox_vmstate = {
     },
 };
 
+/*
+ * Fuzzer hook: write mailbox word 0..2 as the host side would, through the
+ * PSP address space with unspecified attributes, so the doorbell sees an
+ * external write. The BQL is taken if the caller does not hold it. Returns -1
+ * if no mailbox is realized or word >= 3, else 0 or the MemTxResult of the
+ * write (non-zero on failure).
+ */
+static MailboxState* aspfuzz_mailbox_state;
+
+int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value);
+int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value)
+{
+    bool took_bql = !bql_locked();
+    int32_t rc = -1;
+
+    if (took_bql) {
+        bql_lock();
+    }
+    if (aspfuzz_mailbox_state != NULL && word < 3) {
+        rc = address_space_write(&address_space_memory,
+                                 PSP_MAILBOX_BASE + 4 * word,
+                                 MEMTXATTRS_UNSPECIFIED, &value, 4);
+    }
+    if (took_bql) {
+        bql_unlock();
+    }
+    return rc;
+}
+
+static void mailbox_unrealize(DeviceState* dev)
+{
+    if (aspfuzz_mailbox_state == MAILBOX(dev)) {
+        aspfuzz_mailbox_state = NULL;
+    }
+}
+
 static void realize(DeviceState* dev, Error** errp)
 {
     MailboxState* s = MAILBOX(dev);
@@ -173,6 +211,7 @@ static void realize(DeviceState* dev, Error** errp)
     sysbus_init_mmio(sbd, &s->ctrl_iomem);
 
     sysbus_init_irq(sbd, &s->doorbell_irq);
+    aspfuzz_mailbox_state = s;
 }
 
 static const Property mailbox_properties[] = {
@@ -186,6 +225,7 @@ static void class_init(ObjectClass* oc, const void* data)
     ResettableClass* rc = RESETTABLE_CLASS(oc);
 
     dc->realize = realize;
+    dc->unrealize = mailbox_unrealize;
     dc->vmsd = &mailbox_vmstate;
     rc->phases.hold = mailbox_reset_hold;
     device_class_set_props(dc, mailbox_properties);
