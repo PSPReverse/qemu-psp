@@ -78,10 +78,11 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
                             attrs.debug, attrs.requester_id);
     /*
      * Doorbell: a word 0 write raises the source iff it is external
-     * (attrs.unspecified) and the enable register arms it. Writes from
-     * outside the guest carry MEMTXATTRS_UNSPECIFIED: qtest, and the
-     * harness' physical memory writes (cpu_physical_memory_write,
-     * address_space_write with MEMTXATTRS_UNSPECIFIED). The PSP core's TCG
+     * (attrs.unspecified or attrs.debug) and the enable register arms it.
+     * Writes from outside the guest carry MEMTXATTRS_UNSPECIFIED (qtest, the
+     * harness' physical memory writes: cpu_physical_memory_write,
+     * address_space_write with MEMTXATTRS_UNSPECIFIED) or attrs.debug
+     * (cpu_memory_rw_debug: the harness' virtual-address writes, gdbstub). The PSP core's TCG
      * accesses carry filled-in attributes, and the CCP maps guest memory
      * with its own explicit attributes (ccp_attrs in ccpv5.c), so neither
      * the firmware's replies nor a CCP copy onto the mailbox raise it,
@@ -91,7 +92,7 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
         return MEMTX_OK;
     }
     armed = s->int_enable & MAILBOX_INT_ENABLE_SECOS;
-    if (armed && attrs.unspecified) {
+    if (armed && (attrs.unspecified || attrs.debug)) {
         qemu_set_irq(s->doorbell_irq, 1);
     }
     return MEMTX_OK;
