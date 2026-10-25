@@ -46,6 +46,15 @@ class GenRegsTest(unittest.TestCase):
         return re.findall(r"UINT64_C\((0x[0-9a-f]+)\), UINT64_C", m.group(1)) \
             if m else []
 
+    @staticmethod
+    def values(text, gen, space="smn_misc"):
+        """offset -> value of the generated table of one generation"""
+        m = re.search(r"psp_regs_%s_%s\[\] = \{(.*?)\};" % (gen, space),
+                      text, re.S)
+        return {int(o, 16): int(v, 16) for o, v in re.findall(
+            r"UINT64_C\((0x[0-9a-f]+)\), UINT64_C\((0x[0-9a-f]+)\)",
+            m.group(1))} if m else {}
+
     def test_generic_is_flattened_into_every_generation(self):
         self.docs["generic"]["spaces"]["smn_misc"] = [entry("0x10", "0x1")]
         p, text = self.run_gen()
@@ -62,6 +71,75 @@ class GenRegsTest(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         self.assertEqual(self.offsets(text, "zen3"), ["0x10", "0x20"])
         self.assertEqual(self.offsets(text, "zen"), ["0x10"])
+
+    def test_nearest_ancestor_wins(self):
+        # zen3 -> zen2 -> zen_plus -> generic, each layer overrides the last
+        self.docs["generic"]["spaces"]["smn_misc"] = [
+            entry("0x10", "0x1"), entry("0x20", "0x1"), entry("0x30", "0x1")]
+        self.docs["zen_plus"]["spaces"]["smn_misc"] = [
+            entry("0x10", "0x2"), entry("0x20", "0x2")]
+        self.docs["zen2"]["parent"] = "zen_plus"
+        self.docs["zen2"]["spaces"]["smn_misc"] = [entry("0x10", "0x3")]
+        self.docs["zen3"]["parent"] = "zen2"
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(self.values(text, "zen3"),
+                         {0x10: 0x3, 0x20: 0x2, 0x30: 0x1})
+        self.assertEqual(self.values(text, "zen2"),
+                         {0x10: 0x3, 0x20: 0x2, 0x30: 0x1})
+        self.assertEqual(self.values(text, "zen_plus"),
+                         {0x10: 0x2, 0x20: 0x2, 0x30: 0x1})
+        # Not in the chain: generic only
+        self.assertEqual(self.values(text, "zen"),
+                         {0x10: 0x1, 0x20: 0x1, 0x30: 0x1})
+
+    def test_child_value_may_equal_a_value_it_does_not_inherit(self):
+        # The repeat check is against the resolved parent value, not generic
+        self.docs["generic"]["spaces"]["smn_misc"] = [entry("0x10", "0x1")]
+        self.docs["zen2"]["spaces"]["smn_misc"] = [entry("0x10", "0x2")]
+        self.docs["zen3"]["parent"] = "zen2"
+        self.docs["zen3"]["spaces"]["smn_misc"] = [entry("0x10", "0x1")]
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(self.values(text, "zen3"), {0x10: 0x1})
+
+    def test_mask_in_parent_reaches_child_and_child_can_restore(self):
+        self.docs["generic"]["spaces"]["smn_misc"] = [
+            entry("0x10", "0x1"), entry("0x20", "0x1")]
+        self.docs["zen2"]["spaces"]["smn_misc"] = [entry("0x10", None)]
+        self.docs["zen3"]["parent"] = "zen2"
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(self.values(text, "zen3"), {0x20: 0x1})
+        self.assertEqual(self.values(text, "zen"), {0x10: 0x1, 0x20: 0x1})
+        # The child adds the masked offset back with a value of its own
+        self.docs["zen3"]["spaces"]["smn_misc"] = [entry("0x10", "0x9")]
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(self.values(text, "zen3"), {0x10: 0x9, 0x20: 0x1})
+        self.assertEqual(self.values(text, "zen2"), {0x20: 0x1})
+
+    def test_child_mask_does_not_leak_into_parent_or_siblings(self):
+        self.docs["generic"]["spaces"]["smn_misc"] = [entry("0x10", "0x1")]
+        self.docs["zen2"]["spaces"]["smn_misc"] = [entry("0x20", "0x2")]
+        self.docs["zen3"]["parent"] = "zen2"
+        self.docs["zen3"]["spaces"]["smn_misc"] = [entry("0x20", None)]
+        self.docs["zen_tesla"]["parent"] = "zen2"
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(self.values(text, "zen3"), {0x10: 0x1})
+        self.assertEqual(self.values(text, "zen2"), {0x10: 0x1, 0x20: 0x2})
+        self.assertEqual(self.values(text, "zen_tesla"),
+                         {0x10: 0x1, 0x20: 0x2})
+
+    def test_spaces_are_layered_independently(self):
+        self.docs["generic"]["spaces"]["smn_misc"] = [entry("0x10", "0x1")]
+        self.docs["generic"]["spaces"]["x86_misc"] = [entry("0x10", "0x5")]
+        self.docs["zen2"]["spaces"]["smn_misc"] = [entry("0x10", None)]
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual(self.values(text, "zen2"), {})
+        self.assertEqual(self.values(text, "zen2", "x86_misc"), {0x10: 0x5})
 
     def test_mask_hides_only_in_that_generation(self):
         self.docs["generic"]["spaces"]["smn_misc"] = [entry("0x10", "0x1")]
@@ -181,6 +259,31 @@ class GenRegsTest(unittest.TestCase):
         rows = [r.split("\t") for r in open(self.tsv_path).read().splitlines()
                 if r.startswith("psp_misc\tzen3")]
         self.assertEqual([r[6] for r in rows], ["ro", "rw", "rw"])
+
+    def test_rw_flag_is_inherited_and_slots_follow_the_merged_order(self):
+        rw = dict(entry("0x30", "0x7"), rw=True)
+        self.docs["generic"]["spaces"]["psp_misc"] = [rw]
+        self.docs["zen2"]["spaces"]["psp_misc"] = [
+            dict(entry("0x20", "0x1"), rw=True)]
+        self.docs["zen3"]["parent"] = "zen2"
+        p, text = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+
+        def slots(gen):
+            m = re.search(r"psp_regs_%s_psp_misc\[\] = \{(.*?)\};" % gen,
+                          text, re.S)
+            return re.findall(r"UINT64_C\((0x[0-9a-f]+)\), "
+                              r"UINT64_C\(0x[0-9a-f]+\), (-?\d+)\}",
+                              m.group(1))
+        self.assertEqual(slots("zen"), [("0x30", "0")])
+        self.assertEqual(slots("zen3"), [("0x20", "0"), ("0x30", "1")])
+
+    def test_child_may_change_only_the_rw_flag(self):
+        self.docs["generic"]["spaces"]["psp_misc"] = [entry("0x30", "0x7")]
+        self.docs["zen2"]["spaces"]["psp_misc"] = [
+            dict(entry("0x30", "0x7"), rw=True)]
+        p, _ = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
 
     def test_rw_restrictions(self):
         self.docs["generic"]["spaces"]["x86_misc"] = [

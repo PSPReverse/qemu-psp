@@ -230,6 +230,20 @@ qtests_stm32l4x5 = \
    'stm32l4x5_gpio-test',
    'stm32l4x5_usart-test']
 
+# Firmware-free AMD PSP device tests, see README-psp.md; scripts/psp-qtest.sh
+# runs just these
+qtests_amd_psp = [
+  'amd-psp-mailbox-test',
+  'amd-psp-ic-test',
+  'amd-psp-timer-test',
+  'amd-psp-ccp-test',
+  'amd-psp-x86-test',
+  'amd-psp-migrate-test',
+  'amd-psp-reset-test',
+  'amd-psp-todo-test',
+  'amd-psp-pending-fixes-test',
+]
+
 qtests_arm = \
   (config_all_devices.has_key('CONFIG_MPS2') ? ['sse-timer-test'] : []) + \
   (config_all_devices.has_key('CONFIG_CMSDK_APB_DUALTIMER') ? ['cmsdk-apb-dualtimer-test'] : []) + \
@@ -244,7 +258,7 @@ qtests_arm = \
   (config_all_devices.has_key('CONFIG_TPM_TIS_I2C') ? ['tpm-tis-i2c-test'] : []) + \
   (config_all_devices.has_key('CONFIG_VEXPRESS') ? ['test-arm-mptimer'] : []) + \
   (config_all_devices.has_key('CONFIG_MICROBIT') ? ['microbit-test'] : []) + \
-  (config_all_devices.has_key('CONFIG_AMD_PSP') ? ['amd-psp-mailbox-test'] : []) + \
+  (config_all_devices.has_key('CONFIG_AMD_PSP') ? qtests_amd_psp : []) + \
   (config_all_devices.has_key('CONFIG_STM32L4X5_SOC') ? qtests_stm32l4x5 : []) + \
   (config_all_devices.has_key('CONFIG_FSI_APB2OPB_ASPEED') ? ['aspeed_fsi-test'] : []) + \
   (config_all_devices.has_key('CONFIG_STM32L4X5_SOC') and
