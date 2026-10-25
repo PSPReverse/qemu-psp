@@ -1316,6 +1316,9 @@ static void ccp_reset_hold(Object *obj, ResetType type)
     CcpV5State *s = CCP_V5(obj);
 
     ccp_drop_stream_state(s);
+    ccp_init_q(s);
+    s->int_status = 0;
+    qemu_set_irq(s->irq, 0);
     s->zlib_bytes_written = 0;
     s->trng_state = s->trng_seed;
     s->trng_last = 0;
