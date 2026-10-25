@@ -311,13 +311,13 @@ static void ccp_perform_sha_256(CcpV5State* s, uint32_t ctx_id, hwaddr src,
     if (!init && (ctx->raw == NULL ||
                   s->sha_ctx_type[ctx_id] != CCP_SHA_TYPE_256)) {
         if (s->sha_ctx_dropped[ctx_id]) {
-            PSP_TODO("ccp.sha.ctx_dropped",
+            PSP_TODO("ccp.sha256.ctx_dropped",
                      "digest covers only the data after the drop, reported as "
                      "successful",
                      "CCP SHA256: context in LSB %u was dropped by a snapshot "
                      "restore or reset", ctx_id);
         } else {
-            PSP_TODO("ccp.sha.continuation_no_context",
+            PSP_TODO("ccp.sha256.continuation_no_context",
                      "digest covers only this request, reported as successful",
                      "CCP SHA256: continuation without a context in LSB %u",
                      ctx_id);
@@ -372,13 +372,13 @@ static void ccp_perform_sha_384(CcpV5State* s, uint32_t ctx_id, hwaddr src,
     if (!init && (ctx->raw == NULL ||
                   s->sha_ctx_type[ctx_id] != CCP_SHA_TYPE_384)) {
         if (s->sha_ctx_dropped[ctx_id]) {
-            PSP_TODO("ccp.sha.ctx_dropped",
+            PSP_TODO("ccp.sha384.ctx_dropped",
                      "digest covers only the data after the drop, reported as "
                      "successful",
                      "CCP SHA384: context in LSB %u was dropped by a snapshot "
                      "restore or reset", ctx_id);
         } else {
-            PSP_TODO("ccp.sha.continuation_no_context",
+            PSP_TODO("ccp.sha384.continuation_no_context",
                      "digest covers only this request, reported as successful",
                      "CCP SHA384: continuation without a context in LSB %u",
                      ctx_id);

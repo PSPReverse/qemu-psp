@@ -108,7 +108,7 @@ host-side statics, not in vmstate, so snapshot restores do not touch them. The h
 them with the `aspfuzz_todo_*` functions in section 3. So far only the CCP
 (`psp/ccp/ccpv5.c`) uses it, for unimplemented engines, modes, types and memtypes, for
 passthrough bit ops, for zlib flags and for a short input map, and for SHA continuations
-that have no live context (`ccp.sha.continuation_no_context`, or `ccp.sha.ctx_dropped` after
+that have no live context (`ccp.sha{256,384}.continuation_no_context`, or `ccp.sha{256,384}.ctx_dropped` after
 a snapshot restore or reset). Input the guest cannot legitimately send (an out-of-range LSB
 range or context id, an invalid memtype, a failed guest map) is not a site: it is logged
 with `-d guest_errors` and, where the descriptor can fail, fails it. A site's `ret_doc`
