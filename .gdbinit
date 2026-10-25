@@ -7,5 +7,6 @@
 # Load QEMU-specific sub-commands and settings
 source scripts/qemu-gdb.py
 
-source ~/.local/bin/sync.py
+# ret-sync bridge disabled: superseded by Ghidra's gdb integration
+# source ~/.local/bin/sync.py
 source psp/scripts/gdbhelper.py
