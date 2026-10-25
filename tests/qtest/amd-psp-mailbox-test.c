@@ -16,6 +16,7 @@
 
 /* Interrupt controller of Zen2 and later */
 #define IC_BASE 0x03010200
+#define IC_ENABLE(group) (IC_BASE + 4 * (group))
 #define IC_FIQ_HANDLED(group) (IC_BASE + 0xb0 + 4 * (group))
 #define IC_FIQ_ALL_PROCESSED (IC_BASE + 0xc0)
 #define IC_FIQ_NEXT (IC_BASE + 0xc4)
@@ -57,11 +58,15 @@ static QTestState *start(void)
 
 /*
  * Collect the pending sources by acknowledging them one by one: the
- * controller only reports the lowest pending source.
+ * controller only reports the lowest enabled pending source, so enable all
+ * sources first, as the firmware does.
  */
 static void ic_drain(QTestState *qts, bool pending[IC_SOURCES])
 {
     memset(pending, 0, IC_SOURCES * sizeof(bool));
+    for (int g = 0; g < IC_SOURCES / 32; g++) {
+        qtest_writel(qts, IC_ENABLE(g), UINT32_MAX);
+    }
     while (!qtest_readl(qts, IC_FIQ_ALL_PROCESSED)) {
         uint32_t src = qtest_readl(qts, IC_FIQ_NEXT);
 

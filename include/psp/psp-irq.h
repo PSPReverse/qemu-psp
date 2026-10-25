@@ -46,11 +46,11 @@ typedef struct PSPIrqState {
      * Pending interrupt bitfield: 4 priority groups x 32 device sources.
      * Sources are raised via the device's GPIO input lines, reported to the
      * firmware via FIQ_NEXT/FIQ_ALL_PROCESSED and cleared (ACKed) via
-     * FIQ_HANDLED. The core line is asserted while any bit is set.
+     * FIQ_HANDLED. The core line is asserted while any enabled bit is set.
      */
     uint32_t irq_buffer[4];
 
-    /* Output line to the PSP core, asserted while any irq_buffer bit is set. */
+    /* Output line to the PSP core, asserted while an enabled irq_buffer bit is set. */
     qemu_irq parent_irq;
     qemu_irq parent_fiq;
 

@@ -36,9 +36,9 @@
 #include "trace.h"
 
 /*
- * Assert the core line whenever any interrupt source is pending, deassert it
- * once the firmware has ACKed them all. This is the delivery half the device
- * historically lacked (it only tracked the pending bitfield).
+ * Assert the core line whenever an enabled interrupt source is pending, deassert
+ * it once the firmware has ACKed them all. FIQ_NEXT and FIQ_ALL_PROCESSED use
+ * the same enable mask, so they agree with the core line.
  */
 static void psp_irq_update(PSPIrqState* irq)
 {
@@ -138,11 +138,19 @@ static uint32_t psp_irq_read_fiq(PSPIrqState* irq, hwaddr offset, unsigned int s
     switch (offset) {
         case FIQ_ALL_PROCESSED_OFFSET:
             //TODO: pull irq line down maybe here if returning 1 --> all cleared
-            return irq->irq_buffer[0] == 0 && irq->irq_buffer[1] == 0 && irq->irq_buffer[2] == 0 && irq->irq_buffer[3] == 0;
+            for (int i = 0; i < 4; i++) {
+                if (irq->irq_buffer[i] & irq->ccp_queue_bitfield[i]) {
+                    return 0;
+                }
+            }
+            return 1;
         case FIQ_NEXT_OFFSET:
-            for (int i = 0; i < 4; i++)
-                if (irq->irq_buffer[i] > 0)
-                    return 32*i + __builtin_ctz(irq->irq_buffer[i]);
+            for (int i = 0; i < 4; i++) {
+                uint32_t pending = irq->irq_buffer[i] & irq->ccp_queue_bitfield[i];
+                if (pending) {
+                    return 32*i + __builtin_ctz(pending);
+                }
+            }
             return 0;
         default:
             trace_psp_irq_read_unimplemented(offset, size);
