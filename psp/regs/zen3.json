@@ -194,9 +194,9 @@
   "ram_windows": [
     {
       "offset": "0x30500000",
-      "size": "0x2000",
+      "size": "0x40000",
       "source": "code-reading",
-      "note": "Staging buffer for the BL public key: the off-chip BL copies the key header here and reads it back, so it must behave as RAM. Size covers the 0x1800-byte buffer it passes to its directory lookup."
+      "note": "MP5 SRAM window: the off-chip BL stages the BL public key here (0x1800-byte buffer) and later loads the MP5 firmware here, up to 0x40000 bytes, then hashes it, so it must behave as RAM."
     }
   ]
 }
