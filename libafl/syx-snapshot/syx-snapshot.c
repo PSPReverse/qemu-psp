@@ -649,6 +649,7 @@ void syx_snapshot_dirty_list_add_hostaddr_range(void* host_addr, uint64_t len)
         assert(QEMU_PTR_IS_ALIGNED(host_addr, TARGET_PAGE_SIZE));
 
         syx_snapshot_dirty_list_add_hostaddr(host_addr);
+        host_addr += TARGET_PAGE_SIZE;
         len_signed -= TARGET_PAGE_SIZE;
     }
 }
