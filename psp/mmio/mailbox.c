@@ -78,7 +78,7 @@ static MemTxResult mailbox_write(void* opaque, hwaddr offset, uint64_t value,
     trace_psp_mailbox_write(index_to_name(index), s->values[index],
                             attrs.unspecified, attrs.secure, attrs.user,
                             attrs.debug, attrs.requester_id);
-    /* r[impl mbox.doorbell+1] */
+    /* r[impl mbox.doorbell+2] */
     /*
      * Doorbell: a word 0 write raises the source iff it is external
      * (attrs.unspecified) and the enable register arms it. Writes from

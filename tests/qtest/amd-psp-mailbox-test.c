@@ -20,7 +20,7 @@ static void ring_and_drain(QTestState *qts, uint32_t base, uint32_t enable,
 }
 
 /* An external write to word 0 rings the doorbell once it is armed */
-/* r[verify mbox.doorbell+1] */
+/* r[verify mbox.doorbell+2] */
 static void test_external_write_armed(void)
 {
     QTestState *qts = psp_start(PSP_ZEN2);
@@ -35,7 +35,7 @@ static void test_external_write_armed(void)
 }
 
 /* Without the enable register it stays silent */
-/* r[verify mbox.doorbell+1] */
+/* r[verify mbox.doorbell+2] */
 static void test_external_write_unarmed(void)
 {
     QTestState *qts = psp_start(PSP_ZEN2);
