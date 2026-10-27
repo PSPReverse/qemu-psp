@@ -770,6 +770,17 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 }
 
 /* @return true if the descriptor failed, see ccp_aes */
+/* Hex string of a buffer, for trace events that carry operand data. */
+static char *ccp_hex(const uint8_t *buf, size_t len)
+{
+    GString *out = g_string_sized_new(len * 2);
+
+    for (size_t i = 0; i < len; i++) {
+        g_string_append_printf(out, "%02x", buf[i]);
+    }
+    return g_string_free(out, false);
+}
+
 static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
 {
     uint16_t rsa_size;
@@ -845,6 +856,17 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
         ccp_rsa_init_key(&rsa_pubkey, rsa_mod, rsa_exp);
 
         ccp_rsa_encrypt(&rsa_pubkey, rsa_msg, rsa_result);
+
+        if (trace_event_get_state_backends(TRACE_CCP_RSA_DATA)) {
+            g_autofree char *exp_hex = ccp_hex(rsa_exp, rsa_size);
+            g_autofree char *mod_hex = ccp_hex(rsa_mod, rsa_size);
+            g_autofree char *msg_hex = ccp_hex(rsa_msg, rsa_size);
+            g_autofree char *res_hex = ccp_hex(rsa_result, rsa_size);
+
+            trace_ccp_rsa_data(rsa_key_addr, rsa_key_mtype, rsa_src,
+                               rsa_src_mtype, exp_hex, mod_hex, msg_hex,
+                               res_hex);
+        }
 
         ccp_rsa_clear_key(&rsa_pubkey);
 
