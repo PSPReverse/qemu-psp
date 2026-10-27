@@ -104,6 +104,12 @@
         "note": "Value satisfies the ABL poll (16-bit lane, mask 0x200, expected 0x200); real semantics unconfirmed. Probably PCS DXIO KPMX SERDES HWDEBUG on Rome-class parts."
       },
       {
+        "offset": "0x123e14fc",
+        "value": "0x200",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc on the next chiplet (stride 0x1000); value satisfies it, real semantics unconfirmed."
+      },
+      {
         "offset": "0x303000d8",
         "value": "0x40",
         "source": "code-reading",
