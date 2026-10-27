@@ -722,12 +722,6 @@
         "note": "Ready word the Zen3 off-chip BL polls until (v & m) == m, m = bit 0 for the 0x134 slot and bit 1 for the others; 0x3 satisfies both. Slot set not verified."
       },
       {
-        "offset": "0x135e04ec",
-        "value": "0x3",
-        "source": "code-reading",
-        "note": "Ready word the Zen3 off-chip BL polls until (v & m) == m, m = bit 0 for the 0x134 slot and bit 1 for the others; 0x3 satisfies both. Slot set not verified."
-      },
-      {
         "offset": "0x135e04fc",
         "value": "0xa00",
         "source": "code-reading",
@@ -831,12 +825,6 @@
       },
       {
         "offset": "0x137e04ec",
-        "value": "0x3",
-        "source": "code-reading",
-        "note": "Ready word the Zen3 off-chip BL polls until (v & m) == m, m = bit 0 for the 0x134 slot and bit 1 for the others; 0x3 satisfies both. Slot set not verified."
-      },
-      {
-        "offset": "0x138e04ec",
         "value": "0x3",
         "source": "code-reading",
         "note": "Ready word the Zen3 off-chip BL polls until (v & m) == m, m = bit 0 for the 0x134 slot and bit 1 for the others; 0x3 satisfies both. Slot set not verified."
