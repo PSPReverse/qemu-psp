@@ -23,6 +23,7 @@ also covers `amd-psp-zen*`.
 | `dbg_mode` | `amd-psp` (parent of `amd-psp-zen*`) | false | Forwarded to the fuse device; sets bit 10 of fuse register 0x0 (base 0x1a060900). | `-global driver=amd-psp,property=dbg_mode,value=on` | `psp.c:257` prop, `:231-234` forward; `psp-fuse.c:25` |
 | `dbg_mode` | `amd_psp.fuse` | false | Same bit, set directly on the fuse device (no forwarding). | `-global driver=amd_psp.fuse,property=dbg_mode,value=on` | `psp-fuse.c:54`, `:25` |
 | `use_access_observer` | `amd_psp.x86.mapper` | false | Routes the x86 slot memory regions through the access observer instead of the x86 memory. Read at realize. | `-global driver=amd_psp.x86.mapper,property=use_access_observer,value=on` | `psp-x86-mapper.c:316-317`, `:235-236` |
+| `overlay` | `amd_psp.x86.access-observer` | false | Observe through a small I/O region mapped over just the active window of the x86 memory (added on activate, removed on reset), instead of routing every x86 access through the full-space region. Needs `use_access_observer`. Reads and writes are forwarded to the DRAM only; other devices in the window read 0 and drop writes. Accesses to the window by x86-side devices (DMA) are recorded too, with an unrelated PC. Read at realize. | `-global driver=amd_psp.x86.access-observer,property=overlay,value=on` | `access-observer.c` |
 
 Notes:
 - The `expiry_irq_id` value 0x60 is a guess taken from the code comments (`psp-irq.c:275`
