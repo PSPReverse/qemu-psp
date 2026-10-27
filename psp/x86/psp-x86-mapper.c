@@ -278,7 +278,7 @@ static void realize_mapping_slots(DeviceState* dev)
 {
     PSPX86MapperState* s = PSP_X86_MAPPER(dev);
     MemoryRegion* target_mr = &s->x86_memory.mr;
-    if (s->use_access_observer) {
+    if (s->use_access_observer && !s->access_observer.overlay) {
         target_mr = &s->access_observer.mr;
     }
 

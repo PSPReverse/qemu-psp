@@ -35,6 +35,20 @@ typedef struct AccessObserverState {
     /* Reference to the x86 memory*/
     PSPX86State* x86_memory;
 
+    /*
+     * Overlay mode: instead of the full-space region above, an I/O region
+     * shadows just [base, base + size) of the x86 memory while a window is
+     * active. It forwards to the RAM through an alias-only copy of the x86
+     * memory.
+     */
+    bool overlay;
+    bool overlay_mapped;
+    MemoryRegion overlay_mr;
+    MemoryRegion backing_mr;
+    MemoryRegion secure_alias;
+    MemoryRegion regular_alias;
+    AddressSpace backing_as;
+
     PspGeneration generation;
 
 } AccessObserverState;
