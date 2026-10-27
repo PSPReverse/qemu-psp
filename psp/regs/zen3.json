@@ -194,6 +194,678 @@
         "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
       },
       {
+        "offset": "0x126e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126e94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126ea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126eb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126ec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126ed4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126ee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x126ef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129e94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129ea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129eb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129ec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129ed4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129ee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x129ef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ce94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12cea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ceb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12cec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12ced4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12cee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12cef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fe94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12feb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fed4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x12fef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132e94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132ea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132eb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132ec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132ed4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132ee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x132ef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135e94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135ea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135eb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135ec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135ed4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135ee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x135ef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e44fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e54fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e64fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e74fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e84fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138e94fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138ea4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138eb4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138ec4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138ed4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138ee4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
+        "offset": "0x138ef4fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Per-instance status word (0x1000 stride) the Zen3 off-chip BL polls until bit 9 is set, and bit 11 in another step; instance count not verified. 0xa00 satisfies both waits."
+      },
+      {
         "offset": "0x303000d8",
         "value": "0x40",
         "source": "code-reading",
