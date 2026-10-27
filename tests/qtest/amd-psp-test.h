@@ -59,6 +59,7 @@
 #define CCP_INT_STATUS_DONE (1u << 17)
 #define CCP_ZLIB_WRITTEN (CCP_BASE + 0x6028)
 #define CCP_ENGINE_SHA 3
+#define CCP_ENGINE_RSA 4
 #define CCP_ENGINE_PASSTHRU 5
 #define CCP_ENGINE_ZLIB 6
 #define CCP_ENGINE_ECC 7
@@ -68,11 +69,13 @@
 #define CCP_EOM (1u << 4)
 #define CCP_FUNC(f) ((f) << 5)
 #define CCP_SHA256 CCP_FUNC(3u << 10)
+#define CCP_SHA384 CCP_FUNC(4u << 10)
 #define CCP_PT_BSWAP256 CCP_FUNC(2u)
 #define CCP_DESC_SIZE 32
 #define SRAM_DESC 0x1000
 #define SRAM_SRC 0x2000
 #define SRAM_DST 0x3000
+#define SRAM_KEY 0x4000
 
 /* x86 slot mapper (include/psp/x86/psp-x86-mapper.h) */
 #define X86_CTRL 0x03230000
@@ -98,6 +101,8 @@ typedef struct PspCcpDesc {
     uint32_t dst;           /* SHA: length low */
     unsigned dst_mem;
     unsigned lsb;           /* LSB context slot */
+    uint32_t key;           /* RSA: exponent address */
+    unsigned key_mem;
 } PspCcpDesc;
 
 static char *psp_flash_path;
@@ -226,6 +231,8 @@ static inline uint32_t psp_ccp_run(QTestState *qts, const PspCcpDesc *d)
         (d->src_mem << 16) | (d->lsb << 18),
         d->dst,
         d->dst_mem << 16,
+        d->key,
+        d->key_mem << 16,
     };
 
     for (int i = 0; i < ARRAY_SIZE(w); i++) {

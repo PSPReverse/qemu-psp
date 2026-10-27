@@ -763,8 +763,8 @@ static void ccp_sha(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 
         break;
     default:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented SHA type %d\n",
-                      func.sha.type);
+        PSP_TODO("ccp.sha.type", "descriptor skipped, reported as successful",
+                 "CCP Error: Unimplemented SHA type %d", func.sha.type);
         break;
     }
 }
@@ -787,7 +787,7 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     CcpV5RsaPubKey rsa_pubkey;
 
     /*
-     * Only 2048 & 4096 for now. The inputs are zeroed because a SYSTEM source
+     * Up to 4096 bit. The inputs are zeroed because a SYSTEM source
      * is not copied, and the result because mpz_export() writes nothing when
      * the result is 0.
      */
@@ -815,8 +815,8 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     trace_ccp_rsa(desc->src_lo, len, rsa_dst, rsa_dst_mtype, rsa_mode, rsa_size,
                   eom, init);
 
-    if (rsa_mode == 0 &&
-        ((rsa_size == 256 && len == 512) || (rsa_size == 512 && len == 1024))) {
+    if (rsa_mode == 0 && rsa_size >= 1 && rsa_size <= sizeof(rsa_mod) &&
+        len == 2 * (uint32_t)rsa_size) {
 
         /* TODO consistent naming */
         rsa_pubkey.rsa_len = rsa_size;
@@ -851,7 +851,10 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
         return !ccp_copy_to_guest(s, rsa_dst, rsa_result, rsa_dst_mtype,
                                   rsa_size);
     }
-    return false;
+    PSP_TODO("ccp.rsa.unsupported", "descriptor failed",
+             "CCP Error: Unsupported RSA mode %u size %u len %u", rsa_mode,
+             rsa_size, len);
+    return true;
 }
 
 /*
