@@ -98,25 +98,18 @@
         "note": "Zen 3 (EPYC on-chip BL polls bit 8 of these at 0xffff1df8)"
       },
       {
-        "offset": "0x2d01a08",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: SMBus-style block the ABL helper at 0x1d5e0 uses (read, write 0x10, read back); read/write-back storage so the read-back matches."
-      },
-      {
         "offset": "0x2d026c4",
         "value": "0x0",
         "source": "unknown",
         "rw": true,
-        "note": "Placeholder, not hardware behaviour: SMBus-style block the ABL helper at 0x1d5e0 uses (read, write 0x10, read back); read/write-back storage so the read-back matches."
+        "note": "Placeholder, not hardware behaviour: neighbour of the SMBus controller (psp-smn-smbus) the ABL helper at 0x1d5e0 uses; read/write-back storage, bit 16 must read 0."
       },
       {
         "offset": "0x2d026c8",
         "value": "0x0",
         "source": "unknown",
         "rw": true,
-        "note": "Placeholder, not hardware behaviour: SMBus-style block the ABL helper at 0x1d5e0 uses (read, write 0x10, read back); read/write-back storage so the read-back matches."
+        "note": "Placeholder, not hardware behaviour: neighbour of the SMBus controller (psp-smn-smbus) the ABL helper at 0x1d5e0 uses; read/write-back storage, bit 16 must read 0."
       },
       {
         "offset": "0xc000014",

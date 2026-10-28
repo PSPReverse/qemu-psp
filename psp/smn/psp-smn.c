@@ -245,6 +245,11 @@ static void psp_smn_init(Object* obj)
 
     object_initialize_child(obj, "smn_misc", &s->psp_smn_misc,
                             TYPE_PSP_SMN_MISC);
+    /* Only Zen3 has the SMBus controller */
+    if (PSP_SMN_GET_CLASS(obj)->gen == ZEN3) {
+        object_initialize_child(obj, "smn_smbus", &s->psp_smn_smbus,
+                                TYPE_PSP_SMN_SMBUS);
+    }
     object_initialize_child(obj, "smn_flash", &s->psp_smn_flash,
                             TYPE_PSP_SMN_FLASH);
 }
@@ -325,6 +330,14 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
                                  PSP_SMN_FLASH_SIZE_16);
         memory_region_add_subregion_overlap(&s->psp_smn_space, 0x47000000,
                                             &s->psp_smn_flash_alias, 0);
+    }
+
+    if (c->gen == ZEN3) {
+        CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smbus),
+                       errp);
+        memory_region_add_subregion_overlap(
+            &s->psp_smn_space, PSP_SMN_SMBUS_BASE,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_smbus), 0), 0);
     }
 
     /* RAM windows from the JSON register tables in psp/regs */
