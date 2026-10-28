@@ -26,6 +26,7 @@
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-smbus.h"
 #include "psp/smn/psp-smn-smu.h"
+#include "psp/smn/psp-smn-umc.h"
 
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */
@@ -81,6 +82,9 @@ typedef struct PSPSmnState {
 
     /* Zen3 SMU message mailbox */
     PSPSmnSmuState psp_smn_smu;
+
+    /* Zen3 UMC channel APB windows with the PMU mailbox */
+    PSPSmnUmcState psp_smn_umc;
 
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;

@@ -244,6 +244,7 @@ qtests_amd_psp = [
   'amd-psp-pending-fixes-test',
   'amd-psp-smbus-test',
   'amd-psp-smu-test',
+  'amd-psp-umc-test',
 ]
 
 qtests_arm = \
