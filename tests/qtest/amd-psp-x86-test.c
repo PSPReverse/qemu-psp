@@ -99,6 +99,77 @@ static uint64_t observer_hits(QTestState *qts, const char *prop)
  * at X86_WINDOW0 + x is an x86 access at x. Window, exclude ranges and reset
  * are driven through the observer's write-only qtest properties.
  */
+static char *observer_touched(QTestState *qts)
+{
+    QDict *rsp = qtest_qmp(qts, "{'execute': 'qom-get', 'arguments': "
+                           "{'path': %s, 'property': 'touched'}}",
+                           OBSERVER_PATH);
+    char *v;
+
+    g_assert_true(qdict_haskey(rsp, "return"));
+    v = g_strdup(qdict_get_str(rsp, "return"));
+    qobject_unref(rsp);
+    return v;
+}
+
+/* The pc is 0 here: the CPU does not run in qtest */
+static void test_observer_touched(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN2,
+        "-global driver=amd_psp.x86.mapper,property=use_access_observer,"
+        "value=true");
+    char *t;
+
+    if (!qts) {
+        return;
+    }
+    observer_set(qts, "window", "10000,200000");
+    observer_set(qts, "exclude", "30000,1000");
+
+    /* Outside the window and in an exclude range: nothing */
+    qtest_readl(qts, X86_WINDOW0 + 0xfff0);
+    qtest_readl(qts, X86_WINDOW0 + 0x210000);
+    qtest_writel(qts, X86_WINDOW0 + 0x30010, 1);
+    g_assert_cmpuint(observer_hits(qts, "touched_pages"), ==, 0);
+
+    qtest_readl(qts, X86_WINDOW0 + 0x10008);
+    qtest_readl(qts, X86_WINDOW0 + 0x10ff0);
+    qtest_writel(qts, X86_WINDOW0 + 0x11004, 1);
+    qtest_readl(qts, X86_WINDOW0 + 0x12000);
+    qtest_writel(qts, X86_WINDOW0 + 0x12000, 1);
+    qtest_writel(qts, X86_WINDOW0 + 0x13000, 1);
+    qtest_readl(qts, X86_WINDOW0 + 0x13000);
+    g_assert_cmpuint(observer_hits(qts, "touched_pages"), ==, 4);
+    t = observer_touched(qts);
+    g_assert_cmpstr(t, ==, "10000:1:0,11000:2:0,12000:3:0,13000:3:0");
+    g_free(t);
+
+    /* Activating clears the pages, reset too */
+    observer_set(qts, "window", "10000,200000");
+    g_assert_cmpuint(observer_hits(qts, "touched_pages"), ==, 0);
+    qtest_readl(qts, X86_WINDOW0 + 0x10000);
+    g_assert_cmpuint(observer_hits(qts, "touched_pages"), ==, 1);
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'reset', "
+                             "'value': true}}", OBSERVER_PATH);
+    g_assert_cmpuint(observer_hits(qts, "touched_pages"), ==, 0);
+
+    /* The 257th distinct page overflows; known pages still update */
+    observer_set(qts, "window", "100000,200000");
+    for (int i = 0; i < 257; i++) {
+        qtest_readl(qts, X86_WINDOW0 + 0x100000 + i * 0x1000);
+    }
+    g_assert_cmpuint(observer_hits(qts, "touched_pages"), ==, 256);
+    g_assert_cmpuint(observer_hits(qts, "touched_overflow"), ==, 1);
+    qtest_writel(qts, X86_WINDOW0 + 0x100000, 1);
+    g_assert_cmpuint(observer_hits(qts, "touched_overflow"), ==, 1);
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'reset', "
+                             "'value': true}}", OBSERVER_PATH);
+    g_assert_cmpuint(observer_hits(qts, "touched_overflow"), ==, 0);
+    qtest_quit(qts);
+}
+
 static void test_observer_hits(void)
 {
     QTestState *qts = psp_startf(PSP_ZEN2,
@@ -213,6 +284,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/mapper-registers", test_mapper_registers);
     qtest_add_func("/amd-psp/x86/port61", test_port61);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
+    qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);
     qtest_add_func("/amd-psp/x86/observer-exec", test_observer_exec);
 
     return psp_test_run();
