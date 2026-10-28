@@ -72,6 +72,82 @@ static void test_port61(void)
     qtest_quit(qts);
 }
 
+#define OBSERVER_PATH "/machine/soc/x86/access-observer"
+
+static void observer_set(QTestState *qts, const char *prop, const char *val)
+{
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': %s, 'value': %s}}",
+                             OBSERVER_PATH, prop, val);
+}
+
+static uint64_t observer_hits(QTestState *qts, const char *prop)
+{
+    QDict *rsp = qtest_qmp(qts, "{'execute': 'qom-get', 'arguments': "
+                           "{'path': %s, 'property': %s}}",
+                           OBSERVER_PATH, prop);
+    uint64_t v;
+
+    g_assert_true(qdict_haskey(rsp, "return"));
+    v = qdict_get_int(rsp, "return");
+    qobject_unref(rsp);
+    return v;
+}
+
+/*
+ * The access observer sits behind the identity-mapped slots, so a PSP access
+ * at X86_WINDOW0 + x is an x86 access at x. Window, exclude ranges and reset
+ * are driven through the observer's write-only qtest properties.
+ */
+static void test_observer_hits(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN2,
+        "-global driver=amd_psp.x86.mapper,property=use_access_observer,"
+        "value=true");
+
+    if (!qts) {
+        return;
+    }
+    observer_set(qts, "window", "1000,100");
+    observer_set(qts, "exclude", "1040,10");
+
+    /* Outside the window, and inside an exclude range: not illegal */
+    qtest_readl(qts, X86_WINDOW0 + 0xff0);
+    qtest_readl(qts, X86_WINDOW0 + 0x1100);
+    qtest_readl(qts, X86_WINDOW0 + 0x1048);
+    qtest_writel(qts, X86_WINDOW0 + 0x1040, 1);
+    g_assert_cmpuint(observer_hits(qts, "illegal_read_hits"), ==, 0);
+    g_assert_cmpuint(observer_hits(qts, "illegal_write_hits"), ==, 0);
+
+    /* Inside the window; the first hit of each kind is retained */
+    qtest_readl(qts, X86_WINDOW0 + 0x1000);
+    qtest_readl(qts, X86_WINDOW0 + 0x1020);
+    qtest_writel(qts, X86_WINDOW0 + 0x1030, 1);
+    qtest_writel(qts, X86_WINDOW0 + 0x1050, 1);
+    qtest_writel(qts, X86_WINDOW0 + 0x1060, 1);
+    g_assert_cmpuint(observer_hits(qts, "illegal_read_hits"), ==, 2);
+    g_assert_cmpuint(observer_hits(qts, "illegal_write_hits"), ==, 3);
+    g_assert_cmphex(observer_hits(qts, "illegal_read_addr"), ==, 0x1000);
+    g_assert_cmphex(observer_hits(qts, "illegal_write_addr"), ==, 0x1030);
+
+    /* Activating again drops the exclude ranges but keeps the results */
+    observer_set(qts, "window", "1000,100");
+    qtest_readl(qts, X86_WINDOW0 + 0x1048);
+    g_assert_cmpuint(observer_hits(qts, "illegal_read_hits"), ==, 3);
+    g_assert_cmphex(observer_hits(qts, "illegal_read_addr"), ==, 0x1000);
+
+    /* Reset clears the counters and disarms the window */
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'reset', "
+                             "'value': true}}", OBSERVER_PATH);
+    g_assert_cmpuint(observer_hits(qts, "illegal_read_hits"), ==, 0);
+    g_assert_cmpuint(observer_hits(qts, "illegal_write_hits"), ==, 0);
+    g_assert_cmphex(observer_hits(qts, "illegal_read_addr"), ==, 0);
+    qtest_readl(qts, X86_WINDOW0 + 0x1000);
+    g_assert_cmpuint(observer_hits(qts, "illegal_read_hits"), ==, 0);
+    qtest_quit(qts);
+}
+
 /* An aborting child must die at once, not linger while dumping core */
 static void no_core(gpointer unused)
 {
@@ -136,6 +212,7 @@ int main(int argc, char **argv)
 
     qtest_add_func("/amd-psp/x86/mapper-registers", test_mapper_registers);
     qtest_add_func("/amd-psp/x86/port61", test_port61);
+    qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-exec", test_observer_exec);
 
     return psp_test_run();
