@@ -28,6 +28,7 @@
 #include "qemu/bitops.h"
 #include "qemu/log.h"
 #include "qemu/main-loop.h"
+#include "qemu/cutils.h"
 #include "system/address-spaces.h"
 #include "trace.h"
 
@@ -163,8 +164,8 @@ static const VMStateDescription mailbox_vmstate = {
  */
 static MailboxState* aspfuzz_mailbox_state;
 
-int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value);
-int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value)
+static int32_t mailbox_host_write(MailboxState* s, uint32_t word,
+                                  uint32_t value)
 {
     bool took_bql = !bql_locked();
     int32_t rc = -1;
@@ -172,7 +173,7 @@ int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value)
     if (took_bql) {
         bql_lock();
     }
-    if (aspfuzz_mailbox_state != NULL && word < 3) {
+    if (s != NULL && word < 3) {
         rc = address_space_write(&address_space_memory,
                                  PSP_MAILBOX_BASE + 4 * word,
                                  MEMTXATTRS_UNSPECIFIED, &value, 4);
@@ -181,6 +182,45 @@ int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value)
         bql_unlock();
     }
     return rc;
+}
+
+int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value);
+int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value)
+{
+    return mailbox_host_write(aspfuzz_mailbox_state, word, value);
+}
+
+/* Write-only "write" property: "WORD,VALUE", strtoull base 0 */
+static void mailbox_set_write(Object* obj, const char* str, Error** errp)
+{
+    MailboxState* s = MAILBOX(obj);
+    const char* comma = strchr(str, ',');
+    g_autofree char* wstr = NULL;
+    uint64_t word, value;
+    int32_t rc;
+
+    if (!comma) {
+        error_setg(errp, "expected \"WORD,VALUE\"");
+        return;
+    }
+    wstr = g_strndup(str, comma - str);
+    if (qemu_strtou64(wstr, NULL, 0, &word) < 0 ||
+        qemu_strtou64(comma + 1, NULL, 0, &value) < 0) {
+        error_setg(errp, "expected \"WORD,VALUE\"");
+        return;
+    }
+    if (word >= 3) {
+        error_setg(errp, "mailbox word must be 0..2");
+        return;
+    }
+    if (value > UINT32_MAX) {
+        error_setg(errp, "value does not fit in 32 bits");
+        return;
+    }
+    rc = mailbox_host_write(s, word, value);
+    if (rc != 0) {
+        error_setg(errp, "mailbox write failed (%d)", rc);
+    }
 }
 
 static void mailbox_unrealize(DeviceState* dev)
@@ -228,6 +268,7 @@ static void class_init(ObjectClass* oc, const void* data)
     dc->vmsd = &mailbox_vmstate;
     rc->phases.hold = mailbox_reset_hold;
     device_class_set_props(dc, mailbox_properties);
+    object_class_property_add_str(oc, "write", NULL, mailbox_set_write);
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,
