@@ -11,6 +11,9 @@
  * Read of APB register A: write A, poll status, read data.
  * Write: write data, write A | 0x80000000, poll status.
  *
+ * The per channel register block at SMN 0x50000..0x502ff (chip select base
+ * and mask registers among others) is read/write-back storage, reset value 0.
+ *
  * Behind the window sits the Synopsys PMU mailbox (inferred):
  *   0xd0004 message pending, bit 0; 0 = a message is available
  *   0xd0031 host ack, bit 0
@@ -164,6 +167,38 @@ static const MemoryRegionOps psp_umc_ops = {
     .impl.max_access_size = 4,
 };
 
+static uint64_t psp_umc_csr_read(void *opaque, hwaddr offset, unsigned size)
+{
+    PSPSmnUmcChannel *c = opaque;
+    uint32_t val = (c->csr[offset / 4] >> ((offset & 3) * 8)) &
+                   MAKE_64BIT_MASK(0, size * 8);
+
+    trace_psp_smn_umc_csr_read(c - c->parent->chan, offset, val);
+    return val;
+}
+
+static void psp_umc_csr_write(void *opaque, hwaddr offset, uint64_t value,
+                              unsigned size)
+{
+    PSPSmnUmcChannel *c = opaque;
+    uint32_t *slot = &c->csr[offset / 4];
+    uint32_t shift = (offset & 3) * 8;
+    uint32_t mask = (uint32_t)MAKE_64BIT_MASK(0, size * 8) << shift;
+
+    *slot = (*slot & ~mask) | (((uint32_t)value << shift) & mask);
+    trace_psp_smn_umc_csr_write(c - c->parent->chan, offset, value);
+}
+
+static const MemoryRegionOps psp_umc_csr_ops = {
+    .read = psp_umc_csr_read,
+    .write = psp_umc_csr_write,
+    .endianness = DEVICE_LITTLE_ENDIAN,
+    .valid.min_access_size = 1,
+    .valid.max_access_size = 4,
+    .impl.min_access_size = 1,
+    .impl.max_access_size = 4,
+};
+
 static void psp_umc_realize(DeviceState *dev, Error **errp)
 {
     PSPSmnUmcState *s = PSP_SMN_UMC(dev);
@@ -178,6 +213,15 @@ static void psp_umc_realize(DeviceState *dev, Error **errp)
                               PSP_SMN_UMC_REGS_SIZE);
         sysbus_init_mmio(SYS_BUS_DEVICE(dev), &c->iomem);
     }
+    /* MMIO regions 8..15: the register blocks */
+    for (unsigned i = 0; i < PSP_SMN_UMC_CHANNELS; i++) {
+        PSPSmnUmcChannel *c = &s->chan[i];
+        g_autofree char *name = g_strdup_printf("psp-smn-umc-csr%u", i);
+
+        memory_region_init_io(&c->csr_iomem, OBJECT(dev), &psp_umc_csr_ops, c,
+                              name, PSP_SMN_UMC_CSR_SIZE);
+        sysbus_init_mmio(SYS_BUS_DEVICE(dev), &c->csr_iomem);
+    }
 }
 
 static void psp_umc_reset_hold(Object *obj, ResetType type)
@@ -190,6 +234,7 @@ static void psp_umc_reset_hold(Object *obj, ResetType type)
         c->addr = 0;
         c->data = 0;
         c->acked = false;
+        memset(c->csr, 0, sizeof(c->csr));
         memset(c->apb_mbox, 0, sizeof(c->apb_mbox));
         memset(c->apb_msg, 0, sizeof(c->apb_msg));
         g_hash_table_remove_all(c->logged);
@@ -198,12 +243,13 @@ static void psp_umc_reset_hold(Object *obj, ResetType type)
 
 static const VMStateDescription psp_umc_chan_vmstate = {
     .name = "psp-smn-umc-channel",
-    .version_id = 1,
-    .minimum_version_id = 1,
+    .version_id = 2,
+    .minimum_version_id = 2,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(addr, PSPSmnUmcChannel),
         VMSTATE_UINT32(data, PSPSmnUmcChannel),
         VMSTATE_BOOL(acked, PSPSmnUmcChannel),
+        VMSTATE_UINT32_ARRAY(csr, PSPSmnUmcChannel, PSP_SMN_UMC_CSR_SIZE / 4),
         VMSTATE_UINT32_ARRAY(apb_mbox, PSPSmnUmcChannel,
                              PSP_SMN_UMC_MBOX_REGS),
         VMSTATE_UINT32_ARRAY(apb_msg, PSPSmnUmcChannel,

@@ -15,6 +15,11 @@
 #define UMC_DATA 0x51804
 #define UMC_STATUS 0x51808
 
+/* Register block of channel c at offset 0x50000 in SMN slot c */
+#define CSR_BASE 0x50000
+#define CSR_BASEADDR(q) (CSR_BASE + 4 * (q))
+#define CSR_ADDRMASK(q) (CSR_BASE + 0x20 + ((q) >> 1) * 4)
+
 #define APB_PENDING 0xd0004
 #define APB_ACK 0xd0031
 #define APB_CODE 0xd0032
@@ -161,6 +166,59 @@ static void test_pmu_message_property(void)
     qtest_quit(qts);
 }
 
+static void test_csr_readback(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    select_chan(qts, 0);
+    /* Reset value is 0 everywhere in the block, bit 0 of BaseAddr included */
+    for (unsigned off = 0; off < 0x300; off += 4) {
+        g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + off)), ==, 0);
+    }
+    qtest_writel(qts, reg(CSR_BASEADDR(0)), 0x12345679);
+    qtest_writel(qts, reg(CSR_ADDRMASK(0)), 0x00ffff00);
+    qtest_writel(qts, reg(CSR_ADDRMASK(3)), 0x0000fe00);
+    qtest_writel(qts, reg(CSR_BASE + 0x2c), 0xa5a5a5a5);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASEADDR(0))), ==, 0x12345679);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_ADDRMASK(0))), ==, 0x00ffff00);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_ADDRMASK(3))), ==, 0x0000fe00);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + 0x2c)), ==, 0xa5a5a5a5);
+    /* Untouched neighbours stay 0 */
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASEADDR(1))), ==, 0);
+    /* Byte lanes */
+    qtest_writeb(qts, reg(CSR_BASEADDR(1) + 2), 0xab);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASEADDR(1))), ==, 0x00ab0000);
+    g_assert_cmphex(qtest_readb(qts, reg(CSR_BASEADDR(0) + 1)), ==, 0x56);
+    /* The APB window registers are not part of the block */
+    g_assert_cmphex(qtest_readl(qts, reg(UMC_STATUS)) & 1, ==, 1);
+    qtest_quit(qts);
+}
+
+static void test_csr_isolation(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    select_chan(qts, 0);
+    qtest_writel(qts, reg(CSR_BASEADDR(0)), 0x11);
+    qtest_writel(qts, reg(CSR_ADDRMASK(0)), 0xaa00);
+    select_chan(qts, 6);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASEADDR(0))), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_ADDRMASK(0))), ==, 0);
+    qtest_writel(qts, reg(CSR_BASEADDR(0)), 0x66);
+    select_chan(qts, 0);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASEADDR(0))), ==, 0x11);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_ADDRMASK(0))), ==, 0xaa00);
+    select_chan(qts, 6);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASEADDR(0))), ==, 0x66);
+    qtest_quit(qts);
+}
+
 /* The windows do not exist on Zen2: no ready status, no data */
 static void test_zen2_absent(void)
 {
@@ -185,6 +243,8 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/umc/kept-ranges", test_kept_ranges);
     qtest_add_func("/amd-psp/umc/unknown-ignored", test_unknown_ignored);
     qtest_add_func("/amd-psp/umc/channel-isolation", test_channel_isolation);
+    qtest_add_func("/amd-psp/umc/csr-readback", test_csr_readback);
+    qtest_add_func("/amd-psp/umc/csr-isolation", test_csr_isolation);
     qtest_add_func("/amd-psp/umc/mailbox", test_mailbox);
     qtest_add_func("/amd-psp/umc/pmu-message-property",
                    test_pmu_message_property);
