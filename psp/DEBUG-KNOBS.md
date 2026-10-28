@@ -57,6 +57,19 @@ HMP (unverified syntax): `qom-set /machine/soc/irq inject 29`
 
 Value 29 raises source 0x1d. Sources are `group*32 + bit`, 128 total (`psp-irq.h:28`).
 
+### Mailbox doorbell over QMP
+
+The mailbox device (`/machine/soc/mailbox`, checked with `qom-list` on a running
+`-M amd-psp-zen2 -S`) has a write-only string property `write`, `"WORD,VALUE"`
+(`strtoull` base 0, WORD 0..2, VALUE 32 bit). It performs the same unspecified-attribute
+write as `aspfuzz_mailbox_write`, so word 0 rings the doorbell while `0x0301069c` arms it.
+Unlike gdb or guest stores this wakes the SecOS worker while the vCPU runs. Bad syntax or
+WORD >= 3 returns a QMP error.
+
+```
+{"execute": "qom-set", "arguments": {"path": "/machine/soc/mailbox", "property": "write", "value": "0,0x1b0000"}}
+```
+
 ## 3. Exported `aspfuzz_*` symbols
 
 All are non-static and get no header declaration, except where noted. "BQL" means the
@@ -68,7 +81,7 @@ caller must hold the big QEMU lock (not checked for all of them).
 |---|---|---|---|---|
 | `aspfuzz_irq_inject` | `int32_t (uint32_t id)` | `psp-irq.c:207` | Takes BQL only if the caller does not hold it (`bql_locked()`, `:211-213`). Global set at realize (`:266`), cleared at unrealize (`:228`). | `-1` if no IC realized or `id >= 128`; else `0`. |
 | `aspfuzz_timer_advance` | `int32_t (uint64_t ns)` | `psp-timer.c` (after `psp_timer_derived_count`) | Adds `ns` to the timer1 counter offset (`counter_offset_ns`, in vmstate, zeroed on reset). Effective only with `counter_hz != 0`; with 0 the offset is stored and ignored, so the default counter is unchanged. Does not fire or re-arm the expiry timer, so an armed expiry keeps its host-clock deadline. Takes BQL only if the caller does not hold it. Global set at timer1 realize (the first realized timer, which `psp.c` realizes first), cleared at unrealize. | `-1` if timer1 is not realized or the offset would overflow `uint64`; else `0`. |
-| `aspfuzz_mailbox_write` | `int32_t (uint32_t word, uint32_t value)` | `mailbox.c` (before `realize`) | Writes mailbox word `word` (0..2, at `0x03010570 + 4*word`) with a 4-byte `address_space_write` on `address_space_memory` and `MEMTXATTRS_UNSPECIFIED`, so word 0 rings the doorbell when `0x0301069c` arms it. Takes BQL only if the caller does not hold it. Global set at realize, cleared at unrealize. | `-1` if no mailbox is realized or `word >= 3`; else the `address_space_write` result (0 = ok). |
+| `aspfuzz_mailbox_write` | `int32_t (uint32_t word, uint32_t value)` | `mailbox.c` (before `realize`) | Writes mailbox word `word` (0..2, at `0x03010570 + 4*word`) with a 4-byte `address_space_write` on `address_space_memory` and `MEMTXATTRS_UNSPECIFIED`, so word 0 rings the doorbell when `0x0301069c` arms it. Takes BQL only if the caller does not hold it. Global set at realize, cleared at unrealize. The QOM property `write` (see below) shares the body. | `-1` if no mailbox is realized or `word >= 3`; else the `address_space_write` result (0 = ok). |
 | `aspfuzz_smn_update_slot` | `void (uint32_t idx)` | `psp-smn.c:39` | Needs `aspfuzz_smn_state` set (`:132`, by a guest slot write). No bounds check on `idx` (array of 32, `:35`). Otherwise NULL dereference at `:42`. BQL: unverified. | none |
 | `aspfuzz_smn_write` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:49` | `global_smn_as` set at realize (`:273`), never cleared. Uses `address_space_write_rom`. BQL: unverified. | `-1` if unset, `buf` is NULL or `size <= 0`; else the `address_space_write_rom` result (unverified convention). |
 | `aspfuzz_smn_read` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:58` | Same as above, `address_space_read`. | `-1` if unset, `buf` is NULL or `size <= 0`; else the `address_space_read` result (unverified convention). |

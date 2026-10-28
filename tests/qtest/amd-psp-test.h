@@ -32,6 +32,7 @@
 #define IC_FIQ_NEXT(base) ((base) + 0xc4)
 #define IC_SOURCES 128
 #define IC_PATH "/machine/soc/irq"
+#define MBOX_PATH "/machine/soc/mailbox"
 
 #define SRC_CCP 0x15
 #define SRC_DOORBELL 0x3c
