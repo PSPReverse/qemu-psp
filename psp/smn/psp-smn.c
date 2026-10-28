@@ -352,6 +352,11 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
                 &s->psp_smn_space,
                 PSP_SMN_UMC_BASE + (hwaddr)i * PSP_SMN_UMC_STRIDE,
                 sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_umc), i), 0);
+            memory_region_add_subregion_overlap(
+                &s->psp_smn_space,
+                PSP_SMN_UMC_CSR_BASE + (hwaddr)i * PSP_SMN_UMC_STRIDE,
+                sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_umc),
+                                       PSP_SMN_UMC_CHANNELS + i), 0);
         }
     }
 
