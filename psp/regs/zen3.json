@@ -122,6 +122,30 @@
         "note": "Same ABL poll as 0x123e04fc on the next chiplet (stride 0x1000); value satisfies it, real semantics unconfirmed."
       },
       {
+        "offset": "0x126e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the next SMN base 0x12600000 (stride 0x1000 per chiplet); the ABL stalls here once 0x123e{0..3}4fc are ready, value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x126e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the next SMN base 0x12600000 (stride 0x1000 per chiplet); the ABL stalls here once 0x123e{0..3}4fc are ready, value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x126e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the next SMN base 0x12600000 (stride 0x1000 per chiplet); the ABL stalls here once 0x123e{0..3}4fc are ready, value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x126e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the next SMN base 0x12600000 (stride 0x1000 per chiplet); the ABL stalls here once 0x123e{0..3}4fc are ready, value assumed equal, real semantics unconfirmed."
+      },
+      {
         "offset": "0x303000d8",
         "value": "0x40",
         "source": "code-reading",
