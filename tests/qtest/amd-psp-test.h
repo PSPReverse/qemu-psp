@@ -82,6 +82,10 @@
 #define X86_BASE_PROTECTED_MMIO ((0xfffdu << 6) | 0x3f)
 /* I/O port 0x61 once slot 0 is mapped there */
 #define PORT61 (X86_WINDOW0 + 0x61)
+/* FCH UART 0 (x86 0xfedc9000) through slot 0 based at 0xfc000000 */
+#define FCH_UART_SLOT_BASE 0x3f
+#define FCH_UART_THR (X86_WINDOW0 + 0x2dc9000)
+#define FCH_UART_LSR (FCH_UART_THR + 5 * 4)
 
 /* zlib stream of "abcd" in one stored block, with its Adler-32 */
 static const uint8_t psp_zlib_abcd[] = {
