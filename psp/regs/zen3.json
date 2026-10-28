@@ -20,6 +20,12 @@
         "note": "Platform strap, bits 4:2 = 4 (socket SP3 by the ABL's use of the field); the generic value is the Zen2 one."
       },
       {
+        "offset": "0x5a86c",
+        "value": "0xa00f11",
+        "source": "code-reading",
+        "note": "CPUID-EAX style family/model word the ABL checks before the APCB table lookups (bits 27:20 = 0xa, 11:8 = 0xf, 19:16 = 0); the stepping nibble is a guess."
+      },
+      {
         "offset": "0x5d138",
         "value": "0x0",
         "source": "unknown",
