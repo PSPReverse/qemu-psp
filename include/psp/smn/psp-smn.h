@@ -25,6 +25,7 @@
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-smbus.h"
+#include "psp/smn/psp-smn-smu.h"
 
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */
@@ -77,6 +78,9 @@ typedef struct PSPSmnState {
 
     /* Zen3 SMBus controller with the DIMM SPD EEPROMs */
     PSPSmnSmbusState psp_smn_smbus;
+
+    /* Zen3 SMU message mailbox */
+    PSPSmnSmuState psp_smn_smu;
 
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;
