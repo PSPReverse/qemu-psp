@@ -202,6 +202,45 @@ static void test_doorbell_property(void)
 }
 
 /*
+ * The write-only "write" property rings the doorbell over QMP like an
+ * external write, and rejects malformed input.
+ */
+static void test_qom_write(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+    bool pending[IC_SOURCES];
+    QDict *rsp;
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, MBOX_INT_ENABLE, MBOX_INT_ENABLE_SECOS);
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'write', "
+                             "'value': '0,0x1b0000'}}", MBOX_PATH);
+    g_assert_cmphex(qtest_readl(qts, MBOX_WORD(0)), ==, 0x1b0000);
+    psp_ic_drain(qts, IC_BASE, pending);
+    psp_ic_assert_only(pending, SRC_DOORBELL);
+
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'write', "
+                             "'value': '2,42'}}", MBOX_PATH);
+    g_assert_cmpuint(qtest_readl(qts, MBOX_WORD(2)), ==, 42);
+    psp_ic_drain(qts, IC_BASE, pending);
+    psp_ic_assert_only(pending, -1);
+
+    const char *bad[] = { "3,1", "0", "x,1", "0,y", "0,0x100000000", "" };
+    for (int i = 0; i < ARRAY_SIZE(bad); i++) {
+        rsp = qtest_qmp(qts, "{'execute': 'qom-set', 'arguments': "
+                        "{'path': %s, 'property': 'write', "
+                        "'value': %s}}", MBOX_PATH, bad[i]);
+        g_assert_true(qdict_haskey(rsp, "error"));
+        qobject_unref(rsp);
+    }
+    qtest_quit(qts);
+}
+
+/*
  * A CCP passthrough copy onto word 0 lands there, but it is CCP DMA, not an
  * external write: only the CCP completion is raised.
  */
@@ -240,6 +279,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/mailbox/ring-ack-ring", test_ring_ack_ring);
     qtest_add_func("/amd-psp/mailbox/doorbell-property",
                    test_doorbell_property);
+    qtest_add_func("/amd-psp/mailbox/qom-write", test_qom_write);
     qtest_add_func("/amd-psp/mailbox/ccp-copy", test_ccp_copy);
 
     return psp_test_run();
