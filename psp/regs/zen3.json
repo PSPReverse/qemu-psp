@@ -146,6 +146,18 @@
         "note": "Same ABL poll as 0x123e04fc at the next SMN base 0x12600000 (stride 0x1000 per chiplet); the ABL stalls here once 0x123e{0..3}4fc are ready, value assumed equal, real semantics unconfirmed."
       },
       {
+        "offset": "0x134e04ec",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "ABL type-3 index poll (+0xec): observed stuck poll, args value 1 / mask 1; the second value pair is not visible and assumed (0,0). Real semantics unconfirmed."
+      },
+      {
+        "offset": "0x135e04ec",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "ABL type-3 index poll (+0xec): same type-3 descriptor family as 0x134, value assumed equal; the second value pair is not visible and assumed (0,0). Real semantics unconfirmed."
+      },
+      {
         "offset": "0x303000d8",
         "value": "0x40",
         "source": "code-reading",
