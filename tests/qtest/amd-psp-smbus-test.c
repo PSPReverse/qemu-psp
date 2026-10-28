@@ -28,7 +28,7 @@
 #define CNT_BYTE_DATA 0x08
 #define CNT_WORD_DATA 0x0c
 
-#define ADDR_DIMM0 0xa0
+#define ADDR_DIMM1 0xa2
 #define ADDR_MUX 0xe0
 #define ADDR_PAGE0 0x6c
 #define ADDR_PAGE1 0x6e
@@ -88,22 +88,29 @@ static void test_spd_read(void)
     if (!qts) {
         return;
     }
-    g_assert_cmphex(spd_byte(qts, ADDR_DIMM0, 0, 2), ==, 0x0c);
-    g_assert_cmphex(spd_byte(qts, ADDR_DIMM0, 0, 3), ==, 0x02);
+    g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 0, 2), ==, 0x0c);
+    g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 0, 3), ==, 0x01);
     for (int i = 0; i < sizeof(spd); i++) {
-        spd[i] = spd_byte(qts, ADDR_DIMM0, 0, i);
+        spd[i] = spd_byte(qts, ADDR_DIMM1, 0, i);
+    }
+    g_assert_cmphex(spd[126] | (spd[127] << 8), ==, crc16(spd, 126));
+    /* Single rank x8 RDIMM */
+    g_assert_cmphex(spd[12], ==, 0x01);
+    g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 0, 131), ==, 0x01);
+    for (int i = 0; i < sizeof(spd); i++) {
+        spd[i] = spd_byte(qts, ADDR_DIMM1, 0, 128 + i);
     }
     g_assert_cmphex(spd[126] | (spd[127] << 8), ==, crc16(spd, 126));
     /* Page 1: the part number starts at SPD byte 329 */
-    g_assert_cmphex(spd_byte(qts, ADDR_DIMM0, 1, 329 - 256), ==, 'Q');
+    g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 1, 329 - 256), ==, 'Q');
     /* Page 0 again */
-    g_assert_cmphex(spd_byte(qts, ADDR_DIMM0, 0, 2), ==, 0x0c);
+    g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 0, 2), ==, 0x0c);
 
     /* Word data: bytes 2 and 3 */
-    g_assert_cmphex(xfer(qts, ADDR_DIMM0 | 1, 2, CNT_WORD_DATA), ==,
+    g_assert_cmphex(xfer(qts, ADDR_DIMM1 | 1, 2, CNT_WORD_DATA), ==,
                     HSTS_DONE);
     g_assert_cmphex(qtest_readb(qts, SB_DATA0), ==, 0x0c);
-    g_assert_cmphex(qtest_readb(qts, SB_DATA1), ==, 0x02);
+    g_assert_cmphex(qtest_readb(qts, SB_DATA1), ==, 0x01);
     qtest_quit(qts);
 }
 
@@ -114,8 +121,8 @@ static void test_nack_and_mux(void)
     if (!qts) {
         return;
     }
-    /* Slot 1 is not populated by default */
-    g_assert_cmphex(xfer(qts, 0xa2 | 1, 0, CNT_BYTE_DATA), ==, HSTS_FAILED);
+    /* Slot 0 is not populated by default */
+    g_assert_cmphex(xfer(qts, 0xa0 | 1, 0, CNT_BYTE_DATA), ==, HSTS_FAILED);
     g_assert_cmphex(xfer(qts, 0x10, 0, CNT_BYTE_DATA), ==, HSTS_FAILED);
     g_assert_cmphex(xfer(qts, ADDR_MUX, 0x01, CNT_BYTE_DATA), ==, HSTS_DONE);
     qtest_quit(qts);
@@ -161,13 +168,12 @@ static void test_misc_bit4(void)
 static void test_dimm_slots(void)
 {
     QTestState *qts = start("-global driver=amd_psp.smn.smbus,"
-                            "property=dimm-slots,value=2");
+                            "property=dimm-slots,value=3");
 
     if (!qts) {
         return;
     }
-    g_assert_cmphex(xfer(qts, ADDR_DIMM0 | 1, 0, CNT_BYTE_DATA), ==,
-                    HSTS_FAILED);
+    g_assert_cmphex(spd_byte(qts, 0xa0, 0, 2), ==, 0x0c);
     g_assert_cmphex(spd_byte(qts, 0xa2, 0, 2), ==, 0x0c);
     qtest_quit(qts);
 }
@@ -189,7 +195,7 @@ static void test_spd_file(void)
                             "property=spd-file,value=%s", path);
     qts = start(extra);
     if (qts) {
-        g_assert_cmphex(spd_byte(qts, ADDR_DIMM0, 0, 100), ==, 0x5a);
+        g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 0, 100), ==, 0x5a);
         qtest_quit(qts);
     }
     unlink(path);

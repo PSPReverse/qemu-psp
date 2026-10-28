@@ -25,7 +25,7 @@ typedef struct PSPSmnSmbusState {
     MemoryRegion iomem;
 
     /* Properties */
-    uint32_t dimm_slots;    /* bit n: DIMM at 7-bit address 0x50 + n */
+    uint32_t dimm_slots;    /* bit n: DIMM at 7-bit address 0x50 + n, default slot 1 */
     char* spd_file;         /* optional 512 byte image for every DIMM */
 
     /* State */

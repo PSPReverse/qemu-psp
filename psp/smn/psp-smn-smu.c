@@ -30,9 +30,14 @@
 #define RESP_OK 1
 
 #define MSG_QUERY_NUMBER_OF_DF_PSTATES 0x07
+#define MSG_QUERY_MEM_FREQ_OF_DF_PSTATE 0x08
 #define MSG_GET_STARTUP_DF_PSTATE 0x1d
 
 #define DF_PSTATES_MAX 4
+
+static const uint32_t mem_clk_valid[] = {
+    800, 933, 1067, 1200, 1333, 1467, 1600
+};
 
 static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
 {
@@ -41,6 +46,10 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
     switch (msg) {
     case MSG_QUERY_NUMBER_OF_DF_PSTATES:
         data = s->df_pstates;
+        break;
+    case MSG_QUERY_MEM_FREQ_OF_DF_PSTATE:
+        /* The argument is the P-state index; all share one memory clock */
+        data = s->mem_clk_mhz;
         break;
     case MSG_GET_STARTUP_DF_PSTATE:
         break;
@@ -94,6 +103,15 @@ static void psp_smu_realize(DeviceState* dev, Error** errp)
         error_setg(errp, "df-pstates: must be 1..%d", DF_PSTATES_MAX);
         return;
     }
+    for (int i = 0; i < ARRAY_SIZE(mem_clk_valid); i++) {
+        if (s->mem_clk_mhz == mem_clk_valid[i]) {
+            goto mem_clk_ok;
+        }
+    }
+    error_setg(errp, "mem-clk-mhz: must be one of 800, 933, 1067, 1200, "
+               "1333, 1467, 1600");
+    return;
+mem_clk_ok:
     memory_region_init_io(&s->iomem, OBJECT(dev), &psp_smu_ops, s,
                           "psp-smn-smu", PSP_SMN_SMU_REGS * 4);
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem);
@@ -120,6 +138,7 @@ static const VMStateDescription psp_smu_vmstate = {
 
 static const Property psp_smu_properties[] = {
     DEFINE_PROP_UINT32("df-pstates", PSPSmnSmuState, df_pstates, 1),
+    DEFINE_PROP_UINT32("mem-clk-mhz", PSPSmnSmuState, mem_clk_mhz, 1200),
 };
 
 static void psp_smu_class_init(ObjectClass* oc, const void* data)

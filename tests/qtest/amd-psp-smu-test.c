@@ -17,6 +17,7 @@
 #define SMU_MSG (SMU + 0x18)
 
 #define MSG_QUERY_NUMBER_OF_DF_PSTATES 0x07
+#define MSG_QUERY_MEM_FREQ_OF_DF_PSTATE 0x08
 #define MSG_GET_STARTUP_DF_PSTATE 0x1d
 
 static QTestState *start(const char *extra)
@@ -73,6 +74,33 @@ static void test_df_pstates_property(void)
     qtest_quit(qts);
 }
 
+static void test_mem_freq(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_MEM_FREQ_OF_DF_PSTATE, 0), ==,
+                    1200);
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_MEM_FREQ_OF_DF_PSTATE, 1), ==,
+                    1200);
+    qtest_quit(qts);
+}
+
+static void test_mem_freq_property(void)
+{
+    QTestState *qts = start("-global driver=amd_psp.smn.smu,"
+                            "property=mem-clk-mhz,value=1600");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_MEM_FREQ_OF_DF_PSTATE, 0), ==,
+                    1600);
+    qtest_quit(qts);
+}
+
 static void test_startup_pstate(void)
 {
     QTestState *qts = start("");
@@ -120,6 +148,9 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/smu/df-pstates", test_df_pstates);
     qtest_add_func("/amd-psp/smu/df-pstates-property",
                    test_df_pstates_property);
+    qtest_add_func("/amd-psp/smu/mem-freq", test_mem_freq);
+    qtest_add_func("/amd-psp/smu/mem-freq-property",
+                   test_mem_freq_property);
     qtest_add_func("/amd-psp/smu/startup-pstate", test_startup_pstate);
     qtest_add_func("/amd-psp/smu/unknown-message", test_unknown_message);
     qtest_add_func("/amd-psp/smu/zen2-absent", test_zen2_absent);
