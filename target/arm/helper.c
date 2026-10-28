@@ -8968,6 +8968,14 @@ static void arm_cpu_do_interrupt_aarch32(CPUState *cs)
         mask = CPSR_I;
         /* The PC already points to the next instruction.  */
         offset = 0;
+        if (trace_event_get_state_backends(TRACE_ARM_SVC)) {
+            uint32_t lr = env->regs[15] + offset;
+            uint32_t svc_pc = lr - (env->thumb ? 2 : 4);
+
+            trace_arm_svc(env->exception.syndrome & 0xffff,
+                          env->regs[0], env->regs[1], env->regs[2],
+                          env->regs[3], lr, svc_pc, cpsr_read(env));
+        }
         break;
     case EXCP_BKPT:
         /* Fall through to prefetch abort.  */
