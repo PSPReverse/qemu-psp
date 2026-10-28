@@ -16,6 +16,8 @@
 #define PSP_X86_ACCESS_OBSERVER(obj)                                           \
     OBJECT_CHECK(AccessObserverState, (obj), TYPE_PSP_X86_ACCESS_OBSERVER)
 
+#define ACCESS_OBSERVER_MAX_EXCLUDES 4
+
 typedef struct AccessObserverState {
     /* Base Class */
     SysBusDevice parent;
@@ -23,11 +25,23 @@ typedef struct AccessObserverState {
     hwaddr size;
     hwaddr base;
 
-    /* Tracking Results */
+    /* Allow ranges inside the window */
+    struct {
+        hwaddr base;
+        hwaddr size;
+    } exclude[ACCESS_OBSERVER_MAX_EXCLUDES];
+    unsigned int exclude_count;
+
+    /*
+     * Tracking Results: address and pc of the first illegal access of each
+     * kind, valid only if the matching hit counter is non-zero
+     */
     hwaddr observed_illegal_read;
     vaddr pc_illegal_read;
+    uint64_t illegal_read_hits;
     hwaddr observed_illegal_write;
     vaddr pc_illegal_write;
+    uint64_t illegal_write_hits;
 
     /* Intermediate Buffer*/
     MemoryRegion mr;
