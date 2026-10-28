@@ -218,6 +218,50 @@ static void test_observer_hits(void)
     g_assert_cmpuint(observer_hits(qts, "illegal_read_hits"), ==, 0);
     qtest_quit(qts);
 }
+/*
+ * FCH UART 0 at x86 0xfedc9000 (4-byte register stride) reached through slot
+ * 0: THR bytes land on the -serial chardev, LSR reports the transmitter idle.
+ */
+static void test_fch_uart(void)
+{
+    g_autofree char *path = NULL;
+    g_autofree char *out = NULL;
+    QTestState *qts;
+    int fd = g_file_open_tmp("amd-psp-uart-XXXXXX", &path, NULL);
+
+    g_assert_cmpint(fd, >=, 0);
+    close(fd);
+    qts = psp_startf(PSP_ZEN2, "-serial file:%s", path);
+    if (!qts) {
+        unlink(path);
+        return;
+    }
+    /* x86 0xfedc9000 is offset 0x2dc9000 into the 64 MiB slot at 0xfc000000 */
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, FCH_UART_LSR) & 0x60, ==, 0x60);
+    for (const char *c = "psp\n"; *c; c++) {
+        qtest_writeb(qts, FCH_UART_THR, *c);
+    }
+    g_assert_cmphex(qtest_readb(qts, FCH_UART_LSR) & 0x60, ==, 0x60);
+    qtest_quit(qts);
+    g_assert_true(g_file_get_contents(path, &out, NULL, NULL));
+    g_assert_cmpstr(out, ==, "psp\n");
+    unlink(path);
+}
+
+/* Without a -serial chardev the UART still accepts writes and reports idle */
+static void test_fch_uart_no_chardev(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN2, "-serial none");
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    qtest_writeb(qts, FCH_UART_THR, 'x');
+    g_assert_cmphex(qtest_readb(qts, FCH_UART_LSR) & 0x60, ==, 0x60);
+    qtest_quit(qts);
+}
 
 /* An aborting child must die at once, not linger while dumping core */
 static void no_core(gpointer unused)
@@ -285,6 +329,9 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/port61", test_port61);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);
+    qtest_add_func("/amd-psp/x86/fch-uart", test_fch_uart);
+    qtest_add_func("/amd-psp/x86/fch-uart-no-chardev",
+                   test_fch_uart_no_chardev);
     qtest_add_func("/amd-psp/x86/observer-exec", test_observer_exec);
 
     return psp_test_run();

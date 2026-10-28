@@ -81,6 +81,8 @@ static void psp_x86_init(Object* obj)
 #define MMIO_BASE (PROTECTED_REGION_BASE + 0xfc000000)
 #define MASTER_STATUS_PORT_BASE (MMIO_BASE + 0x80)
 
+#define FCH_UART0_BASE 0xfedc9000UL
+
 static void psp_x86_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
@@ -123,9 +125,13 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
         sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->sts), 0);
     memory_region_add_subregion(&s->mr, MASTER_STATUS_PORT_BASE, mr_status);
 
-    /* A MMIO accessible UART */
-    // serial_mm_init(&s->mr, 0xfffdfc0003f8, 0, 0, 115200, serial_hd(0),
-    // DEVICE_NATIVE_ENDIAN);
+    /*
+     * FCH UART 0 (UART at offset 0x9000 of the 0xfedc0000 block): a 16550
+     * with 4-byte register stride. Output goes to the first -serial
+     * chardev, or is dropped when none is attached.
+     */
+    serial_mm_init(&s->mr, FCH_UART0_BASE, 2, NULL, 115200, serial_hd(0),
+                   DEVICE_LITTLE_ENDIAN);
 
     /* Connect the misc device to the x86 address space */
     qdev_prop_set_uint32(DEVICE(&s->pci_config_space), "psp_generation",
