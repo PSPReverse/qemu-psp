@@ -172,6 +172,13 @@
     ],
     "psp_misc": [
       {
+        "offset": "0x2d01a08",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: the ABL helper at 0x1d5e0 reads, writes 0x10 and reads back; read/write-back storage lets the read-back match."
+      },
+      {
         "offset": "0x3010004",
         "value": "0x0",
         "source": "unknown",
