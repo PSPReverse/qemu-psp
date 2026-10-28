@@ -186,7 +186,12 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
         libafl_qemu_breakpoint_run(libafl_gen_cur_pc);
 
         // 0x0f, 0x3a, 0xf2, 0x44
-        uint8_t backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next);
+        // Probing an I/O page would record a byte the target decoder then
+        // re-reads at a lower offset (see record_save), so skip it there.
+        uint8_t backdoor = 0;
+        if (tb_page_addr0(db->tb) != -1) {
+            backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next);
+        }
         if (backdoor == 0x0f) {
             backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next +1);
             if (backdoor == 0x3a) {
