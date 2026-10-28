@@ -242,6 +242,7 @@ qtests_amd_psp = [
   'amd-psp-reset-test',
   'amd-psp-todo-test',
   'amd-psp-pending-fixes-test',
+  'amd-psp-smbus-test',
 ]
 
 qtests_arm = \

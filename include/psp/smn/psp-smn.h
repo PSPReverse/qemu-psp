@@ -24,6 +24,7 @@
 
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
+#include "psp/smn/psp-smn-smbus.h"
 
 #define PSP_SMN_CTRL_SIZE 16 * 4
 #define PSP_SMN_SLOT_SIZE 1024 * 1024 /* 1M */
@@ -73,6 +74,9 @@ typedef struct PSPSmnState {
      * guest has programmed a slot, the power-on offset before that.
      */
     hwaddr psp_smn_alias[PSP_SMN_SLOT_COUNT];
+
+    /* Zen3 SMBus controller with the DIMM SPD EEPROMs */
+    PSPSmnSmbusState psp_smn_smbus;
 
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;
