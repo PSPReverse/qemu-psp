@@ -283,6 +283,19 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
         memory_region_add_subregion(
             &s->mr, PSP_X86_TPM_BASE,
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->tpm), 0));
+
+        /* The host side of the BL's non-volatile store */
+        object_initialize_child(OBJECT(dev), "nv", &s->nv, TYPE_PSP_X86_NV);
+        s->nv.as = &s->as;
+        if (!sysbus_realize(SYS_BUS_DEVICE(&s->nv), errp)) {
+            return;
+        }
+        memory_region_add_subregion(
+            &s->mr, PSP_X86_NV_SMI_TRIGGER,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->nv), 0));
+        memory_region_add_subregion(
+            &s->mr, PSP_X86_NV_SMI_STATUS,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->nv), 1));
     }
 
     /* Connect the misc device to the x86 address space */

@@ -97,6 +97,12 @@
 #define TPM_LOC0 (X86_WINDOW0 + 0x2d40000)
 #define TPM_LOC3_ACCESS (TPM_LOC0 + 0x3000)
 #define TPM_LOC3_STS (TPM_LOC0 + 0x3018)
+/* Zen3 NV store SMI registers (x86 0xfed80298 / 0xfed802a8), same slot */
+#define NV_SMI_TRIGGER (X86_WINDOW0 + 0x2d80298)
+#define NV_SMI_STATUS (X86_WINDOW0 + 0x2d802a8)
+/* x86 RAM through slot 1 based at 0; the NV shared buffer is at 0x02000000 */
+#define X86_SLOT_SIZE_BYTES 0x4000000
+#define NV_BUF (X86_WINDOW0 + X86_SLOT_SIZE_BYTES + 0x2000000)
 
 /* zlib stream of "abcd" in one stored block, with its Adler-32 */
 static const uint8_t psp_zlib_abcd[] = {
