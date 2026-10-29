@@ -8,7 +8,9 @@
  * bits [10:2] register dword, bits [13:11] function, bits [23:16] instance.
  * Only the function and the register are used to look a register up; the
  * instance and the remaining bits are ignored, so every instance sees the
- * same register file. Registers the guest never wrote read 0.
+ * same register file. Registers the guest never wrote read 0, except the
+ * DRAM hole base (function 0, offset 0x104), which reads the value the
+ * 'hole-base-default' property gives until the guest writes it.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
@@ -16,6 +18,7 @@
 
 #include "psp/smn/psp-smn-df-fica.h"
 
+#include "hw/qdev-properties.h"
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
@@ -23,6 +26,7 @@
 #include "trace.h"
 
 #define FICAA_KEY_MASK 0x3ffc   /* function [13:11] and register [10:2] */
+#define FICAA_KEY_HOLE_BASE 0x104       /* function 0 */
 
 static PSPSmnDfFicaEntry* df_fica_find(PSPSmnDfFicaState* s, uint32_t key)
 {
@@ -54,7 +58,13 @@ static uint64_t df_ficad_read(void* opaque, hwaddr offset, unsigned size)
     PSPSmnDfFicaState* s = opaque;
     uint32_t key = s->ficaa & FICAA_KEY_MASK;
     PSPSmnDfFicaEntry* e = df_fica_find(s, key);
-    uint32_t val = e ? e->value : 0;
+    uint32_t val = 0;
+
+    if (e) {
+        val = e->value;
+    } else if (key == FICAA_KEY_HOLE_BASE) {
+        val = s->hole_base_default;
+    }
 
     trace_psp_smn_df_fica_read(s->ficaa, val);
     return val;
@@ -146,6 +156,11 @@ static const VMStateDescription df_fica_vmstate = {
     }
 };
 
+static const Property df_fica_properties[] = {
+    DEFINE_PROP_UINT32("hole-base-default", PSPSmnDfFicaState,
+                       hole_base_default, 0xb0000001),
+};
+
 static void df_fica_class_init(ObjectClass* oc, const void* data)
 {
     DeviceClass* dc = DEVICE_CLASS(oc);
@@ -153,6 +168,7 @@ static void df_fica_class_init(ObjectClass* oc, const void* data)
 
     dc->realize = df_fica_realize;
     dc->vmsd = &df_fica_vmstate;
+    device_class_set_props(dc, df_fica_properties);
     rc->phases.hold = df_fica_reset_hold;
 }
 

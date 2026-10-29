@@ -81,8 +81,41 @@ static void test_unwritten_reads_zero(void)
     if (!qts) {
         return;
     }
-    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x104)), ==, 0);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x100)), ==, 0);
     g_assert_cmphex(df_read(qts, KEY(0x1e, 2, 0x7fc)), ==, 0);
+    qtest_quit(qts);
+}
+
+static void test_hole_base_default(void)
+{
+    QTestState *qts = start(PSP_ZEN3);
+
+    if (!qts) {
+        return;
+    }
+    /* Served until written, for any instance, only for function 0 */
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x104)), ==, 0xb0000001);
+    g_assert_cmphex(df_read(qts, KEY(0x1e, 0, 0x104)), ==, 0xb0000001);
+    g_assert_cmphex(df_read(qts, KEY(0, 1, 0x104)), ==, 0);
+    df_write(qts, KEY(0, 0, 0x104), 0x80000001);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x104)), ==, 0x80000001);
+    /* Writing zero is a write, not the default */
+    df_write(qts, KEY(0, 0, 0x104), 0);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x104)), ==, 0);
+    qtest_quit(qts);
+}
+
+static void test_hole_base_default_off(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN3, "-global "
+                                 "driver=amd_psp.smn.df-fica,"
+                                 "property=hole-base-default,value=0");
+
+    if (!qts) {
+        return;
+    }
+    qtest_writew(qts, SMN_CTRL, 0);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x104)), ==, 0);
     qtest_quit(qts);
 }
 
@@ -107,6 +140,10 @@ int main(int argc, char **argv)
                    test_instance_ignored);
     qtest_add_func("/amd-psp/df-fica/unwritten-reads-zero",
                    test_unwritten_reads_zero);
+    qtest_add_func("/amd-psp/df-fica/hole-base-default",
+                   test_hole_base_default);
+    qtest_add_func("/amd-psp/df-fica/hole-base-default-off",
+                   test_hole_base_default_off);
     qtest_add_func("/amd-psp/df-fica/zen2-absent", test_zen2_absent);
 
     return psp_test_run();
