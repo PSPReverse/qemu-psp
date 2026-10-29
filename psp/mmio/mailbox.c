@@ -190,6 +190,46 @@ int32_t aspfuzz_mailbox_write(uint32_t word, uint32_t value)
     return mailbox_host_write(aspfuzz_mailbox_state, word, value);
 }
 
+/*
+ * Fuzzer hook: read mailbox word 0..2, or word 3 for the enable register at
+ * PSP_MAILBOX_CTRL_BASE, straight from the device state (no bus access, so
+ * no side effects). The BQL is taken if the caller does not hold it. Returns
+ * -1 if no mailbox is realized or word > 3, else 0.
+ */
+static int32_t mailbox_host_read(MailboxState* s, uint32_t word,
+                                 uint32_t* value)
+{
+    bool took_bql = !bql_locked();
+    int32_t rc = -1;
+
+    if (took_bql) {
+        bql_lock();
+    }
+    if (s != NULL && value != NULL && word <= 3) {
+        *value = word < 3 ? s->values[word] : s->int_enable;
+        rc = 0;
+    }
+    if (took_bql) {
+        bql_unlock();
+    }
+    return rc;
+}
+
+int32_t aspfuzz_mailbox_read(uint32_t word, uint32_t* value);
+int32_t aspfuzz_mailbox_read(uint32_t word, uint32_t* value)
+{
+    return mailbox_host_read(aspfuzz_mailbox_state, word, value);
+}
+
+/* Read-only "words" property: "w0,w1,w2,ctrl" in hex */
+static char* mailbox_get_words(Object* obj, Error** errp)
+{
+    MailboxState* s = MAILBOX(obj);
+
+    return g_strdup_printf("0x%x,0x%x,0x%x,0x%x", s->values[0], s->values[1],
+                           s->values[2], s->int_enable);
+}
+
 /* Write-only "write" property: "WORD,VALUE", strtoull base 0 */
 static void mailbox_set_write(Object* obj, const char* str, Error** errp)
 {
@@ -269,6 +309,7 @@ static void class_init(ObjectClass* oc, const void* data)
     rc->phases.hold = mailbox_reset_hold;
     device_class_set_props(dc, mailbox_properties);
     object_class_property_add_str(oc, "write", NULL, mailbox_set_write);
+    object_class_property_add_str(oc, "words", mailbox_get_words, NULL);
 }
 static const TypeInfo psp_sts_info = {
     .name = TYPE_MAILBOX,

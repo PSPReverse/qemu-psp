@@ -326,6 +326,83 @@ static void test_observer_exec(void)
     }
 }
 
+#define X86_MEM_PATH "/machine/soc/x86/x86-full-memory"
+
+static QDict *x86_mem_qmp(QTestState *qts, const char *cmd, const char *prop,
+                          const char *val)
+{
+    if (val) {
+        return qtest_qmp(qts, "{'execute': %s, 'arguments': {'path': %s, "
+                         "'property': %s, 'value': %s}}",
+                         cmd, X86_MEM_PATH, prop, val);
+    }
+    return qtest_qmp(qts, "{'execute': %s, 'arguments': {'path': %s, "
+                     "'property': %s}}", cmd, X86_MEM_PATH, prop);
+}
+
+/* poke is visible through the mapper slot, peek reads it back, errors reject */
+static void test_poke_peek(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+    QDict *rsp;
+    char *v;
+
+    if (!qts) {
+        return;
+    }
+    rsp = x86_mem_qmp(qts, "qom-set", "poke", "1000,efbeadde");
+    g_assert_true(qdict_haskey(rsp, "return"));
+    qobject_unref(rsp);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x1000), ==, 0xdeadbeef);
+
+    /* Written through the slot, read back by peek */
+    qtest_writel(qts, X86_WINDOW0 + 0x1004, 0x04030201);
+    rsp = x86_mem_qmp(qts, "qom-set", "peek", "1000,8");
+    g_assert_true(qdict_haskey(rsp, "return"));
+    qobject_unref(rsp);
+    rsp = x86_mem_qmp(qts, "qom-get", "peek_result", NULL);
+    g_assert_cmpstr(qdict_get_str(rsp, "return"), ==, "efbeadde01020304");
+    qobject_unref(rsp);
+
+    /* The largest poke and peek */
+    v = g_strnfill(2 * 4096, 'a');
+    g_autofree char *arg = g_strdup_printf("2000,%s", v);
+    rsp = x86_mem_qmp(qts, "qom-set", "poke", arg);
+    g_assert_true(qdict_haskey(rsp, "return"));
+    qobject_unref(rsp);
+    g_free(v);
+    rsp = x86_mem_qmp(qts, "qom-set", "peek", "2000,1000");
+    g_assert_true(qdict_haskey(rsp, "return"));
+    qobject_unref(rsp);
+    rsp = x86_mem_qmp(qts, "qom-get", "peek_result", NULL);
+    g_assert_cmpuint(strlen(qdict_get_str(rsp, "return")), ==, 2 * 4096);
+    qobject_unref(rsp);
+
+    const char *bad_poke[] = { "1000", "1000,abc", "1000,", "1000,zz",
+                               "xyz,00", ",00", "1000000000000,00" };
+    for (int i = 0; i < ARRAY_SIZE(bad_poke); i++) {
+        rsp = x86_mem_qmp(qts, "qom-set", "poke", bad_poke[i]);
+        g_assert_true(qdict_haskey(rsp, "error"));
+        qobject_unref(rsp);
+    }
+    arg = g_strdup_printf("1000,%0*d", 2 * 4097, 0);
+    rsp = x86_mem_qmp(qts, "qom-set", "poke", arg);
+    g_assert_true(qdict_haskey(rsp, "error"));
+    qobject_unref(rsp);
+
+    /* A failed peek leaves an empty result */
+    const char *bad_peek[] = { "1000", "1000,1001", "1000,0", "x,4", "1000,y" };
+    for (int i = 0; i < ARRAY_SIZE(bad_peek); i++) {
+        rsp = x86_mem_qmp(qts, "qom-set", "peek", bad_peek[i]);
+        g_assert_true(qdict_haskey(rsp, "error"));
+        qobject_unref(rsp);
+        rsp = x86_mem_qmp(qts, "qom-get", "peek_result", NULL);
+        g_assert_cmpstr(qdict_get_str(rsp, "return"), ==, "");
+        qobject_unref(rsp);
+    }
+    qtest_quit(qts);
+}
+
 /* The regular DRAM defaults to 8 GiB on Zen3 and 1 GiB elsewhere */
 static void test_regular_dram_default(void)
 {
@@ -575,6 +652,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/port61", test_port61);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);
+    qtest_add_func("/amd-psp/x86/poke-peek", test_poke_peek);
     qtest_add_func("/amd-psp/x86/fch-uart", test_fch_uart);
     qtest_add_func("/amd-psp/x86/fch-uart-no-chardev",
                    test_fch_uart_no_chardev);

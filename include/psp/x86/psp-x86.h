@@ -64,5 +64,8 @@ typedef struct PSPX86State {
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;
+
+    /* Hex of the last "peek" property write, NULL if it failed or was not done */
+    char* peek_result;
 } PSPX86State;
 #endif
