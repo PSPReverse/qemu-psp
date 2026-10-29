@@ -24,6 +24,7 @@
 
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
+#include "psp/smn/psp-smn-mp5.h"
 #include "psp/smn/psp-smn-dxio-pcs.h"
 #include "psp/smn/psp-smn-smbus.h"
 #include "psp/smn/psp-smn-smu.h"
@@ -86,6 +87,9 @@ typedef struct PSPSmnState {
 
     /* Zen3 SMU message mailbox */
     PSPSmnSmuState psp_smn_smu;
+
+    /* Zen3 MP5 stand-in */
+    PSPSmnMp5State psp_smn_mp5;
 
     /* Zen3 UMC channel APB windows with the PMU mailbox */
     PSPSmnUmcState psp_smn_umc;

@@ -14,6 +14,12 @@ psp_smn_misc_write_unimplemented(uint64_t off, uint64_t val) "offset=0x%"PRIx64"
 psp_smn_dxio_pcs_read(unsigned inst, uint64_t off, uint32_t val) "inst=%u offset=0x%"PRIx64" value=0x%08x"
 psp_smn_dxio_pcs_write(unsigned inst, uint64_t off, uint64_t val) "inst=%u offset=0x%"PRIx64" value=0x%08"PRIx64
 
+# psp-smn-mp5.c
+psp_smn_mp5_read(uint32_t val) "value=0x%08x"
+psp_smn_mp5_write(uint64_t val) "value=0x%08"PRIx64
+psp_smn_mp5_trigger(uint32_t delay_us) "answer in %u us"
+psp_smn_mp5_fire(void) "mailbox answer and interrupt"
+
 # psp-smn-smbus.c
 psp_smn_smbus_read(uint64_t off, uint8_t val) "offset=0x%"PRIx64" value=0x%02x"
 psp_smn_smbus_write(uint64_t off, uint8_t val) "offset=0x%"PRIx64" value=0x%02x"

@@ -348,10 +348,37 @@
         "note": "ABL type-3 index poll (+0xec): observed stuck poll, args value 2 / mask 2; the second value pair is not visible and assumed (0,0). Real semantics unconfirmed."
       },
       {
+        "offset": "0x30000808",
+        "value": "0x100000",
+        "source": "inferred",
+        "rw": true,
+        "note": "64-bit word (0x30000808 low, 0x3000080c high) the MP5 command handler of the Zen3 off-chip BL clears bit 20 of; read/write-back storage with bit 20 set at reset so the clear is observable. Real semantics unconfirmed."
+      },
+      {
+        "offset": "0x3000080c",
+        "value": "0x0",
+        "source": "inferred",
+        "rw": true,
+        "note": "High half of the 64-bit word at 0x30000808; read/write-back storage."
+      },
+      {
         "offset": "0x303000d8",
         "value": "0x40",
         "source": "code-reading",
         "note": "Per-node register (node << 25 stride) the Zen3 off-chip BL polls until it reads 0x40. Only node 0 is present. Inferred."
+      },
+      {
+        "offset": "0x303000e0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: the Zen3 off-chip BL sets bit 1 here after loading the MP5 firmware; read/write-back storage."
+      },
+      {
+        "offset": "0x30410024",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-node register (node << 25 stride) of which the Zen3 off-chip BL requires bit 0 after the MP5 start; constant 1 satisfies it. Only node 0 is present. Inferred."
       },
       {
         "offset": "0x304101c0",
@@ -381,6 +408,13 @@
         "source": "unknown",
         "rw": true,
         "note": "Placeholder, not hardware behaviour: read/write-back storage for a register the Zen3 boot path accesses and nothing models yet."
+      },
+      {
+        "offset": "0x301071c",
+        "value": "0x0",
+        "source": "inferred",
+        "rw": true,
+        "note": "MP5 command mailbox word: the MP5 stand-in writes the command (bits 23:16), the Zen3 off-chip BL writes its answer back with bit 31 set; read/write-back storage."
       },
       {
         "offset": "0x30109a4",
