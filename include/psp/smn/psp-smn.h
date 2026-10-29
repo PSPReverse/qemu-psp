@@ -24,6 +24,7 @@
 
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
+#include "psp/smn/psp-smn-dxio-pcs.h"
 #include "psp/smn/psp-smn-smbus.h"
 #include "psp/smn/psp-smn-smu.h"
 #include "psp/smn/psp-smn-umc.h"
@@ -79,6 +80,9 @@ typedef struct PSPSmnState {
 
     /* Zen3 SMBus controller with the DIMM SPD EEPROMs */
     PSPSmnSmbusState psp_smn_smbus;
+
+    /* Zen3 DXIO PCS state registers */
+    PSPSmnDxioPcsState psp_smn_dxio_pcs;
 
     /* Zen3 SMU message mailbox */
     PSPSmnSmuState psp_smn_smu;

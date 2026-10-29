@@ -245,6 +245,7 @@ qtests_amd_psp = [
   'amd-psp-smbus-test',
   'amd-psp-smu-test',
   'amd-psp-umc-test',
+  'amd-psp-dxio-pcs-test',
 ]
 
 qtests_arm = \
