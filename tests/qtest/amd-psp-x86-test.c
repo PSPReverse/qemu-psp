@@ -321,11 +321,41 @@ static void test_observer_exec(void)
     }
 }
 
+/* The regular DRAM defaults to 8 GiB on Zen3 and 1 GiB elsewhere */
+static void test_regular_dram_default(void)
+{
+    static const struct {
+        const char *machine;
+        uint64_t size;
+    } cases[] = {
+        { PSP_ZEN2, 1ULL << 30 },
+        { PSP_ZEN3, 8ULL << 30 },
+    };
+
+    for (int i = 0; i < G_N_ELEMENTS(cases); i++) {
+        QTestState *qts = psp_start(cases[i].machine);
+        QDict *rsp;
+
+        if (!qts) {
+            return;
+        }
+        rsp = qtest_qmp(qts, "{'execute': 'qom-get', 'arguments': "
+                        "{'path': '/machine/soc/x86/x86-full-memory', "
+                        "'property': 'regular_dram_size'}}");
+        g_assert_true(qdict_haskey(rsp, "return"));
+        g_assert_cmpuint(qdict_get_int(rsp, "return"), ==, cases[i].size);
+        qobject_unref(rsp);
+        qtest_quit(qts);
+    }
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
 
     qtest_add_func("/amd-psp/x86/mapper-registers", test_mapper_registers);
+    qtest_add_func("/amd-psp/x86/regular-dram-default",
+                   test_regular_dram_default);
     qtest_add_func("/amd-psp/x86/port61", test_port61);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);
