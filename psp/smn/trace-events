@@ -30,6 +30,10 @@ psp_smn_smu_read(uint64_t off, uint32_t val) "offset=0x%"PRIx64" value=0x%08x"
 psp_smn_smu_write(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%08"PRIx64
 psp_smn_smu_message(uint32_t msg, uint32_t arg, uint32_t data) "msg=0x%x arg=0x%x data=0x%x"
 
+# psp-smn-df-fica.c
+psp_smn_df_fica_read(uint32_t ficaa, uint32_t val) "ficaa=0x%08x value=0x%08x"
+psp_smn_df_fica_write(uint32_t ficaa, uint64_t val) "ficaa=0x%08x value=0x%08"PRIx64
+
 # psp-smn-umc.c
 psp_smn_umc_read(unsigned chan, uint64_t off, uint32_t val) "chan=%u offset=0x%"PRIx64" value=0x%08x"
 psp_smn_umc_write(unsigned chan, uint64_t off, uint64_t val) "chan=%u offset=0x%"PRIx64" value=0x%08"PRIx64

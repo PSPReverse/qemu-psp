@@ -245,6 +245,7 @@ qtests_amd_psp = [
   'amd-psp-pending-fixes-test',
   'amd-psp-smbus-test',
   'amd-psp-smu-test',
+  'amd-psp-df-fica-test',
   'amd-psp-umc-test',
   'amd-psp-dxio-pcs-test',
   'amd-psp-mp5-test',

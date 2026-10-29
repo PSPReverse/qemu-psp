@@ -24,6 +24,7 @@
 
 #include "psp/psp-window.h"
 #include "psp/smn/psp-smn-flash.h"
+#include "psp/smn/psp-smn-df-fica.h"
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-mp5.h"
 #include "psp/smn/psp-smn-dxio-pcs.h"
@@ -86,6 +87,8 @@ typedef struct PSPSmnState {
     /* Zen3 DXIO PCS state registers */
     PSPSmnDxioPcsState psp_smn_dxio_pcs;
 
+    /* Zen3 data fabric indirect configuration access */
+    PSPSmnDfFicaState psp_smn_df_fica;
     /* Zen3 SMU message mailbox */
     PSPSmnSmuState psp_smn_smu;
 
