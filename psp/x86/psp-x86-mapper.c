@@ -39,7 +39,7 @@ static void psp_x86_set_mapping(PSPX86MapperState *s, uint32_t slot_id,
                                 PSPX86Addr x86_addr)
 {
     s->psp_x86_slots[slot_id].x86_addr = x86_addr;
-    memory_region_set_alias_offset(&s->psp_x86_containers[slot_id], x86_addr);
+    psp_window_set_target(&s->psp_x86_windows[slot_id], x86_addr);
 }
 
 static void psp_x86_map_slot(PSPX86MapperState* s, uint32_t slot_id)
@@ -182,16 +182,18 @@ static const VMStateDescription psp_x86_slot_vmstate = {
 };
 
 /*
- * The x86 address of each slot is restored, and the container alias is
- * pointed at it again.
+ * The x86 address of each slot is restored, and the window is pointed at it
+ * again.
  */
 static int mapper_post_load(void *opaque, int version_id)
 {
     PSPX86MapperState *s = PSP_X86_MAPPER(opaque);
 
+    psp_window_begin_update();
     for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
         psp_x86_set_mapping(s, i, s->psp_x86_slots[i].x86_addr);
     }
+    psp_window_end_update();
     return 0;
 }
 
@@ -282,22 +284,21 @@ static void realize_mapping_slots(DeviceState* dev)
         target_mr = &s->access_observer.mr;
     }
 
+    address_space_init(&s->target_as, target_mr, "x86-mapper-target");
+
     for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
         char name[PSP_X86_SLOT_NAME_LEN] = {0};
         /* The X86 MMIO region of the PSP */
         snprintf(name, PSP_X86_SLOT_NAME_LEN, "%s%d", PSP_X86_SLOT_NAME, i);
-        /* Each container is an alias to the X86 addres space. Here we
-         * initialize each container beginning with the address 0 in the x86
-         * address space.
+        /* Each window shows the X86 address space. Here we initialize each
+         * window beginning with the address 0 in the x86 address space, and
+         * map it to the PSP address space.
          */
-        memory_region_init_alias(&s->psp_x86_containers[i], OBJECT(dev), name,
-                                 target_mr, i * PSP_X86_SLOT_SIZE,
-                                 PSP_X86_SLOT_SIZE);
-
-        /* Map the containers to the PSP address space */
         hwaddr slot_offset = PSP_X86_MAPPING_BASE + i * PSP_X86_SLOT_SIZE;
-        memory_region_add_subregion_overlap(get_system_memory(), slot_offset,
-                                            &s->psp_x86_containers[i], 0);
+        psp_window_init(&s->psp_x86_windows[i], OBJECT(dev), name,
+                        get_system_memory(), slot_offset, target_mr,
+                        &s->target_as, i * PSP_X86_SLOT_SIZE,
+                        PSP_X86_SLOT_SIZE);
     }
 }
 /*
@@ -308,11 +309,13 @@ static void mapper_reset_hold(Object *obj, ResetType type)
 {
     PSPX86MapperState *s = PSP_X86_MAPPER(obj);
 
+    psp_window_begin_update();
     for (unsigned int i = 0; i < PSP_X86_SLOT_COUNT; i++) {
         memset(s->psp_x86_slots[i].ctrl_regs, 0,
                sizeof(s->psp_x86_slots[i].ctrl_regs));
         psp_x86_set_mapping(s, i, i * PSP_X86_SLOT_SIZE);
     }
+    psp_window_end_update();
     s->magic3.value = 0;
     s->magic3.counter = 0;
 }

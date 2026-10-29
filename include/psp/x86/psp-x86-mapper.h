@@ -9,6 +9,7 @@
 
 #include "psp/generations.h"
 #include "psp/psp-misc.h"
+#include "psp/psp-window.h"
 #include "psp/x86/access-observer.h"
 #include "psp/x86/psp-x86.h"
 
@@ -110,16 +111,19 @@ typedef struct PSPX86MapperState {
     Magic3State magic3;
 
     /**
-     * @brief The memory regions that represent the x86 containers
+     * @brief The windows that represent the x86 containers
      *
-     * They are themselves aliased into the PSP address space
-     * but also alias regions in the x86 address space
+     * They are themselves mapped into the PSP address space
+     * but also show the x86 address space
      *
-     * This second alias gets updated whenever an appropriate write
-     * happens to the control registers
+     * The part of the x86 address space they show gets updated whenever an
+     * appropriate write happens to the control registers
      *
      */
-    MemoryRegion psp_x86_containers[PSP_X86_SLOT_COUNT];
+    PspWindow psp_x86_windows[PSP_X86_SLOT_COUNT];
+
+    /* The address space the windows show */
+    AddressSpace target_as;
 
     PSPX86Slot psp_x86_slots[PSP_X86_SLOT_COUNT];
 
