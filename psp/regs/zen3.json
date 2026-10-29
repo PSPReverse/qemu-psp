@@ -348,6 +348,62 @@
         "note": "ABL type-3 index poll (+0xec): observed stuck poll, args value 2 / mask 2; the second value pair is not visible and assumed (0,0). Real semantics unconfirmed."
       },
       {
+        "offset": "0x20002ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x20022ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x20042ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x20062ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x20082ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x200a2ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x200c2ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
+        "offset": "0x200e2ff0",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: per-CCD window register the BL CCD step maps (0x20002ff0 + (ccd<<17)) and ORs bit 31 into; read/write-back storage."
+      },
+      {
         "offset": "0x30000808",
         "value": "0x100000",
         "source": "inferred",
@@ -360,6 +416,12 @@
         "source": "inferred",
         "rw": true,
         "note": "High half of the 64-bit word at 0x30000808; read/write-back storage."
+      },
+      {
+        "offset": "0x30081024",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "CCD presence mask byte the off-chip BL reads for die 0; one CCD set. Workaround: on the real boot path the CCD step that reads it is skipped, our run takes it, so a non-zero mask avoids post code 0x35."
       },
       {
         "offset": "0x303000d8",
