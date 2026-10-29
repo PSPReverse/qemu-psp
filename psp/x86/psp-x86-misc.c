@@ -114,6 +114,15 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
          */
         val = (s->port61_ctl & 0x3) | (s->port61_refresh ? 0x10 : 0);
         s->port61_refresh = !s->port61_refresh;
+    } else if (s->generation == ZEN3 && (addr >> 24) == 0xfffdf7 &&
+               (addr & 0x7fff) == 0x7f94) {
+        /*
+         * Per-core status byte of the 0xfffdf7xxxxxx core register alias
+         * (one byte per register bit, byte +4 is bit 0). The SEV INIT
+         * hardware check wants it set for every core the BL lists as
+         * present. Inferred from that check; every core reads as ready.
+         */
+        val = 1;
     } else if (!psp_regs_lookup(s->generation, PSP_REG_SPACE_X86_MISC, addr,
                                 &val)) {
         trace_psp_x86_misc_read_unimplemented(addr, info.region_name,
