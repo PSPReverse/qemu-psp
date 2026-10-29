@@ -24,6 +24,7 @@
 #include "psp/x86/config-space.h"
 #include "psp/x86/x86-misc.h"
 #include "psp/x86/x86-tpm.h"
+#include "psp/x86/x86-nv.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
 #define PSP_X86(obj) OBJECT_CHECK(PSPX86State, (obj), TYPE_PSP_X86)
@@ -43,6 +44,7 @@ typedef struct PSPX86State {
 
     /* Zen3 TPM TIS stand-in, realized for Zen3 only */
     PSPX86TpmState tpm;
+    PSPX86NvState nv;
 
     /* The centralized PSP Status register */
     PSPStsState sts;

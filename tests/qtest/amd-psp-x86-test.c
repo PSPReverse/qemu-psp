@@ -361,6 +361,148 @@ static void test_tpm_tis_zen2(void)
     qtest_quit(qts);
 }
 
+/* Byte sum of the shared buffer body, as the BL and the host compute it */
+static uint8_t nv_sum(QTestState *qts, uint32_t size)
+{
+    uint8_t sum = 0;
+
+    for (uint32_t i = 0; i < size; i++) {
+        sum += qtest_readb(qts, NV_BUF + 8 + i);
+    }
+    return sum;
+}
+
+/* Write a request (payload already in place), raise the SMI */
+static void nv_request(QTestState *qts, uint32_t cmd, uint32_t size,
+                       uint64_t lba, uint64_t off, uint64_t len)
+{
+    qtest_writel(qts, NV_BUF + 0x08, size);
+    qtest_writel(qts, NV_BUF + 0x10, 2);
+    qtest_writeq(qts, NV_BUF + 0x18, lba);
+    qtest_writeq(qts, NV_BUF + 0x20, off);
+    qtest_writeq(qts, NV_BUF + 0x28, len);
+    qtest_writel(qts, NV_BUF, cmd);
+    qtest_writel(qts, NV_BUF + 4, 0x100 | nv_sum(qts, size));
+    qtest_writel(qts, NV_SMI_TRIGGER,
+                 qtest_readl(qts, NV_SMI_TRIGGER) | (1u << 25));
+}
+
+static void nv_check_done(QTestState *qts, uint32_t size)
+{
+    g_assert_cmphex(qtest_readl(qts, NV_BUF), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, NV_BUF + 0xc), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, NV_BUF + 4), ==,
+                    0x80000000 | nv_sum(qts, size));
+}
+
+static QTestState *nv_start(const char *extra)
+{
+    QTestState *qts = psp_startf(PSP_ZEN3, "%s", extra);
+
+    if (qts) {
+        qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+        qtest_writel(qts, X86_CTRL + X86_SLOT_REGS, 0);
+        qtest_writel(qts, NV_BUF + 4, 0x80000000);
+    }
+    return qts;
+}
+
+/* The readiness registers the BL checks before raising an SMI */
+static void test_nv_registers(void)
+{
+    QTestState *qts = nv_start("");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(qtest_readl(qts, NV_SMI_TRIGGER) & 0x90000000, ==,
+                    0x10000000);
+    g_assert_cmphex((qtest_readl(qts, NV_SMI_STATUS) >> 2) & 3, ==, 1);
+    qtest_quit(qts);
+}
+
+/* Block device: info, erased reads, write/read back, erase */
+static void test_nv_blocks(void)
+{
+    QTestState *qts = nv_start("");
+    uint8_t data[16], rd[16];
+
+    if (!qts) {
+        return;
+    }
+    nv_request(qts, 0x83, 0x28, 0, 0, 0);
+    nv_check_done(qts, 0x28);
+    g_assert_cmphex(qtest_readq(qts, NV_BUF + 0x20), ==, 0x1000);
+    g_assert_cmphex(qtest_readq(qts, NV_BUF + 0x28), ==, 8);
+
+    nv_request(qts, 0x84, 0x28 + 16, 3, 0, 16);
+    nv_check_done(qts, 0x28 + 16);
+    qtest_memread(qts, NV_BUF + 0x30, rd, 16);
+    for (int i = 0; i < 16; i++) {
+        g_assert_cmphex(rd[i], ==, 0xff);
+        data[i] = 0x10 + i;
+    }
+
+    qtest_memwrite(qts, NV_BUF + 0x30, data, 16);
+    nv_request(qts, 0x85, 0x28 + 16, 3, 0x20, 16);
+    nv_check_done(qts, 0x28 + 16);
+    memset(rd, 0, sizeof(rd));
+    qtest_memwrite(qts, NV_BUF + 0x30, rd, 16);
+    nv_request(qts, 0x84, 0x28 + 16, 3, 0x20, 16);
+    nv_check_done(qts, 0x28 + 16);
+    qtest_memread(qts, NV_BUF + 0x30, rd, 16);
+    g_assert_cmpmem(rd, 16, data, 16);
+
+    /* Erase two blocks starting at block 2 clears block 3 again */
+    nv_request(qts, 0x86, 0x20, 2, 2, 0);
+    nv_check_done(qts, 0x20);
+    nv_request(qts, 0x84, 0x28 + 16, 3, 0x20, 16);
+    nv_check_done(qts, 0x28 + 16);
+    qtest_memread(qts, NV_BUF + 0x30, rd, 16);
+    g_assert_cmphex(rd[0], ==, 0xff);
+
+    /* Out of range, bad command and bad checksum report an error word */
+    nv_request(qts, 0x84, 0x28 + 16, 8, 0, 16);
+    g_assert_cmphex(qtest_readl(qts, NV_BUF + 0xc), ==, 1);
+    nv_request(qts, 0x87, 0x28, 0, 0, 0);
+    g_assert_cmphex(qtest_readl(qts, NV_BUF + 0xc), ==, 1);
+    qtest_writel(qts, NV_BUF, 0x83);
+    qtest_writel(qts, NV_BUF + 4, 0x100);
+    qtest_writel(qts, NV_SMI_TRIGGER, 1u << 25);
+    g_assert_cmphex(qtest_readl(qts, NV_BUF + 0xc), ==, 1);
+    qtest_quit(qts);
+}
+
+/* Disabled: registers read 0 and a trigger leaves the buffer alone */
+static void test_nv_disabled(void)
+{
+    QTestState *qts = nv_start("-global driver=amd_psp.x86.nv,"
+                               "property=enabled,value=off");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(qtest_readl(qts, NV_SMI_TRIGGER), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, NV_SMI_STATUS), ==, 0);
+    nv_request(qts, 0x83, 0x28, 0, 0, 0);
+    g_assert_cmphex(qtest_readl(qts, NV_BUF), ==, 0x83);
+    qtest_quit(qts);
+}
+
+/* Zen2 has no NV store: the catch-all answers 0 */
+static void test_nv_zen2(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readl(qts, NV_SMI_TRIGGER), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, NV_SMI_STATUS), ==, 0);
+    qtest_quit(qts);
+}
+
 /* An aborting child must die at once, not linger while dumping core */
 static void no_core(gpointer unused)
 {
@@ -760,6 +902,10 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/tpm-tis", test_tpm_tis);
     qtest_add_func("/amd-psp/x86/tpm-tis-disabled", test_tpm_tis_disabled);
     qtest_add_func("/amd-psp/x86/tpm-tis-zen2", test_tpm_tis_zen2);
+    qtest_add_func("/amd-psp/x86/nv-registers", test_nv_registers);
+    qtest_add_func("/amd-psp/x86/nv-blocks", test_nv_blocks);
+    qtest_add_func("/amd-psp/x86/nv-disabled", test_nv_disabled);
+    qtest_add_func("/amd-psp/x86/nv-zen2", test_nv_zen2);
     qtest_add_func("/amd-psp/x86/fch-uart", test_fch_uart);
     qtest_add_func("/amd-psp/x86/fch-uart-no-chardev",
                    test_fch_uart_no_chardev);
