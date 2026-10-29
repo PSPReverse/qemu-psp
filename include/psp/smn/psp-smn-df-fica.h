@@ -32,6 +32,8 @@ typedef struct PSPSmnDfFicaState {
     /* State */
     uint32_t ficaa;
     uint32_t count;
+    /* Property */
+    uint32_t hole_base_default;
     PSPSmnDfFicaEntry entries[PSP_SMN_DF_FICA_ENTRIES];
 } PSPSmnDfFicaState;
 

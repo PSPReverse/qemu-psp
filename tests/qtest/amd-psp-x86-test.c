@@ -509,21 +509,31 @@ static void test_zen3_dram_split(void)
     if (!qts) {
         return;
     }
-    /* Slot 0 on the last 64 MiB of low DRAM (x86 0x7c000000) */
-    qtest_writel(qts, X86_CTRL, 0x1f);
+    /* Slot 0 on the last 64 MiB of low DRAM (x86 0xac000000) */
+    qtest_writel(qts, X86_CTRL, 0x2b);
     qtest_writel(qts, X86_WINDOW0 + 0x100, 0x11223344);
     g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x11223344);
+    /* The last page below the top of memory is DRAM, the MMIO hole above is not */
+    qtest_writel(qts, X86_WINDOW0 + 0x3fff000, 0xa5a5a5a5);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x3fff000), ==, 0xa5a5a5a5);
+    qtest_writel(qts, X86_CTRL, 0x2c);
+    qtest_writel(qts, X86_WINDOW0 + 0x100, 0xdeadbeef);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0);
     /* Slot 0 on the first 64 MiB above 4 GiB (x86 0x100000000) */
     qtest_writel(qts, X86_CTRL, 1u << 6);
     g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0);
     qtest_writel(qts, X86_WINDOW0 + 0x100, 0x55667788);
     g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x55667788);
-    /* The last 64 MiB of the 6 GiB above 4 GiB (x86 0x27c000000) */
-    qtest_writel(qts, X86_CTRL, (2u << 6) | 0x1f);
+    /* The last 64 MiB of the 5.25 GiB above 4 GiB (x86 0x24c000000) */
+    qtest_writel(qts, X86_CTRL, (2u << 6) | 0x13);
     qtest_writel(qts, X86_WINDOW0 + 0x100, 0x99aabbcc);
     g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x99aabbcc);
+    /* Nothing above 0x250000000 */
+    qtest_writel(qts, X86_CTRL, (2u << 6) | 0x14);
+    qtest_writel(qts, X86_WINDOW0 + 0x100, 0x13572468);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0);
     /* Nothing of the above aliased into low DRAM */
-    qtest_writel(qts, X86_CTRL, 0x1f);
+    qtest_writel(qts, X86_CTRL, 0x2b);
     g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x11223344);
     /* The FCH UART below 4 GiB is not shadowed by DRAM */
     qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);

@@ -185,9 +185,11 @@ static void psp_x86_init(Object* obj)
 /*
  * DRAM beyond this size is not mapped contiguously from 0: like on a real PC
  * the first REGULAR_DRAM_LOW_SIZE bytes sit below the MMIO hole and the rest
- * above 4 GiB, so that the x86 MMIO windows below 4 GiB stay reachable.
+ * above 4 GiB, so that the x86 MMIO windows below 4 GiB stay reachable. The
+ * size is the top of memory (TOM) the Zen3 ABL programs into the data fabric
+ * for two 4 GiB DIMMs; the MMIO hole spans TOM to 4 GiB.
  */
-#define REGULAR_DRAM_LOW_SIZE UINT64_C(0x80000000)
+#define REGULAR_DRAM_LOW_SIZE UINT64_C(0xb0000000)
 #define REGULAR_DRAM_HIGH_BASE UINT64_C(0x100000000)
 
 #define PROTECTED_REGION_BASE 0xfffd00000000UL
