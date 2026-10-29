@@ -94,6 +94,9 @@ static void test_spd_read(void)
         spd[i] = spd_byte(qts, ADDR_DIMM1, 0, i);
     }
     g_assert_cmphex(spd[126] | (spd[127] << 8), ==, crc16(spd, 126));
+    /* 4 Gbit x8 dies, 15 row and 10 column bits: 4 GiB per DIMM */
+    g_assert_cmphex(spd[4], ==, 0x84);
+    g_assert_cmphex(spd[5], ==, 0x19);
     /* Single rank x8 RDIMM */
     g_assert_cmphex(spd[12], ==, 0x01);
     g_assert_cmphex(spd_byte(qts, ADDR_DIMM1, 0, 131), ==, 0x01);

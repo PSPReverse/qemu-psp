@@ -22,6 +22,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 #include "qemu/osdep.h"
+#include "qemu/units.h"
 
 #include "psp/smn/psp-smn-smbus.h"
 
@@ -74,7 +75,18 @@ uint16_t psp_spd_crc16(const uint8_t* data, size_t len)
 }
 
 /*
- * One valid DDR4 RDIMM image: 8 GiB, single rank, 8 x 8 Gbit x8 devices,
+ * Geometry of one generated DIMM: 8 x 4 Gbit x8 devices, single rank, 16
+ * banks, 8 byte bus, i.e. 4 GiB. The total DRAM is the number of populated
+ * channels (0 and 6, both served by this SPD) times this, i.e. 8 GiB; keep
+ * it in sync with the Zen3 default of the x86 regular DRAM.
+ */
+#define PSP_DIMM_ROW_BITS 15
+#define PSP_DIMM_COL_BITS 10
+#define PSP_DIMM_SIZE ((1ULL << (PSP_DIMM_ROW_BITS + PSP_DIMM_COL_BITS)) * 16 * 8)
+QEMU_BUILD_BUG_ON(PSP_DIMM_SIZE != 4 * GiB);
+
+/*
+ * One valid DDR4 RDIMM image with the geometry above,
  * DDR4-2400 17-17-17. Time values use the 125 ps MTB with 1 ps fine offsets.
  */
 static void psp_spd_generate(uint8_t* spd, unsigned slot)
@@ -88,8 +100,8 @@ static void psp_spd_generate(uint8_t* spd, unsigned slot)
     spd[1] = 0x11;          /* SPD revision 1.1 */
     spd[2] = 0x0c;          /* DDR4 SDRAM */
     spd[3] = 0x01;          /* RDIMM */
-    spd[4] = 0x84;          /* 8 Gbit, 4 bank groups of 4 banks */
-    spd[5] = 0x21;          /* 16 row, 10 column bits */
+    spd[4] = 0x84;          /* 4 Gbit, 4 bank groups of 4 banks */
+    spd[5] = ((PSP_DIMM_ROW_BITS - 12) << 3) | (PSP_DIMM_COL_BITS - 9);
     spd[6] = 0x00;          /* monolithic package */
     spd[11] = 0x03;         /* 1.2 V */
     spd[12] = 0x01;         /* x8 devices, 1 rank */
