@@ -9,7 +9,6 @@
 #include "psp/psp-window.h"
 
 #include "qemu/bswap.h"
-#include "qemu/rcu.h"
 
 /* Forwarded accesses after which a window with RAM behind it becomes an alias */
 #define PSP_WINDOW_PROMOTE_HITS 256
@@ -21,21 +20,25 @@ static bool window_target_has_ram(PspWindow *w)
     hwaddr addr = w->target;
     hwaddr end = w->target + w->size;
 
-    RCU_READ_LOCK_GUARD();
+    /*
+     * Walk the sections of the target: address_space_translate() does not
+     * clip the length at the end of an I/O region, so it would step over RAM
+     * that follows one.
+     */
     while (addr < end) {
-        hwaddr xlat;
-        hwaddr len = end - addr;
-        MemoryRegion *mr = address_space_translate(w->as, addr, &xlat, &len,
-                                                   false,
-                                                   MEMTXATTRS_UNSPECIFIED);
+        MemoryRegionSection sec = memory_region_find(w->as->root, addr,
+                                                     end - addr);
+        bool ram;
 
-        if (memory_region_is_ram(mr) || memory_region_is_romd(mr)) {
+        if (!sec.mr) {
+            return false;
+        }
+        ram = memory_region_is_ram(sec.mr) || memory_region_is_romd(sec.mr);
+        addr = sec.offset_within_address_space + sec.size;
+        memory_region_unref(sec.mr);
+        if (ram) {
             return true;
         }
-        if (!len) {
-            break;
-        }
-        addr += len;
     }
     return false;
 }

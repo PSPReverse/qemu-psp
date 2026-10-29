@@ -509,13 +509,15 @@ static void test_window_ccp(void)
     }
     n = zlib_stored(stream, payload, PAYLOAD);
 
-    for (int c = 0; c < 2; c++) {
+    for (int c = 0; c < 3; c++) {
         QTestState *qts = psp_start(PSP_ZEN3);
         PspCcpDesc d = {
             .engine = CCP_ENGINE_ZLIB, .flags = CCP_INIT | CCP_EOM,
             .len = n, .src_mem = CCP_MEMTYPE_LOCAL,
             .dst = SRAM_DST, .dst_mem = CCP_MEMTYPE_LOCAL,
         };
+
+        uint64_t out_addr = SRAM_DST;
 
         if (!qts) {
             return;
@@ -530,17 +532,30 @@ static void test_window_ccp(void)
                            n);
             qtest_writel(qts, X86_CTRL, 0x1f);
             d.src = X86_WINDOW0 + 0x1000;
-        } else {
+        } else if (c == 1) {
             /* The 1 MiB SMN RAM window at 0x30500000 through SMN slots 0, 1 */
             qtest_writew(qts, SMN_CTRL + 2, 0x305);
             qtest_memwrite(qts, SMN_WINDOW0 + SMN_SLOT_SIZE + 0x1000, stream,
                            n);
             qtest_writew(qts, SMN_CTRL, 0x305);
             d.src = SMN_WINDOW0 + 0x1000;
+        } else {
+            /*
+             * Secure DRAM in the tail of an x86 window that starts in MMIO,
+             * the Zen3 BL's layout: the target is no RAM at its start, and
+             * the stream is longer than a bounce buffer.
+             */
+            qtest_writel(qts, X86_CTRL + X86_SLOT_REGS, 0x3fff7e);
+            qtest_memwrite(qts, X86_WINDOW0 + X86_SLOT_SIZE + 0x3820760,
+                           stream, n);
+            qtest_writel(qts, X86_CTRL, 0x3fff7e);
+            d.src = X86_WINDOW0 + 0x3820760;
+            d.dst = X86_WINDOW0 + 0x3800000;
+            out_addr = d.dst;
         }
         g_assert_cmpuint(psp_ccp_run(qts, &d), ==, 0);
         g_assert_cmpuint(qtest_readl(qts, CCP_ZLIB_WRITTEN), ==, PAYLOAD);
-        qtest_memread(qts, SRAM_DST, out, sizeof(out));
+        qtest_memread(qts, out_addr, out, sizeof(out));
         g_assert_cmpmem(out, sizeof(out), payload, sizeof(payload));
         qtest_quit(qts);
     }
