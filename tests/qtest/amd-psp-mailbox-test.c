@@ -168,7 +168,7 @@ static void test_ring_ack_ring(void)
     qtest_quit(qts);
 }
 
-/* The doorbell is Zen2-only by default; the property moves or disables it */
+/* The doorbell is on by default for Zen2 and Zen3; the property moves or disables it */
 static void test_doorbell_property(void)
 {
     QTestState *qts;
@@ -179,13 +179,13 @@ static void test_doorbell_property(void)
         return;
     }
     ring_and_drain(qts, IC_BASE, MBOX_INT_ENABLE_SECOS, pending);
-    psp_ic_assert_only(pending, -1);
+    psp_ic_assert_only(pending, SRC_DOORBELL);
     qtest_quit(qts);
 
     qts = psp_startf(PSP_ZEN3, "-global driver=amd_psp.mailbox,"
-                     "property=doorbell_irq_id,value=%d", SRC_DOORBELL);
+                     "property=doorbell_irq_id,value=-1");
     ring_and_drain(qts, IC_BASE, MBOX_INT_ENABLE_SECOS, pending);
-    psp_ic_assert_only(pending, SRC_DOORBELL);
+    psp_ic_assert_only(pending, -1);
     qtest_quit(qts);
 
     qts = psp_startf(PSP_ZEN2, "-global driver=amd_psp.mailbox,"
