@@ -42,8 +42,8 @@ void aspfuzz_smn_update_slot(uint32_t idx);
 void aspfuzz_smn_update_slot(uint32_t idx)
 {
     PSPSmnAddr addr = aspfuzz_smn_slots[idx];
-    memory_region_set_alias_offset(&aspfuzz_smn_state->psp_smn_containers[idx],
-                                   addr);
+    psp_window_set_target(&aspfuzz_smn_state->psp_smn_windows[idx], addr);
+    aspfuzz_smn_state->psp_smn_alias[idx] = addr;
     trace_psp_smn_update_slot(idx, addr);
 }
 
@@ -121,7 +121,7 @@ static void psp_smn_set_alias(PSPSmnState *smn, uint32_t idx, hwaddr offset)
 {
     /* TODO documentation */
     smn->psp_smn_alias[idx] = offset;
-    memory_region_set_alias_offset(&smn->psp_smn_containers[idx], offset);
+    psp_window_set_target(&smn->psp_smn_windows[idx], offset);
 }
 
 static void psp_smn_mirror_slot(PSPSmnState *smn, uint32_t idx)
@@ -153,8 +153,10 @@ static void psp_smn_write(void* opaque, hwaddr offset, uint64_t value,
         idx = (offset / 4) * 2;
         smn->psp_smn_slots[idx] = ((uint32_t)value & 0xffff) << 20;
         smn->psp_smn_slots[idx + 1] = ((uint32_t)value >> 16) << 20;
+        psp_window_begin_update();
         psp_smn_update_slot(smn, idx);
         psp_smn_update_slot(smn, idx + 1);
+        psp_window_end_update();
         break;
     case 2:
         idx = offset / 2;
@@ -198,16 +200,18 @@ static uint64_t psp_smn_read(void* opaque, hwaddr offset, unsigned int size)
 
 /*
  * The slot registers and the applied alias offsets are restored as they were
- * saved; the memory core is then pointed at those offsets again.
+ * saved; the windows are then pointed at those offsets again.
  */
 static int psp_smn_post_load(void *opaque, int version_id)
 {
     PSPSmnState *smn = PSP_SMN(opaque);
 
+    psp_window_begin_update();
     for (int i = 0; i < PSP_SMN_SLOT_COUNT; i++) {
         psp_smn_set_alias(smn, i, smn->psp_smn_alias[i]);
         psp_smn_mirror_slot(smn, i);
     }
+    psp_window_end_update();
     return 0;
 }
 
@@ -278,20 +282,16 @@ static void psp_smn_realize_slots(PSPSmnState* s)
         /* The SMN MMIO region of the PSP */
         snprintf(name, PSP_SMN_SLOT_NAME_LEN, "%s%d", PSP_SMN_SLOT_NAME, i);
 
-        /* TODO: How to check for errors? */
-        /* Each container is an alias to the SMN address space. Here we
-         * initialize each container beginning with the address 0 in the SMN
-         * address space.
+        /* Each window shows the SMN address space, initially from address 0
+         * of the slot's own 1M, see psp_window_init().
          */
-        memory_region_init_alias(&s->psp_smn_containers[i], OBJECT(s), name,
-                                 &s->psp_smn_space, i * PSP_SMN_SLOT_SIZE,
-                                 PSP_SMN_SLOT_SIZE);
-
-        /* Map the containers to the PSP address space */
         slot_offset = s->psp_smn_base + i * PSP_SMN_SLOT_SIZE;
 
-        memory_region_add_subregion_overlap(get_system_memory(), slot_offset,
-                                            &s->psp_smn_containers[i], 0);
+        /* Map the windows to the PSP address space */
+        psp_window_init(&s->psp_smn_windows[i], OBJECT(s), name,
+                        get_system_memory(), slot_offset, &s->psp_smn_space,
+                        &s->psp_smn_space_as, i * PSP_SMN_SLOT_SIZE,
+                        PSP_SMN_SLOT_SIZE);
     }
 }
 
@@ -404,11 +404,13 @@ static void psp_smn_reset_hold(Object *obj, ResetType type)
 {
     PSPSmnState *smn = PSP_SMN(obj);
 
+    psp_window_begin_update();
     for (int i = 0; i < PSP_SMN_SLOT_COUNT; i++) {
         smn->psp_smn_slots[i] = 0;
         psp_smn_set_alias(smn, i, i * PSP_SMN_SLOT_SIZE);
         psp_smn_mirror_slot(smn, i);
     }
+    psp_window_end_update();
 }
 
 static void psp_smn_class_init(ObjectClass* oc, const void* data)

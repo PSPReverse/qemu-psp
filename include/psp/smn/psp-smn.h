@@ -22,6 +22,7 @@
 #include "system/memory.h"
 #include "hw/sysbus.h"
 
+#include "psp/psp-window.h"
 #include "psp/smn/psp-smn-flash.h"
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-mp5.h"
@@ -54,8 +55,8 @@ typedef struct PSPSmnState {
     /* MemoryRegion containing the MMIO control registers */
     MemoryRegion psp_smn_control;
 
-    /* MemoryRegions containing the SMN slots */
-    MemoryRegion psp_smn_containers[PSP_SMN_SLOT_COUNT];
+    /* The SMN slots */
+    PspWindow psp_smn_windows[PSP_SMN_SLOT_COUNT];
 
     /* Full 32bit SMN address space */
     MemoryRegion psp_smn_space;

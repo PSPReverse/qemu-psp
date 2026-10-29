@@ -11,6 +11,11 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 
+#define SMN_CTRL 0x03220000
+#define SMN_WINDOW0 0x01000000          /* PSP address of slot 0 */
+#define SMN_SLOT_SIZE 0x100000
+#define X86_SLOT_SIZE 0x4000000
+
 /* The mapper registers are plain per-slot storage */
 static void test_mapper_registers(void)
 {
@@ -383,6 +388,164 @@ static void test_zen3_dram_split(void)
     qtest_quit(qts);
 }
 
+/*
+ * A window shows what its slot register selects, at every access size, also
+ * when it is used a lot while it stays put and when it is moved afterwards.
+ */
+static void test_window_retarget(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+    static const uint8_t want[7] = { 0x00, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
+    uint8_t buf[7];
+
+    if (!qts) {
+        return;
+    }
+    /* Slot 0 on low DRAM (x86 0x0) */
+    qtest_writel(qts, X86_CTRL, 0);
+    qtest_writeb(qts, X86_WINDOW0 + 0x100, 0x11);
+    qtest_writew(qts, X86_WINDOW0 + 0x102, 0x3322);
+    qtest_writel(qts, X86_WINDOW0 + 0x104, 0x77665544);
+    qtest_writeq(qts, X86_WINDOW0 + 0x108, 0xffeeddccbbaa9988ull);
+    g_assert_cmphex(qtest_readq(qts, X86_WINDOW0 + 0x100), ==,
+                    0x7766554433220011ull);
+    g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x100), ==, 0x11);
+    g_assert_cmphex(qtest_readw(qts, X86_WINDOW0 + 0x102), ==, 0x3322);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x104), ==, 0x77665544);
+    g_assert_cmphex(qtest_readq(qts, X86_WINDOW0 + 0x108), ==,
+                    0xffeeddccbbaa9988ull);
+    /* Unaligned and crossing words */
+    qtest_memread(qts, X86_WINDOW0 + 0x101, buf, sizeof(buf));
+    g_assert_cmpmem(buf, sizeof(buf), want, sizeof(want));
+
+    /* A move shows other memory, and the memory behind the old one is kept */
+    qtest_writel(qts, X86_CTRL, 1u << 6);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x104), ==, 0);
+    qtest_writel(qts, X86_WINDOW0 + 0x104, 0xdeadbeef);
+    qtest_writel(qts, X86_CTRL, 0);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x104), ==, 0x77665544);
+
+    /* Heavy use makes the window an alias; it must show the same memory */
+    for (int i = 0; i < 1000; i++) {
+        qtest_writel(qts, X86_WINDOW0 + 0x1000 + 4 * i, i * 3 + 1);
+    }
+    for (int i = 0; i < 1000; i++) {
+        g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x1000 + 4 * i), ==,
+                        i * 3 + 1);
+    }
+    /* Moving it back and forth keeps both contents */
+    qtest_writel(qts, X86_CTRL, 1u << 6);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x1000 + 4), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x104), ==, 0xdeadbeef);
+    qtest_writel(qts, X86_CTRL, 0);
+    for (int i = 0; i < 1000; i++) {
+        g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x1000 + 4 * i), ==,
+                        i * 3 + 1);
+    }
+    qtest_quit(qts);
+}
+
+/*
+ * A window onto a device keeps reaching it when moved to RAM and back, also
+ * after many accesses, and a window onto nothing mapped reads as such.
+ */
+static void test_window_device(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    for (int i = 0; i < 1000; i++) {
+        g_assert_cmphex(qtest_readb(qts, FCH_UART_LSR) & 0x60, ==, 0x60);
+    }
+    qtest_writel(qts, X86_CTRL, 0x1f);
+    qtest_writel(qts, X86_WINDOW0 + 0x100, 0x11223344);
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, FCH_UART_LSR) & 0x60, ==, 0x60);
+    qtest_writel(qts, X86_CTRL, 0x1f);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x11223344);
+    qtest_quit(qts);
+}
+
+/* zlib stream of PAYLOAD in one stored block */
+static size_t zlib_stored(uint8_t *out, const uint8_t *payload, uint16_t len)
+{
+    uint32_t a = 1, b = 0;
+    size_t n = 0;
+
+    out[n++] = 0x78;
+    out[n++] = 0x01;
+    out[n++] = 0x01;
+    out[n++] = len & 0xff;
+    out[n++] = len >> 8;
+    out[n++] = ~len & 0xff;
+    out[n++] = (~len >> 8) & 0xff;
+    for (int i = 0; i < len; i++) {
+        a = (a + payload[i]) % 65521;
+        b = (b + a) % 65521;
+        out[n++] = payload[i];
+    }
+    out[n++] = b >> 8;
+    out[n++] = b & 0xff;
+    out[n++] = a >> 8;
+    out[n++] = a & 0xff;
+    return n;
+}
+
+/*
+ * The CCP inflates a stream that it must map whole. It is longer than a bounce
+ * buffer, and sits in RAM behind a window that was only just pointed there.
+ */
+static void test_window_ccp(void)
+{
+    enum { PAYLOAD = 6000 };
+    uint8_t payload[PAYLOAD], stream[PAYLOAD + 16], out[PAYLOAD];
+    size_t n;
+
+    for (int i = 0; i < PAYLOAD; i++) {
+        payload[i] = i * 13 + (i >> 8);
+    }
+    n = zlib_stored(stream, payload, PAYLOAD);
+
+    for (int c = 0; c < 2; c++) {
+        QTestState *qts = psp_start(PSP_ZEN3);
+        PspCcpDesc d = {
+            .engine = CCP_ENGINE_ZLIB, .flags = CCP_INIT | CCP_EOM,
+            .len = n, .src_mem = CCP_MEMTYPE_LOCAL,
+            .dst = SRAM_DST, .dst_mem = CCP_MEMTYPE_LOCAL,
+        };
+
+        if (!qts) {
+            return;
+        }
+        if (c == 0) {
+            /*
+             * x86 DRAM at x86 0x7c000000 through slots 0 and 1. The data goes
+             * in through slot 1, so slot 0 is not used before the CCP is.
+             */
+            qtest_writel(qts, X86_CTRL + X86_SLOT_REGS, 0x1f);
+            qtest_memwrite(qts, X86_WINDOW0 + X86_SLOT_SIZE + 0x1000, stream,
+                           n);
+            qtest_writel(qts, X86_CTRL, 0x1f);
+            d.src = X86_WINDOW0 + 0x1000;
+        } else {
+            /* The 1 MiB SMN RAM window at 0x30500000 through SMN slots 0, 1 */
+            qtest_writew(qts, SMN_CTRL + 2, 0x305);
+            qtest_memwrite(qts, SMN_WINDOW0 + SMN_SLOT_SIZE + 0x1000, stream,
+                           n);
+            qtest_writew(qts, SMN_CTRL, 0x305);
+            d.src = SMN_WINDOW0 + 0x1000;
+        }
+        g_assert_cmpuint(psp_ccp_run(qts, &d), ==, 0);
+        g_assert_cmpuint(qtest_readl(qts, CCP_ZLIB_WRITTEN), ==, PAYLOAD);
+        qtest_memread(qts, SRAM_DST, out, sizeof(out));
+        g_assert_cmpmem(out, sizeof(out), payload, sizeof(payload));
+        qtest_quit(qts);
+    }
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -391,6 +554,9 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/regular-dram-default",
                    test_regular_dram_default);
     qtest_add_func("/amd-psp/x86/zen3-dram-split", test_zen3_dram_split);
+    qtest_add_func("/amd-psp/x86/window-retarget", test_window_retarget);
+    qtest_add_func("/amd-psp/x86/window-device", test_window_device);
+    qtest_add_func("/amd-psp/x86/window-ccp", test_window_ccp);
     qtest_add_func("/amd-psp/x86/port61", test_port61);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);

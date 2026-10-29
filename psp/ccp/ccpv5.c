@@ -35,6 +35,7 @@
 
 #include "psp/ccp/ccpv5-linux.h"
 #include "psp/ccp/ccpv5-nettle.h"
+#include "psp/psp-window.h"
 #include "psp/psp-todo.h"
 /* TODO: Restrict access to specific MemoryRegions only.
  *       Verify correct use of ccp_map/cpu_physical_memory_unmap */
@@ -54,6 +55,8 @@ static const MemTxAttrs ccp_attrs = {.requester_id = CCP_REQUESTER_ID};
  */
 static void* ccp_map(hwaddr addr, hwaddr* plen, bool is_write)
 {
+    /* RAM behind an SMN or x86 window is mapped through the window */
+    psp_window_prepare_map(addr, *plen);
     return address_space_map(&address_space_memory, addr, plen, is_write,
                              ccp_attrs);
 }
