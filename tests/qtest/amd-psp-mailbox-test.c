@@ -240,6 +240,54 @@ static void test_qom_write(void)
     qtest_quit(qts);
 }
 
+static char *mbox_words(QTestState *qts)
+{
+    QDict *rsp = qtest_qmp(qts, "{'execute': 'qom-get', 'arguments': "
+                           "{'path': %s, 'property': 'words'}}", MBOX_PATH);
+    char *v;
+
+    g_assert_true(qdict_haskey(rsp, "return"));
+    v = g_strdup(qdict_get_str(rsp, "return"));
+    qobject_unref(rsp);
+    return v;
+}
+
+/* The read-only "words" property shows the three words and the enable register */
+static void test_qom_words(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+    char *w;
+    QDict *rsp;
+
+    if (!qts) {
+        return;
+    }
+    w = mbox_words(qts);
+    g_assert_cmpstr(w, ==, "0x0,0x0,0x0,0x0");
+    g_free(w);
+
+    qtest_writel(qts, MBOX_INT_ENABLE, 0x3f300ffc);
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'write', "
+                             "'value': '1,0x1000000'}}", MBOX_PATH);
+    qtest_qmp_assert_success(qts, "{'execute': 'qom-set', 'arguments': "
+                             "{'path': %s, 'property': 'write', "
+                             "'value': '0,0x10000'}}", MBOX_PATH);
+    /* The firmware's reply goes through the bus, not the property */
+    qtest_writel(qts, MBOX_WORD(0), 0xa0000000);
+    qtest_writel(qts, MBOX_WORD(2), 0x12);
+    w = mbox_words(qts);
+    g_assert_cmpstr(w, ==, "0xa0000000,0x1000000,0x12,0x3f300ffc");
+    g_free(w);
+
+    rsp = qtest_qmp(qts, "{'execute': 'qom-set', 'arguments': "
+                    "{'path': %s, 'property': 'words', 'value': 'x'}}",
+                    MBOX_PATH);
+    g_assert_true(qdict_haskey(rsp, "error"));
+    qobject_unref(rsp);
+    qtest_quit(qts);
+}
+
 /*
  * A CCP passthrough copy onto word 0 lands there, but it is CCP DMA, not an
  * external write: only the CCP completion is raised.
@@ -280,6 +328,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/mailbox/doorbell-property",
                    test_doorbell_property);
     qtest_add_func("/amd-psp/mailbox/qom-write", test_qom_write);
+    qtest_add_func("/amd-psp/mailbox/qom-words", test_qom_words);
     qtest_add_func("/amd-psp/mailbox/ccp-copy", test_ccp_copy);
 
     return psp_test_run();

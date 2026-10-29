@@ -70,6 +70,33 @@ WORD >= 3 returns a QMP error.
 {"execute": "qom-set", "arguments": {"path": "/machine/soc/mailbox", "property": "write", "value": "0,0x1b0000"}}
 ```
 
+### Host mailbox exchange over QMP / HMP
+
+For the Zen3 off-chip BL's host commands (word 0 = `command << 16`, replies `0xA0000000 | rc`;
+word 1 / word 2 = low / high half of the x86 buffer address). Three properties, all taking the
+BQL like any QOM setter:
+
+| Property | QOM path | Syntax | Notes |
+|---|---|---|---|
+| `words` (read-only) | `/machine/soc/mailbox` | `"w0,w1,w2,ctrl"`, hex, e.g. `0xa0000000,0x0,0x0,0x3f300ffc` | `ctrl` is the `0x0301069c` enable register. C ABI twin: `aspfuzz_mailbox_read(word, &value)`, word 0..3, `-1` on no mailbox or word > 3. |
+| `poke` (write-only) | `/machine/soc/x86/x86-full-memory` | `"ADDR,HEXBYTES"`: ADDR hex x86 physical address, HEXBYTES 1..4096 bytes as an even number of hex digits | `address_space_write` on the x86 space with `MEMTXATTRS_UNSPECIFIED`, so the guest sees it through the mapper slots like a host write. Bad syntax, odd length, more than 4096 bytes, non-hex data, or an address outside 48 bits is a QMP error. |
+| `peek` (write-only) + `peek_result` (read-only) | same | `peek`: `"ADDR,LEN"`, both hex, LEN 1..0x1000 | Reads the x86 space into `peek_result` (lower-case hex, no separators). `peek_result` is the empty string after a failed `peek` or before the first one. |
+
+(The x86 device's path is the mapper's child `x86-full-memory` under `/machine/soc/x86`; the
+access observer is a sibling at `/machine/soc/x86/access-observer`.)
+
+Sequence for one command (buffer at x86 `0x1000000`, command `0x1`):
+
+```
+qom-set /machine/soc/x86/x86-full-memory poke "01000000,deadbeef"   # 1. command buffer
+qom-set /machine/soc/mailbox write "1,0x1000000"                    # 2. buffer address low
+qom-set /machine/soc/mailbox write "2,0"                            #    buffer address high
+qom-set /machine/soc/mailbox write "0,0x10000"                      # 3. word 0 = cmd<<16: rings the doorbell
+qom-get /machine/soc/mailbox words                                  # 4. reply: w0 = 0xa0000000|rc
+qom-set /machine/soc/x86/x86-full-memory peek "01000000,10"         # 5. read the buffer back
+qom-get /machine/soc/x86/x86-full-memory peek_result
+```
+
 ## 3. Exported `aspfuzz_*` symbols
 
 All are non-static and get no header declaration, except where noted. "BQL" means the
@@ -82,6 +109,7 @@ caller must hold the big QEMU lock (not checked for all of them).
 | `aspfuzz_irq_inject` | `int32_t (uint32_t id)` | `psp-irq.c:207` | Takes BQL only if the caller does not hold it (`bql_locked()`, `:211-213`). Global set at realize (`:266`), cleared at unrealize (`:228`). | `-1` if no IC realized or `id >= 128`; else `0`. |
 | `aspfuzz_timer_advance` | `int32_t (uint64_t ns)` | `psp-timer.c` (after `psp_timer_derived_count`) | Adds `ns` to the timer1 counter offset (`counter_offset_ns`, in vmstate, zeroed on reset). Effective only with `counter_hz != 0`; with 0 the offset is stored and ignored, so the default counter is unchanged. Does not fire or re-arm the expiry timer, so an armed expiry keeps its host-clock deadline. Takes BQL only if the caller does not hold it. Global set at timer1 realize (the first realized timer, which `psp.c` realizes first), cleared at unrealize. | `-1` if timer1 is not realized or the offset would overflow `uint64`; else `0`. |
 | `aspfuzz_mailbox_write` | `int32_t (uint32_t word, uint32_t value)` | `mailbox.c` (before `realize`) | Writes mailbox word `word` (0..2, at `0x03010570 + 4*word`) with a 4-byte `address_space_write` on `address_space_memory` and `MEMTXATTRS_UNSPECIFIED`, so word 0 rings the doorbell when `0x0301069c` arms it. Takes BQL only if the caller does not hold it. Global set at realize, cleared at unrealize. The QOM property `write` (see below) shares the body. | `-1` if no mailbox is realized or `word >= 3`; else the `address_space_write` result (0 = ok). |
+| `aspfuzz_mailbox_read` | `int32_t (uint32_t word, uint32_t *value)` | `mailbox.c` (after `aspfuzz_mailbox_write`) | Reads mailbox word `word` (0..2) or, for `word` 3, the enable register value (`0x0301069c`) straight from the device state, with no bus access. Takes BQL only if the caller does not hold it. Same global as `aspfuzz_mailbox_write`. The QOM property `words` (see below) shares the state. | `-1` if no mailbox is realized, `value` is NULL or `word > 3`; else `0`. |
 | `aspfuzz_smn_update_slot` | `void (uint32_t idx)` | `psp-smn.c:39` | Needs `aspfuzz_smn_state` set (`:132`, by a guest slot write). No bounds check on `idx` (array of 32, `:35`). Otherwise NULL dereference at `:42`. BQL: unverified. | none |
 | `aspfuzz_smn_write` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:49` | `global_smn_as` set at realize (`:273`), never cleared. Uses `address_space_write_rom`. BQL: unverified. | `-1` if unset, `buf` is NULL or `size <= 0`; else the `address_space_write_rom` result (unverified convention). |
 | `aspfuzz_smn_read` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:58` | Same as above, `address_space_read`. | `-1` if unset, `buf` is NULL or `size <= 0`; else the `address_space_read` result (unverified convention). |

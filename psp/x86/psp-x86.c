@@ -27,6 +27,7 @@
 #include "hw/loader.h"
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
+#include "qemu/cutils.h"
 #include "qemu/log.h"
 #include "system/system.h"
 #include "trace.h"
@@ -59,6 +60,113 @@ int32_t aspfuzz_x86_read(hwaddr addr, void* buf, hwaddr size)
                               MEMTXATTRS_UNSPECIFIED, buf, size);
 }
 /** END exposing the x86 AddressSpace for ASPFuzz */
+
+#define X86_POKE_MAX 4096
+
+/*
+ * Write-only "poke" property: "ADDR,HEXBYTES". ADDR is a hex x86 physical
+ * address, HEXBYTES up to 4096 bytes in hex. Written with unspecified
+ * attributes, as a host write would be.
+ */
+static void psp_x86_set_poke(Object* obj, const char* str, Error** errp)
+{
+    PSPX86State* s = PSP_X86(obj);
+    const char* comma = strchr(str, ',');
+    g_autofree char* astr = NULL;
+    g_autofree uint8_t* buf = NULL;
+    uint64_t addr;
+    size_t len, i;
+
+    if (!comma) {
+        error_setg(errp, "expected \"ADDR,HEXBYTES\"");
+        return;
+    }
+    astr = g_strndup(str, comma - str);
+    if (qemu_strtou64(astr, NULL, 16, &addr) < 0) {
+        error_setg(errp, "bad hex address");
+        return;
+    }
+    len = strlen(comma + 1);
+    if (len == 0 || len % 2 != 0) {
+        error_setg(errp, "data must be a non-empty, even number of hex digits");
+        return;
+    }
+    len /= 2;
+    if (len > X86_POKE_MAX) {
+        error_setg(errp, "at most %d bytes", X86_POKE_MAX);
+        return;
+    }
+    if (addr >= X86_PHYS_ADDR_SPACE_SIZE ||
+        len > X86_PHYS_ADDR_SPACE_SIZE - addr) {
+        error_setg(errp, "range outside the x86 address space");
+        return;
+    }
+    buf = g_malloc(len);
+    for (i = 0; i < len; i++) {
+        int hi = g_ascii_xdigit_value(comma[1 + 2 * i]);
+        int lo = g_ascii_xdigit_value(comma[2 + 2 * i]);
+
+        if (hi < 0 || lo < 0) {
+            error_setg(errp, "bad hex data");
+            return;
+        }
+        buf[i] = hi << 4 | lo;
+    }
+    if (address_space_write(&s->as, addr, MEMTXATTRS_UNSPECIFIED, buf, len) !=
+        MEMTX_OK) {
+        error_setg(errp, "write to the x86 address space failed");
+    }
+}
+
+/* Write-only "peek" property: "ADDR,LEN" (hex ADDR, hex LEN <= 4096) */
+static void psp_x86_set_peek(Object* obj, const char* str, Error** errp)
+{
+    PSPX86State* s = PSP_X86(obj);
+    const char* comma = strchr(str, ',');
+    g_autofree char* astr = NULL;
+    g_autofree uint8_t* buf = NULL;
+    GString* hex;
+    uint64_t addr, len;
+
+    g_clear_pointer(&s->peek_result, g_free);
+    if (!comma) {
+        error_setg(errp, "expected \"ADDR,LEN\"");
+        return;
+    }
+    astr = g_strndup(str, comma - str);
+    if (qemu_strtou64(astr, NULL, 16, &addr) < 0 ||
+        qemu_strtou64(comma + 1, NULL, 16, &len) < 0) {
+        error_setg(errp, "expected hex \"ADDR,LEN\"");
+        return;
+    }
+    if (len == 0 || len > X86_POKE_MAX) {
+        error_setg(errp, "LEN must be 1..%d", X86_POKE_MAX);
+        return;
+    }
+    if (addr >= X86_PHYS_ADDR_SPACE_SIZE ||
+        len > X86_PHYS_ADDR_SPACE_SIZE - addr) {
+        error_setg(errp, "range outside the x86 address space");
+        return;
+    }
+    buf = g_malloc(len);
+    if (address_space_read(&s->as, addr, MEMTXATTRS_UNSPECIFIED, buf, len) !=
+        MEMTX_OK) {
+        error_setg(errp, "read from the x86 address space failed");
+        return;
+    }
+    hex = g_string_sized_new(2 * len);
+    for (uint64_t i = 0; i < len; i++) {
+        g_string_append_printf(hex, "%02x", buf[i]);
+    }
+    s->peek_result = g_string_free(hex, false);
+}
+
+static char* psp_x86_get_peek_result(Object* obj, Error** errp)
+{
+    PSPX86State* s = PSP_X86(obj);
+
+    return g_strdup(s->peek_result ? s->peek_result : "");
+}
 
 static void psp_x86_init(Object* obj)
 {
@@ -199,6 +307,10 @@ static void psp_x86_class_init(ObjectClass* oc, const void* data)
     DeviceClass* dc = DEVICE_CLASS(oc);
     dc->realize = psp_x86_realize;
     device_class_set_props(dc, properties);
+    object_class_property_add_str(oc, "poke", NULL, psp_x86_set_poke);
+    object_class_property_add_str(oc, "peek", NULL, psp_x86_set_peek);
+    object_class_property_add_str(oc, "peek_result", psp_x86_get_peek_result,
+                                  NULL);
 }
 
 static const TypeInfo psp_x86_info = {
