@@ -2,6 +2,26 @@
   "spaces": {
     "smn_misc": [
       {
+        "offset": "0x1d050",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: DF indirect register access address (FICAA) the ABL programs the DRAM map through; read/write-back storage so reads return the last write."
+      },
+      {
+        "offset": "0x1d080",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: DF indirect register access data (FICAD); read/write-back storage so the DRAM base written in the DF After Training step reads back in the memory clear step."
+      },
+      {
+        "offset": "0x1d848",
+        "value": "0x2",
+        "source": "code-reading",
+        "note": "Memory clear status the ABL polls with no timeout: bit 1 must read set after the start write (bit 0). Constant bit 1 satisfies it; real semantics unconfirmed."
+      },
+      {
         "offset": "0x50df4",
         "value": "0x200",
         "source": "code-reading",
