@@ -2,20 +2,6 @@
   "spaces": {
     "smn_misc": [
       {
-        "offset": "0x1d050",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: DF indirect register access address (FICAA) the ABL programs the DRAM map through; read/write-back storage so reads return the last write."
-      },
-      {
-        "offset": "0x1d080",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: DF indirect register access data (FICAD); read/write-back storage so the DRAM base written in the DF After Training step reads back in the memory clear step."
-      },
-      {
         "offset": "0x1d848",
         "value": "0x2",
         "source": "code-reading",
