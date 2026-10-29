@@ -124,6 +124,9 @@ static uint32_t ccp_queue_read(CcpV5State* s, hwaddr offset, uint32_t id)
         ret = qs->ccp_q_status;
         trace_ccp_queue_status_read(id, ret);
         break;
+    case CCP_Q_SCRATCH_OFFSET:
+        ret = qs->ccp_q_scratch;
+        break;
     default:
         qemu_log_mask(LOG_UNIMP,
                       "CCP Error: CCP queue read at unknown "
@@ -995,6 +998,9 @@ static void ccp_queue_write(CcpV5State* s, hwaddr offset, uint32_t val,
         qs->ccp_q_status = val;
         trace_ccp_queue_status_write(id, val);
         break;
+    case CCP_Q_SCRATCH_OFFSET:
+        qs->ccp_q_scratch = val;
+        break;
     default:
         qemu_log_mask(LOG_UNIMP,
                       "CCP Error: CCP queue write at unknown "
@@ -1210,6 +1216,26 @@ static void ccp_init(Object* obj)
     s->zlib_bytes_written = 0;
 }
 
+/*
+ * Only present in the stream when non-zero, so streams of devices that never
+ * use the register (Zen2) are unchanged and older streams still load.
+ */
+static bool ccp_q_scratch_needed(void* opaque)
+{
+    return ((CcpV5QState*)opaque)->ccp_q_scratch != 0;
+}
+
+static const VMStateDescription ccp_q_scratch_vmstate = {
+    .name = "amd.ccpV5/q_state/scratch",
+    .version_id = 1,
+    .minimum_version_id = 1,
+    .needed = ccp_q_scratch_needed,
+    .fields = (const VMStateField[]){
+        VMSTATE_UINT32(ccp_q_scratch, CcpV5QState),
+        VMSTATE_END_OF_LIST()
+    }
+};
+
 static const VMStateDescription ccp_q_vmstate = {
     .name = "amd.ccpV5/q_state",
     .version_id = 1,
@@ -1221,6 +1247,10 @@ static const VMStateDescription ccp_q_vmstate = {
         VMSTATE_UINT32(ccp_q_status, CcpV5QState),
         VMSTATE_UINT32(ccp_q_id, CcpV5QState),
         VMSTATE_END_OF_LIST()
+    },
+    .subsections = (const VMStateDescription* const []){
+        &ccp_q_scratch_vmstate,
+        NULL
     }
 };
 

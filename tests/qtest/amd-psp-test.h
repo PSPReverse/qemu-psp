@@ -59,6 +59,7 @@
 #define CCP_Q_HEAD 0x4
 #define CCP_Q_TAIL 0x8
 #define CCP_Q_STATUS 0x100
+#define CCP_Q_SCRATCH 0x11c
 #define CCP_Q_RUN 1
 #define CCP_Q_HALT 2
 #define CCP_INT_STATUS (CCP_BASE + 0x6008)

@@ -38,6 +38,31 @@ static void test_queue_registers(void)
     qtest_quit(qts);
 }
 
+/* Queue offset 0x11c is a plain word per queue, separate from its neighbours */
+static void test_queue_scratch(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+
+    if (!qts) {
+        return;
+    }
+    for (int q = 0; q < 5; q++) {
+        g_assert_cmphex(qtest_readl(qts, Q(q) + CCP_Q_SCRATCH), ==, 0);
+    }
+    for (int q = 0; q < 5; q++) {
+        qtest_writel(qts, Q(q) + CCP_Q_SCRATCH, 0x76543210 + q);
+    }
+    for (int q = 0; q < 5; q++) {
+        g_assert_cmphex(qtest_readl(qts, Q(q) + CCP_Q_SCRATCH), ==,
+                        0x76543210 + q);
+        g_assert_cmphex(qtest_readl(qts, Q(q) + CCP_Q_CTRL), ==, CCP_Q_HALT);
+        g_assert_cmphex(qtest_readl(qts, Q(q) + CCP_Q_HEAD), ==, 0);
+        g_assert_cmphex(qtest_readl(qts, Q(q) + CCP_Q_TAIL), ==, 0);
+        g_assert_cmphex(qtest_readl(qts, Q(q) + CCP_Q_STATUS), ==, 0);
+    }
+    qtest_quit(qts);
+}
+
 /*
  * A passthrough copy lands, the queue ends halted with head == tail, the
  * completion is latched in the interrupt status and raised as IC source 0x15.
@@ -336,6 +361,7 @@ int main(int argc, char **argv)
     psp_test_init(&argc, &argv);
 
     qtest_add_func("/amd-psp/ccp/queue-registers", test_queue_registers);
+    qtest_add_func("/amd-psp/ccp/queue-scratch", test_queue_scratch);
     qtest_add_func("/amd-psp/ccp/passthrough", test_passthrough);
     qtest_add_func("/amd-psp/ccp/passthrough-lsb", test_passthrough_lsb);
     qtest_add_func("/amd-psp/ccp/sha256", test_sha256);
