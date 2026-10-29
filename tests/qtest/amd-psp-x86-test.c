@@ -268,6 +268,72 @@ static void test_fch_uart_no_chardev(void)
     qtest_quit(qts);
 }
 
+/* The Zen3 TPM TIS stand-in: locality 3 ACCESS/STS, locality 0 reads 0 */
+static void test_tpm_tis(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0x80);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC3_ACCESS), ==, 0x80);
+    qtest_writeb(qts, TPM_LOC3_ACCESS, 0x08);   /* seize: ignored */
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0x80);
+    qtest_writeb(qts, TPM_LOC3_ACCESS, 0x02);   /* requestUse */
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0xa1);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC3_STS), ==, 0x04000000);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_STS + 3), ==, 0x04);
+    g_assert_cmphex(qtest_readw(qts, TPM_LOC3_STS + 2), ==, 0x0400);
+    qtest_writel(qts, TPM_LOC3_STS, 0x02000000);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC3_STS), ==, 0x04000000);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0xa1);
+    qtest_writeb(qts, TPM_LOC3_ACCESS, 0x20);   /* release */
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0x81);
+    /* Locality 0 and the other locality 3 registers read 0 */
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC0), ==, 0);
+    qtest_writel(qts, TPM_LOC0, 0xffffffff);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC0), ==, 0);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC0 + 0x1000), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC0 + 0x3014), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC0 + 0x3fe0), ==, 0);
+    qtest_quit(qts);
+}
+
+static void test_tpm_tis_disabled(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN3, "-global "
+                                 "driver=amd_psp.x86.tpm,property=enabled,"
+                                 "value=off");
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0);
+    qtest_writeb(qts, TPM_LOC3_ACCESS, 0x02);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC3_STS), ==, 0);
+    qtest_quit(qts);
+}
+
+/* Zen2 has no TPM: the catch-all answers, ACCESS never reads valid */
+static void test_tpm_tis_zen2(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), !=, 0x80);
+    qtest_writeb(qts, TPM_LOC3_ACCESS, 0x02);
+    g_assert_cmphex(qtest_readb(qts, TPM_LOC3_ACCESS), !=, 0xa1);
+    g_assert_cmphex(qtest_readl(qts, TPM_LOC3_STS), !=, 0x04000000);
+    qtest_quit(qts);
+}
+
 /* An aborting child must die at once, not linger while dumping core */
 static void no_core(gpointer unused)
 {
@@ -653,6 +719,9 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);
     qtest_add_func("/amd-psp/x86/poke-peek", test_poke_peek);
+    qtest_add_func("/amd-psp/x86/tpm-tis", test_tpm_tis);
+    qtest_add_func("/amd-psp/x86/tpm-tis-disabled", test_tpm_tis_disabled);
+    qtest_add_func("/amd-psp/x86/tpm-tis-zen2", test_tpm_tis_zen2);
     qtest_add_func("/amd-psp/x86/fch-uart", test_fch_uart);
     qtest_add_func("/amd-psp/x86/fch-uart-no-chardev",
                    test_fch_uart_no_chardev);

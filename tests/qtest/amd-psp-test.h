@@ -87,6 +87,10 @@
 #define FCH_UART_SLOT_BASE 0x3f
 #define FCH_UART_THR (X86_WINDOW0 + 0x2dc9000)
 #define FCH_UART_LSR (FCH_UART_THR + 5 * 4)
+/* Zen3 TPM TIS (x86 0xfed40000, localities 0x1000 apart), same slot */
+#define TPM_LOC0 (X86_WINDOW0 + 0x2d40000)
+#define TPM_LOC3_ACCESS (TPM_LOC0 + 0x3000)
+#define TPM_LOC3_STS (TPM_LOC0 + 0x3018)
 
 /* zlib stream of "abcd" in one stored block, with its Adler-32 */
 static const uint8_t psp_zlib_abcd[] = {
