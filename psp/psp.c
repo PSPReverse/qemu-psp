@@ -238,6 +238,12 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
                                             s->mailbox.doorbell_irq_id));
     }
 
+    /* The Zen3 MP5 stand-in answers with IC source 0x10 */
+    if (PspNameToGen(DEVICE_GET_CLASS(dev)->desc) == ZEN3) {
+        sysbus_connect_irq(SYS_BUS_DEVICE(&s->smn.psp_smn_mp5), 0,
+                           qdev_get_gpio_in(DEVICE(&s->irq), PSP_MP5_IRQ_ID));
+    }
+
     /* Map Fuse */
     if (s->dbg_mode) {
         /* set dbg_mode if global dbg mode is active */

@@ -254,6 +254,8 @@ static void psp_smn_init(Object* obj)
                                 TYPE_PSP_SMN_DXIO_PCS);
         object_initialize_child(obj, "smn_smu", &s->psp_smn_smu,
                                 TYPE_PSP_SMN_SMU);
+        object_initialize_child(obj, "smn_mp5", &s->psp_smn_mp5,
+                                TYPE_PSP_SMN_MP5);
         object_initialize_child(obj, "smn_umc", &s->psp_smn_umc,
                                 TYPE_PSP_SMN_UMC);
     }
@@ -349,6 +351,10 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_SMU_BASE,
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_smu), 0), 0);
+        CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_mp5), errp);
+        memory_region_add_subregion_overlap(
+            &s->psp_smn_space, PSP_SMN_MP5_BASE,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_mp5), 0), 0);
         CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_dxio_pcs),
                        errp);
         for (unsigned i = 0; i < PSP_SMN_DXIO_PCS_COUNT; i++) {
