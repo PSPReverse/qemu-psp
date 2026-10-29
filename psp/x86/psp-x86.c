@@ -271,6 +271,18 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     serial_mm_init(&s->mr, FCH_UART0_BASE, 2, NULL, 115200, serial_hd(0),
                    DEVICE_LITTLE_ENDIAN);
 
+    /* The Zen3 off-chip BL's TPM bring-up polls a TIS interface */
+    if (s->generation == ZEN3) {
+        object_initialize_child(OBJECT(dev), "tpm", &s->tpm,
+                                TYPE_PSP_X86_TPM);
+        if (!sysbus_realize(SYS_BUS_DEVICE(&s->tpm), errp)) {
+            return;
+        }
+        memory_region_add_subregion(
+            &s->mr, PSP_X86_TPM_BASE,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->tpm), 0));
+    }
+
     /* Connect the misc device to the x86 address space */
     qdev_prop_set_uint32(DEVICE(&s->pci_config_space), "psp_generation",
                          s->generation);

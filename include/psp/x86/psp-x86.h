@@ -23,6 +23,7 @@
 #include "psp/mmio/psp-sts.h"
 #include "psp/x86/config-space.h"
 #include "psp/x86/x86-misc.h"
+#include "psp/x86/x86-tpm.h"
 
 #define TYPE_PSP_X86 "amd_psp.x86"
 #define PSP_X86(obj) OBJECT_CHECK(PSPX86State, (obj), TYPE_PSP_X86)
@@ -39,6 +40,9 @@ typedef struct PSPX86State {
 
     /*The PCI Config Space also known as PCICFG*/
     PSPX86ConfigSpaceState pci_config_space;
+
+    /* Zen3 TPM TIS stand-in, realized for Zen3 only */
+    PSPX86TpmState tpm;
 
     /* The centralized PSP Status register */
     PSPStsState sts;
