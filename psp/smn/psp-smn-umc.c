@@ -13,6 +13,10 @@
  *
  * The per channel register block at SMN 0x50000..0x502ff (chip select base
  * and mask registers among others) is read/write-back storage, reset value 0.
+ * One bit is derived: bit 9 of the register at 0x144 reads 1 while bit 31 of
+ * the register at 0x100 is set (inferred: the SEV INIT hardware check wants
+ * the channel's ready bit once the ABL has enabled the channel; the ABL does
+ * not read 0x144 after it enables the channel).
  *
  * Behind the window sits the Synopsys PMU mailbox (inferred):
  *   0xd0004 message pending, bit 0; 0 = a message is available
@@ -46,6 +50,11 @@
 #define ADDR_WRITE_FLAG 0x80000000u
 #define APB_MASK 0xfffffu
 #define STATUS_DONE 1
+
+#define CSR_ENABLE 0x100        /* bit 31: channel enabled */
+#define CSR_ENABLE_BIT 31
+#define CSR_READY 0x144         /* bit 9: ready, follows the enable bit */
+#define CSR_READY_BIT 9
 
 #define APB_MBOX_PENDING 0xd0004
 #define APB_MBOX_ACK 0xd0031
@@ -170,8 +179,14 @@ static const MemoryRegionOps psp_umc_ops = {
 static uint64_t psp_umc_csr_read(void *opaque, hwaddr offset, unsigned size)
 {
     PSPSmnUmcChannel *c = opaque;
-    uint32_t val = (c->csr[offset / 4] >> ((offset & 3) * 8)) &
-                   MAKE_64BIT_MASK(0, size * 8);
+    uint32_t word = c->csr[offset / 4];
+    uint32_t val;
+
+    if (offset / 4 == CSR_READY / 4) {
+        word = deposit32(word, CSR_READY_BIT, 1,
+                         extract32(c->csr[CSR_ENABLE / 4], CSR_ENABLE_BIT, 1));
+    }
+    val = (word >> ((offset & 3) * 8)) & MAKE_64BIT_MASK(0, size * 8);
 
     trace_psp_smn_umc_csr_read(c - c->parent->chan, offset, val);
     return val;

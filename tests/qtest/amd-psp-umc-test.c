@@ -219,6 +219,30 @@ static void test_csr_isolation(void)
     qtest_quit(qts);
 }
 
+/* Bit 9 of register 0x144 follows bit 31 of register 0x100, per channel */
+static void test_csr_ready_follows_enable(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    select_chan(qts, 0);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + 0x144)), ==, 0);
+    qtest_writel(qts, reg(CSR_BASE + 0x144), 0x101);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + 0x144)), ==, 0x101);
+    qtest_writel(qts, reg(CSR_BASE + 0x100), 0x80000200);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + 0x144)), ==, 0x301);
+    g_assert_cmphex(qtest_readb(qts, reg(CSR_BASE + 0x145)), ==, 0x03);
+    /* Another channel is unaffected */
+    select_chan(qts, 6);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + 0x144)), ==, 0);
+    select_chan(qts, 0);
+    qtest_writel(qts, reg(CSR_BASE + 0x100), 0x200);
+    g_assert_cmphex(qtest_readl(qts, reg(CSR_BASE + 0x144)), ==, 0x101);
+    qtest_quit(qts);
+}
+
 /* The windows do not exist on Zen2: no ready status, no data */
 static void test_zen2_absent(void)
 {
@@ -245,6 +269,8 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/umc/channel-isolation", test_channel_isolation);
     qtest_add_func("/amd-psp/umc/csr-readback", test_csr_readback);
     qtest_add_func("/amd-psp/umc/csr-isolation", test_csr_isolation);
+    qtest_add_func("/amd-psp/umc/csr-ready-follows-enable",
+                   test_csr_ready_follows_enable);
     qtest_add_func("/amd-psp/umc/mailbox", test_mailbox);
     qtest_add_func("/amd-psp/umc/pmu-message-property",
                    test_pmu_message_property);
