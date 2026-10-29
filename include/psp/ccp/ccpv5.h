@@ -50,6 +50,7 @@
 #define CCP_Q_HEAD_LO_OFFSET 0x4  /* Queue head register offset */
 #define CCP_Q_TAIL_LO_OFFSET 0x8  /* Queue tail register offset */
 #define CCP_Q_STATUS_OFFSET 0x100 /* Queue status register offset */
+#define CCP_Q_SCRATCH_OFFSET 0x11c /* Plain read/write word, Zen3 SEV init check */
 
 /* Global registers */
 #define CCP_CFG_INT_STATUS_OFFSET 0x8
@@ -97,6 +98,8 @@ typedef struct CcpV5QState {
 
     uint32_t ccp_q_id;
 
+    /* Plain read/write word at CCP_Q_SCRATCH_OFFSET */
+    uint32_t ccp_q_scratch;
 } CcpV5QState;
 
 typedef struct CcpV5State {
