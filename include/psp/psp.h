@@ -27,6 +27,7 @@
 #include "psp/ccp/ccpv5.h"
 #include "psp/generations.h"
 #include "psp/mmio/mailbox.h"
+#include "psp/mmio/sev-mailbox.h"
 #include "psp/mmio/psp-fuse.h"
 #include "psp/mmio/psp-sts.h"
 #include "psp/mmio/psp-timer.h"
@@ -117,6 +118,9 @@ typedef struct AmdPspState {
 
     /* Mailbox */
     MailboxState mailbox;
+
+    /* Zen3 SEV firmware mailbox */
+    SevMailboxState sev_mailbox;
 
     /* General unimplemented devices */
     UnimplementedDeviceState unimp;
