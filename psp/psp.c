@@ -214,14 +214,15 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
 
     /* Map Mailbox> */
     /*
-     * Only Zen2 SecOS is known to take the host doorbell (IC source 0x3c);
-     * -global driver=amd_psp.mailbox,property=doorbell_irq_id,value=N picks
-     * a source on any generation, -1 disables it.
+     * Zen2 SecOS and the Zen3 off-chip BL take the host doorbell on IC source
+     * 0x3c; -global driver=amd_psp.mailbox,property=doorbell_irq_id,value=N
+     * picks a source on any generation, -1 disables it.
      */
     if (s->mailbox.doorbell_irq_id == MAILBOX_DOORBELL_GEN_DEFAULT) {
+        PspGeneration gen = PspNameToGen(DEVICE_GET_CLASS(dev)->desc);
+
         qdev_prop_set_int32(DEVICE(&s->mailbox), "doorbell_irq_id",
-                            PspNameToGen(DEVICE_GET_CLASS(dev)->desc) == ZEN2
-                                ? 0x3c : -1);
+                            gen == ZEN2 || gen == ZEN3 ? 0x3c : -1);
     }
     if (!sysbus_realize(SYS_BUS_DEVICE(&s->mailbox), errp)) {
         return;
