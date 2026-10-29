@@ -77,6 +77,33 @@ static void test_port61(void)
     qtest_quit(qts);
 }
 
+/*
+ * Zen3: byte +4 of the per-core register alias at 0xfffdf7xxxxxx reads 1
+ * (every core ready), the neighbouring bytes stay unmodelled (0). Zen2 has
+ * no such alias.
+ */
+static void test_core_alias_ready(void)
+{
+    /* Slot 0 covers 0xfffdf4000000..0xfffdf7ffffff */
+    const uint32_t base = (0xfffdu << 6) | 0x3d;
+    const uint32_t core = 0x3f87f90;
+    unsigned gen;
+
+    for (gen = 0; gen < 2; gen++) {
+        QTestState *qts = psp_start(gen ? PSP_ZEN3 : PSP_ZEN2);
+
+        if (!qts) {
+            continue;
+        }
+        qtest_writel(qts, X86_CTRL, base);
+        g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core + 4), ==, gen);
+        g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core), ==, 0);
+        g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core + 5), ==, 0);
+        g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x1000 + 4), ==, 0);
+        qtest_quit(qts);
+    }
+}
+
 #define OBSERVER_PATH "/machine/soc/x86/access-observer"
 
 static void observer_set(QTestState *qts, const char *prop, const char *val)
@@ -726,6 +753,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/window-device", test_window_device);
     qtest_add_func("/amd-psp/x86/window-ccp", test_window_ccp);
     qtest_add_func("/amd-psp/x86/port61", test_port61);
+    qtest_add_func("/amd-psp/x86/core-alias-ready", test_core_alias_ready);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);
     qtest_add_func("/amd-psp/x86/poke-peek", test_poke_peek);
