@@ -34,6 +34,11 @@
 #define IC_PATH "/machine/soc/irq"
 #define MBOX_PATH "/machine/soc/mailbox"
 
+#define SEV_PATH "/machine/soc/sev-mailbox"
+/* Zen3 SEV mailbox words (include/psp/mmio/sev-mailbox.h) */
+#define SEV_WORD(n) ((n) == 0 ? 0x03010980 : 0x030109e0 + 4 * ((n) - 1))
+#define SRC_SEV 0x40
+
 #define SRC_CCP 0x15
 #define SRC_DOORBELL 0x3c
 

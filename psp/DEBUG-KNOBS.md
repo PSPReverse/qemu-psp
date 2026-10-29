@@ -15,6 +15,7 @@ also covers `amd-psp-zen*`.
 |---|---|---|---|---|---|
 | `force_group0`, `force_group1`, `force_group3` | `amd_psp.irq` | 0 | Bits marked pending on every reset. Bit n of group N is source `32*N+n`. | `-global driver=amd_psp.irq,property=force_group0,value=536870912` (0x20000000, source 0x1d) | `psp-irq.c:294-296` props, `:279-286` reset hold |
 | `doorbell_irq_id` | `amd_psp.mailbox` | 0x3c (60) | IC source raised on a write to mailbox word 0 (0x03010570) from outside the guest (`MemTxAttrs.unspecified`: qtest, `cpu_physical_memory_write`, `address_space_write` with `MEMTXATTRS_UNSPECIFIED`) while `0x0301069c` arms it; the PSP core's own writes never raise it. Debug writes through a virtual address (`cpu_memory_rw_debug`, gdbstub) carry the core's attributes and do not count (code read, not run). CCP DMA carries explicit attributes (`ccp_attrs`, requester id 0xcc), also when it lands on the mailbox through a bounce buffer, so it does not count either. `-1` disables. Wired at realize only. | `-global driver=amd_psp.mailbox,property=doorbell_irq_id,value=60` | `mailbox.c` `mailbox_properties`, `mailbox_write`; default and wiring in `psp.c` realize (`MAILBOX_DOORBELL_GEN_DEFAULT`, `sysbus_connect_irq`) |
+| `doorbell_irq_id` | `amd_psp.sev-mailbox` (Zen3 only) | 0x40 (64) | IC source raised on a write to the SEV command word (0x03010980) with bit 31 clear from outside the guest (`MemTxAttrs.unspecified`, same rule as the host mailbox); the BL's replies and CCP DMA never raise it. Line stays high until the BL acknowledges. `-1` disables. Wired at realize only. | `-global driver=amd_psp.sev-mailbox,property=doorbell_irq_id,value=-1` | `sev-mailbox.c` `sev_mailbox_properties`, `sev_mailbox_write`; wiring in `psp.c` realize |
 | `expiry_irq_id` | `amd_psp.timer` | -1 (off) | Periodic expiry raised on IC source N. Period at `+0x10` (100 MHz, 10 ns per tick). Only timer1 is wired. | `-global driver=amd_psp.timer,property=expiry_irq_id,value=96` (0x60, unverified as the tick id) | `psp-timer.c:238` prop, `:42-49` arm, `:52-57` expire; wiring `psp.c:187-192`; timer2 is not connected (`psp.c:193-196`) |
 | `counter_hz` | `amd_psp.timer` | 0 (off: +1 per read) | Non-zero: the counter at `+0x20` returns the last written value plus elapsed `QEMU_CLOCK_VIRTUAL` time scaled to this rate, so polls finish in virtual time. The enable bit is not consulted in this mode. Deterministic only with `-icount`; without it the value depends on host timing. The counter also adds the offset set by `aspfuzz_timer_advance()` (section 3), so a harness can skip guest time between runs. With `counter_hz` at 0 the offset is stored but has no effect. The same counter is read as a 64-bit value at PSP-misc `0x032001f0` (low word) and `0x032001f4` (high word); both read 0 while `counter_hz` is 0. The 64-bit semantics are inferred from the thesis (a free-running system timer the kernel compares with sleeper deadlines), not measured. The base is the last written `+0x20` value, and the two words come from separate snapshots, so they can disagree across a carry. | `-global driver=amd_psp.timer,property=counter_hz,value=100000000` | `psp-timer.c` `psp_timer_derived_count`, read and write `+0x20`; prop in `psp_timer_properties` |
 | `flash_img` | `amd_psp.smnflash` | unset | Host path of the flash image loaded into the SMN flash region. Unset or unloadable means `exit(1)`. | `-global driver=amd_psp.smnflash,property=flash_img,value=/path/to/image.bin` | `psp-smn-flash.c:79` prop, `:61-68` realize |
@@ -70,6 +71,25 @@ WORD >= 3 returns a QMP error.
 {"execute": "qom-set", "arguments": {"path": "/machine/soc/mailbox", "property": "write", "value": "0,0x1b0000"}}
 ```
 
+### SEV mailbox over QMP
+
+The Zen3 BL's second host mailbox, for the SEV firmware applet (contract inferred from static
+analysis, not verified against hardware): word 0 = `0x03010980` (command `cmd << 16`, bit 31
+clear; the BL replies `0x80000000 | (cmd & ~0xffff) | rc`), word 1 / word 2 = `0x030109e0` /
+`0x030109e4` (low / high half of the x86 buffer address). The device is
+`/machine/soc/sev-mailbox` (Zen3 only) with the same `write` ("WORD,VALUE", WORD 0..2) and
+read-only `words` (`"w0,w1,w2"`, hex) properties as the host mailbox; C ABI twins
+`aspfuzz_sev_mailbox_write(word, value)` and `aspfuzz_sev_mailbox_read(word, &value)`
+(`sev-mailbox.c`, same rules as `aspfuzz_mailbox_*`, word 0..2).
+
+```
+qom-set /machine/soc/x86/x86-full-memory poke "01000000,<zero bytes in hex>"   # 1. command buffer
+qom-set /machine/soc/sev-mailbox write "1,0x1000000"                           # 2. buffer address low
+qom-set /machine/soc/sev-mailbox write "2,0"                                   #    buffer address high
+qom-set /machine/soc/sev-mailbox write "0,0x40000"                             # 3. cmd<<16 (0x04): rings IC source 0x40
+qom-get /machine/soc/sev-mailbox words                                         # 4. poll: w0 = 0x80000000|cmd<<16|rc
+```
+
 ### Host mailbox exchange over QMP / HMP
 
 For the Zen3 off-chip BL's host commands (word 0 = `command << 16`, replies `0xA0000000 | rc`;
@@ -110,6 +130,8 @@ caller must hold the big QEMU lock (not checked for all of them).
 | `aspfuzz_timer_advance` | `int32_t (uint64_t ns)` | `psp-timer.c` (after `psp_timer_derived_count`) | Adds `ns` to the timer1 counter offset (`counter_offset_ns`, in vmstate, zeroed on reset). Effective only with `counter_hz != 0`; with 0 the offset is stored and ignored, so the default counter is unchanged. Does not fire or re-arm the expiry timer, so an armed expiry keeps its host-clock deadline. Takes BQL only if the caller does not hold it. Global set at timer1 realize (the first realized timer, which `psp.c` realizes first), cleared at unrealize. | `-1` if timer1 is not realized or the offset would overflow `uint64`; else `0`. |
 | `aspfuzz_mailbox_write` | `int32_t (uint32_t word, uint32_t value)` | `mailbox.c` (before `realize`) | Writes mailbox word `word` (0..2, at `0x03010570 + 4*word`) with a 4-byte `address_space_write` on `address_space_memory` and `MEMTXATTRS_UNSPECIFIED`, so word 0 rings the doorbell when `0x0301069c` arms it. Takes BQL only if the caller does not hold it. Global set at realize, cleared at unrealize. The QOM property `write` (see below) shares the body. | `-1` if no mailbox is realized or `word >= 3`; else the `address_space_write` result (0 = ok). |
 | `aspfuzz_mailbox_read` | `int32_t (uint32_t word, uint32_t *value)` | `mailbox.c` (after `aspfuzz_mailbox_write`) | Reads mailbox word `word` (0..2) or, for `word` 3, the enable register value (`0x0301069c`) straight from the device state, with no bus access. Takes BQL only if the caller does not hold it. Same global as `aspfuzz_mailbox_write`. The QOM property `words` (see below) shares the state. | `-1` if no mailbox is realized, `value` is NULL or `word > 3`; else `0`. |
+| `aspfuzz_sev_mailbox_write` | `int32_t (uint32_t word, uint32_t value)` | `sev-mailbox.c` | Writes SEV mailbox word `word` (0..2 = `0x03010980`, `0x030109e0`, `0x030109e4`) with a 4-byte `address_space_write` and `MEMTXATTRS_UNSPECIFIED`, so a word 0 command (bit 31 clear) rings the doorbell. Takes BQL only if the caller does not hold it. Global set at realize, cleared at unrealize; Zen3 only. | `-1` if no SEV mailbox is realized or `word >= 3`; else the `address_space_write` result (0 = ok). |
+| `aspfuzz_sev_mailbox_read` | `int32_t (uint32_t word, uint32_t *value)` | `sev-mailbox.c` | Reads SEV mailbox word `word` (0..2) straight from the device state, no bus access. Takes BQL only if the caller does not hold it. | `-1` if no SEV mailbox is realized, `value` is NULL or `word >= 3`; else `0`. |
 | `aspfuzz_smn_update_slot` | `void (uint32_t idx)` | `psp-smn.c:39` | Needs `aspfuzz_smn_state` set (`:132`, by a guest slot write). No bounds check on `idx` (array of 32, `:35`). Otherwise NULL dereference at `:42`. BQL: unverified. | none |
 | `aspfuzz_smn_write` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:49` | `global_smn_as` set at realize (`:273`), never cleared. Uses `address_space_write_rom`. BQL: unverified. | `-1` if unset, `buf` is NULL or `size <= 0`; else the `address_space_write_rom` result (unverified convention). |
 | `aspfuzz_smn_read` | `int (hwaddr addr, void* buf, int size)` | `psp-smn.c:58` | Same as above, `address_space_read`. | `-1` if unset, `buf` is NULL or `size <= 0`; else the `address_space_read` result (unverified convention). |

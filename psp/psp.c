@@ -96,6 +96,11 @@ static void amd_psp_init(Object* obj)
 
     object_initialize_child(obj, "mailbox", &s->mailbox, TYPE_MAILBOX);
 
+    if (PspNameToGen(DEVICE_GET_CLASS(obj)->desc) == ZEN3) {
+        object_initialize_child(obj, "sev-mailbox", &s->sev_mailbox,
+                                TYPE_SEV_MAILBOX);
+    }
+
     object_initialize_child(obj, "unimp", &s->unimp, TYPE_UNIMPLEMENTED_DEVICE);
 }
 
@@ -237,6 +242,23 @@ static void amd_psp_realize(DeviceState* dev, Error** errp)
         sysbus_connect_irq(SYS_BUS_DEVICE(&s->mailbox), 0,
                            qdev_get_gpio_in(DEVICE(&s->irq),
                                             s->mailbox.doorbell_irq_id));
+    }
+
+    /* The Zen3 BL takes SEV commands from the host on IC source 0x40 */
+    if (PspNameToGen(DEVICE_GET_CLASS(dev)->desc) == ZEN3) {
+        SysBusDevice* sev = SYS_BUS_DEVICE(&s->sev_mailbox);
+
+        if (!sysbus_realize(sev, errp)) {
+            return;
+        }
+        sysbus_mmio_map(sev, 0, PSP_SEV_MAILBOX_CMD);
+        sysbus_mmio_map(sev, 1, PSP_SEV_MAILBOX_ADDR_LO);
+        sysbus_mmio_map(sev, 2, PSP_SEV_MAILBOX_ADDR_HI);
+        if (s->sev_mailbox.doorbell_irq_id >= 0) {
+            sysbus_connect_irq(sev, 0,
+                               qdev_get_gpio_in(DEVICE(&s->irq),
+                                                s->sev_mailbox.doorbell_irq_id));
+        }
     }
 
     /* The Zen3 MP5 stand-in answers with IC source 0x10 */

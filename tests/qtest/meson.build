@@ -234,6 +234,7 @@ qtests_stm32l4x5 = \
 # runs just these
 qtests_amd_psp = [
   'amd-psp-mailbox-test',
+  'amd-psp-sev-mailbox-test',
   'amd-psp-ic-test',
   'amd-psp-timer-test',
   'amd-psp-ccp-test',
