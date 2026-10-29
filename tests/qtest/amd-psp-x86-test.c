@@ -349,6 +349,40 @@ static void test_regular_dram_default(void)
     }
 }
 
+/*
+ * The Zen3 DRAM is split around the MMIO hole: the first 2 GiB below it, the
+ * rest above 4 GiB. The FCH UART below 4 GiB stays reachable, both DRAM parts
+ * are accessible and they are backed by the same RAM block.
+ */
+static void test_zen3_dram_split(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+
+    if (!qts) {
+        return;
+    }
+    /* Slot 0 on the last 64 MiB of low DRAM (x86 0x7c000000) */
+    qtest_writel(qts, X86_CTRL, 0x1f);
+    qtest_writel(qts, X86_WINDOW0 + 0x100, 0x11223344);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x11223344);
+    /* Slot 0 on the first 64 MiB above 4 GiB (x86 0x100000000) */
+    qtest_writel(qts, X86_CTRL, 1u << 6);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0);
+    qtest_writel(qts, X86_WINDOW0 + 0x100, 0x55667788);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x55667788);
+    /* The last 64 MiB of the 6 GiB above 4 GiB (x86 0x27c000000) */
+    qtest_writel(qts, X86_CTRL, (2u << 6) | 0x1f);
+    qtest_writel(qts, X86_WINDOW0 + 0x100, 0x99aabbcc);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x99aabbcc);
+    /* Nothing of the above aliased into low DRAM */
+    qtest_writel(qts, X86_CTRL, 0x1f);
+    g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x100), ==, 0x11223344);
+    /* The FCH UART below 4 GiB is not shadowed by DRAM */
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, FCH_UART_LSR) & 0x60, ==, 0x60);
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -356,6 +390,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/mapper-registers", test_mapper_registers);
     qtest_add_func("/amd-psp/x86/regular-dram-default",
                    test_regular_dram_default);
+    qtest_add_func("/amd-psp/x86/zen3-dram-split", test_zen3_dram_split);
     qtest_add_func("/amd-psp/x86/port61", test_port61);
     qtest_add_func("/amd-psp/x86/observer-hits", test_observer_hits);
     qtest_add_func("/amd-psp/x86/observer-touched", test_observer_touched);

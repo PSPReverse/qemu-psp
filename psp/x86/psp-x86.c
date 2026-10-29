@@ -74,6 +74,13 @@ static void psp_x86_init(Object* obj)
 #define REGULAR_DRAM_DEFAULT_SIZE UINT64_C(0x40000000)
 #define REGULAR_DRAM_ZEN3_DEFAULT_SIZE UINT64_C(0x200000000)
 #define REGULAR_DRAM_BASE 0x0
+/*
+ * DRAM beyond this size is not mapped contiguously from 0: like on a real PC
+ * the first REGULAR_DRAM_LOW_SIZE bytes sit below the MMIO hole and the rest
+ * above 4 GiB, so that the x86 MMIO windows below 4 GiB stay reachable.
+ */
+#define REGULAR_DRAM_LOW_SIZE UINT64_C(0x80000000)
+#define REGULAR_DRAM_HIGH_BASE UINT64_C(0x100000000)
 
 #define PROTECTED_REGION_BASE 0xfffd00000000UL
 
@@ -121,7 +128,23 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     }
     memory_region_init_ram(&s->regular_dram, OBJECT(dev), "x86.regular_dram",
                            s->regular_dram_size, &error_abort);
-    memory_region_add_subregion(&s->mr, REGULAR_DRAM_BASE, &s->regular_dram);
+    if (s->regular_dram_size <= REGULAR_DRAM_LOW_SIZE) {
+        memory_region_add_subregion(&s->mr, REGULAR_DRAM_BASE,
+                                    &s->regular_dram);
+    } else {
+        /* One RAM block (one snapshot unit), exposed through two aliases */
+        memory_region_init_alias(&s->regular_dram_low, OBJECT(dev),
+                                 "x86.regular_dram_low", &s->regular_dram, 0,
+                                 REGULAR_DRAM_LOW_SIZE);
+        memory_region_add_subregion(&s->mr, REGULAR_DRAM_BASE,
+                                    &s->regular_dram_low);
+        memory_region_init_alias(&s->regular_dram_high, OBJECT(dev),
+                                 "x86.regular_dram_high", &s->regular_dram,
+                                 REGULAR_DRAM_LOW_SIZE,
+                                 s->regular_dram_size - REGULAR_DRAM_LOW_SIZE);
+        memory_region_add_subregion(&s->mr, REGULAR_DRAM_HIGH_BASE,
+                                    &s->regular_dram_high);
+    }
 
     /* Map PSP Status port */
     qdev_prop_set_bit(DEVICE(&s->sts), "in_x86_space", true);

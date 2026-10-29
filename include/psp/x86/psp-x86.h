@@ -55,6 +55,10 @@ typedef struct PSPX86State {
     /* DRAM exposed to the host software */
     MemoryRegion regular_dram;
 
+    /* Views of regular_dram when it is split around the MMIO hole */
+    MemoryRegion regular_dram_low;
+    MemoryRegion regular_dram_high;
+
     /* Size of regular_dram in bytes; every snapshot copies the whole block */
     uint64_t regular_dram_size;
 
