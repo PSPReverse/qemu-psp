@@ -172,6 +172,102 @@
         "note": "Same ABL poll as 0x123e04fc at the next SMN base 0x12600000 (stride 0x1000 per chiplet); the ABL stalls here once 0x123e{0..3}4fc are ready, value assumed equal, real semantics unconfirmed."
       },
       {
+        "offset": "0x12ee04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12e (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12ee14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12e (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12ee24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12e (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12ee34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12e (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12fe04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12f (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12fe14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12f (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12fe24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12f (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x12fe34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x12f (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x130e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x130 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x130e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x130 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x130e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x130 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x130e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x130 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x131e04fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x131 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x131e14fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x131 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x131e24fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x131 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
+        "offset": "0x131e34fc",
+        "value": "0xa00",
+        "source": "code-reading",
+        "note": "Same ABL poll as 0x123e04fc at the DXIO PCS instance 0x131 (stride 0x1000 per chiplet); value assumed equal, real semantics unconfirmed."
+      },
+      {
         "offset": "0x134e04ec",
         "value": "0x1",
         "source": "code-reading",

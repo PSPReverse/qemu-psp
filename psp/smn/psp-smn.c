@@ -245,10 +245,13 @@ static void psp_smn_init(Object* obj)
 
     object_initialize_child(obj, "smn_misc", &s->psp_smn_misc,
                             TYPE_PSP_SMN_MISC);
-    /* Only Zen3 has the SMBus controller, the SMU mailbox and the UMC APB windows */
+    /* Only Zen3 has the SMBus controller, the SMU mailbox, the UMC APB
+     * windows and the DXIO PCS registers */
     if (PSP_SMN_GET_CLASS(obj)->gen == ZEN3) {
         object_initialize_child(obj, "smn_smbus", &s->psp_smn_smbus,
                                 TYPE_PSP_SMN_SMBUS);
+        object_initialize_child(obj, "smn_dxio_pcs", &s->psp_smn_dxio_pcs,
+                                TYPE_PSP_SMN_DXIO_PCS);
         object_initialize_child(obj, "smn_smu", &s->psp_smn_smu,
                                 TYPE_PSP_SMN_SMU);
         object_initialize_child(obj, "smn_umc", &s->psp_smn_umc,
@@ -346,6 +349,16 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_SMU_BASE,
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_smu), 0), 0);
+        CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_dxio_pcs),
+                       errp);
+        for (unsigned i = 0; i < PSP_SMN_DXIO_PCS_COUNT; i++) {
+            memory_region_add_subregion_overlap(
+                &s->psp_smn_space,
+                ((hwaddr)(PSP_SMN_DXIO_PCS_FIRST + i)
+                 * PSP_SMN_DXIO_PCS_STRIDE) + PSP_SMN_DXIO_PCS_OFFSET,
+                sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_dxio_pcs),
+                                       i), 0);
+        }
         CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_umc), errp);
         for (unsigned i = 0; i < PSP_SMN_UMC_CHANNELS; i++) {
             memory_region_add_subregion_overlap(
