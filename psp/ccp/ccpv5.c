@@ -33,6 +33,7 @@
 #include "system/address-spaces.h"
 #include "trace.h"
 
+#include "psp/ccp/ccp-ecc.h"
 #include "psp/ccp/ccpv5-linux.h"
 #include "psp/ccp/ccpv5-nettle.h"
 #include "psp/psp-window.h"
@@ -860,10 +861,51 @@ static bool ccp_rsa(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     return false;
 }
 
+/* @return true if the descriptor failed, see ccp_aes */
+static bool ccp_ecc(CcpV5State *s, uint32_t id, ccp5_desc *desc)
+{
+    ccp_function func;
+    unsigned op;
+    uint32_t len = CCP5_CMD_LEN(desc);
+    ccp_memtype src_mtype = CCP5_CMD_SRC_MEM(desc);
+    ccp_memtype dst_mtype = CCP5_CMD_DST_MEM(desc);
+    hwaddr src = CCP5_CMD_SRC_LO(desc) | ((hwaddr)(CCP5_CMD_SRC_HI(desc)) << 32);
+    hwaddr dst = CCP5_CMD_DST_LO(desc) | ((hwaddr)(CCP5_CMD_DST_HI(desc)) << 32);
+    uint8_t in[CCP_ECC_SRC_SIZE] = {0};
+    uint8_t out[CCP_ECC_DST_SIZE];
+
+    func.raw = CCP5_CMD_FUNCTION(desc);
+    op = func.raw >> 12;
+
+    if (len != CCP_ECC_SRC_SIZE) {
+        qemu_log_mask(LOG_GUEST_ERROR,
+                      "CCP Error: ECC source length 0x%x, expected 0x%x\n",
+                      len, CCP_ECC_SRC_SIZE);
+        return true;
+    }
+    if (!ccp_copy_to_host(s, in, src, src_mtype, len)) {
+        return true;
+    }
+    if (!ccp_ecc_execute(op, in, out)) {
+        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented ECC operation %u\n",
+                      op);
+        return true;
+    }
+    if (!ccp_copy_to_guest(s, dst, out, dst_mtype, CCP_ECC_SLOT_SIZE)) {
+        return true;
+    }
+    if (op == CCP_ECC_OP_PMUL) {
+        return !ccp_copy_to_guest(s, dst + CCP_ECC_Y_OFFSET,
+                                  out + CCP_ECC_Y_OFFSET, dst_mtype,
+                                  CCP_ECC_SLOT_SIZE);
+    }
+    return false;
+}
+
 /*
- * @return true if the request used an unimplemented engine (XTS-AES, DES3 or
- * ECC) and was not executed. Unknown engines are reported with PSP_TODO and
- * return false, so the queue reports them as successful.
+ * @return true if the request used an unimplemented engine (XTS-AES or DES3)
+ * or ECC operation and was not executed. Unknown engines are reported with
+ * PSP_TODO and return false, so the queue reports them as successful.
  */
 static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
 {
@@ -892,8 +934,7 @@ static bool ccp_execute(CcpV5State* s, uint32_t id, ccp5_desc* desc)
         ccp_zlib(s, id, desc);
         break;
     case CCP_ENGINE_ECC:
-        qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented engine (ECC)\n");
-        return true;
+        return ccp_ecc(s, id, desc);
     default:
         PSP_TODO("ccp.engine.unknown",
                  "descriptor skipped, reported as successful",

@@ -356,6 +356,119 @@ static void test_trng_narrow_read(void)
     qtest_quit(qts);
 }
 
+/* P-384, little-endian slots as the ECC engine takes them */
+#define ECC_P "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe" \
+              "ffffffff0000000000000000ffffffff"
+#define ECC_A "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe" \
+              "ffffffff0000000000000000fffffffc"
+#define ECC_N "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf" \
+              "581a0db248b0a77aecec196accc52973"
+#define ECC_GX "aa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a38" \
+               "5502f25dbf55296c3a545e3872760ab7"
+#define ECC_GY "3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c0" \
+               "0a60b1ce1d7e819d7a431d7c90ea0e5f"
+#define ECC_2GX "08d999057ba3d2d969260045c55b97f089025959a6f434d651d207d19fb96e9e" \
+                "4fe0e86ebe0e64f85b96a9c75295df61"
+#define ECC_2GY "8e80f1fa5b1b3cedb7bfe8dffd6dba74b275d875bc6cc43e904e505f256ab425" \
+                "5ffd43e94d39e22d61501e700a940e80"
+
+#define ECC_SLOT 0x48
+
+/* Big-endian hex (or a small number) into a little-endian 0x48 byte slot */
+static void ecc_slot(uint8_t *slot, const char *hex)
+{
+    size_t n = strlen(hex) / 2;
+
+    memset(slot, 0, ECC_SLOT);
+    for (size_t i = 0; i < n; i++) {
+        unsigned v;
+
+        g_assert_cmpint(sscanf(hex + 2 * i, "%2x", &v), ==, 1);
+        slot[n - 1 - i] = v;
+    }
+}
+
+static uint32_t ecc_run(QTestState *qts, unsigned op, uint8_t slots[8][ECC_SLOT])
+{
+    PspCcpDesc d = {
+        .engine = CCP_ENGINE_ECC, .flags = CCP_FUNC((op << 12) | 0x180),
+        .len = 8 * ECC_SLOT,
+        .src = SRAM_SRC, .src_mem = CCP_MEMTYPE_LOCAL,
+        .dst = SRAM_DST, .dst_mem = CCP_MEMTYPE_LOCAL,
+    };
+
+    qtest_memwrite(qts, SRAM_SRC, slots, 8 * ECC_SLOT);
+    return psp_ccp_run(qts, &d);
+}
+
+static void ecc_expect(QTestState *qts, unsigned off, const char *hex)
+{
+    uint8_t want[ECC_SLOT], got[ECC_SLOT];
+
+    ecc_slot(want, hex);
+    qtest_memread(qts, SRAM_DST + off, got, sizeof(got));
+    g_assert_cmpmem(got, ECC_SLOT, want, ECC_SLOT);
+}
+
+/* Modular multiply, add and inverse, and the P-384 point multiplication */
+static void test_ecc(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+    uint8_t s[8][ECC_SLOT];
+
+    if (!qts) {
+        return;
+    }
+
+    memset(s, 0, sizeof(s));
+    ecc_slot(s[0], "0d");
+    ecc_slot(s[1], "09");
+    ecc_slot(s[2], "0a");
+    g_assert_cmpuint(ecc_run(qts, 0, s), ==, 0);
+    ecc_expect(qts, 0, "0c");   /* 90 mod 13 */
+    g_assert_cmpuint(ecc_run(qts, 1, s), ==, 0);
+    ecc_expect(qts, 0, "06");   /* 19 mod 13 */
+    g_assert_cmpuint(ecc_run(qts, 2, s), ==, 0);
+    ecc_expect(qts, 0, "03");   /* 3 * 9 = 27 = 1 mod 13 */
+
+    /* Large operands: (n - 1)^2 mod n == 1, (n - 1) + (n - 1) == n - 2 */
+    ecc_slot(s[0], ECC_N);
+    ecc_slot(s[1], "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf"
+                   "581a0db248b0a77aecec196accc52972");
+    ecc_slot(s[2], "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf"
+                   "581a0db248b0a77aecec196accc52972");
+    g_assert_cmpuint(ecc_run(qts, 0, s), ==, 0);
+    ecc_expect(qts, 0, "01");
+    g_assert_cmpuint(ecc_run(qts, 1, s), ==, 0);
+    ecc_expect(qts, 0, "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf"
+                       "581a0db248b0a77aecec196accc52971");
+    g_assert_cmpuint(ecc_run(qts, 2, s), ==, 0);
+    ecc_expect(qts, 0, "ffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf"
+                       "581a0db248b0a77aecec196accc52972");
+
+    /* PMUL: 2G, then n * G is the point at infinity, reported as zeros */
+    memset(s, 0, sizeof(s));
+    ecc_slot(s[0], ECC_P);
+    ecc_slot(s[1], ECC_GX);
+    ecc_slot(s[2], ECC_GY);
+    ecc_slot(s[4], ECC_A);
+    ecc_slot(s[5], "02");
+    g_assert_cmpuint(ecc_run(qts, 4, s), ==, 0);
+    ecc_expect(qts, 0, ECC_2GX);
+    ecc_expect(qts, 0x4c, ECC_2GY);
+    ecc_slot(s[5], ECC_N);
+    g_assert_cmpuint(ecc_run(qts, 4, s), ==, 0);
+    ecc_expect(qts, 0, "00");
+    ecc_expect(qts, 0x4c, "00");
+    ecc_slot(s[5], "00");
+    g_assert_cmpuint(ecc_run(qts, 4, s), ==, 0);
+    ecc_expect(qts, 0, "00");
+
+    /* Unsupported operations fail the request */
+    g_assert_cmpuint(ecc_run(qts, 3, s), !=, 0);
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -371,6 +484,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/ccp/zlib", test_zlib);
     qtest_add_func("/amd-psp/ccp/zlib-error-leaves-device-usable",
                    test_zlib_error_leaves_device_usable);
+    qtest_add_func("/amd-psp/ccp/ecc", test_ecc);
     qtest_add_func("/amd-psp/ccp/trng-default-seed", test_trng_default_seed);
     qtest_add_func("/amd-psp/ccp/trng-seed", test_trng_seed);
     qtest_add_func("/amd-psp/ccp/trng-narrow-read", test_trng_narrow_read);
