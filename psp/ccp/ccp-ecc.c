@@ -175,6 +175,7 @@ bool ccp_ecc_execute(unsigned op, const uint8_t *src, uint8_t *dst)
     case CCP_ECC_OP_MADD:
     case CCP_ECC_OP_MINV:
     case CCP_ECC_OP_PMUL:
+    case CCP_ECC_OP_PCOMB:
         break;
     default:
         return false;
@@ -184,6 +185,47 @@ bool ccp_ecc_execute(unsigned op, const uint8_t *src, uint8_t *dst)
     mpz_inits(m, a, b, r, NULL);
     slot_get(m, src, 0);
     if (mpz_sgn(m) == 0) {
+        goto out;
+    }
+
+    if (op == CCP_ECC_OP_PCOMB) {
+        /* A * P1 + B * P2, the curve constant a sits in the last slot */
+        EccCurve c;
+        EccPoint q1, q2, t1, t2, res;
+
+        mpz_init_set(c.p, m);
+        mpz_init(c.a);
+        slot_get(c.a, src, 7);
+        mpz_mod(c.a, c.a, c.p);
+        point_init(&q1);
+        point_init(&q2);
+        point_init(&t1);
+        point_init(&t2);
+        point_init(&res);
+        slot_get(q1.x, src, 1);
+        slot_get(q1.y, src, 2);
+        slot_get(q2.x, src, 4);
+        slot_get(q2.y, src, 5);
+        mpz_mod(q1.x, q1.x, c.p);
+        mpz_mod(q1.y, q1.y, c.p);
+        mpz_mod(q2.x, q2.x, c.p);
+        mpz_mod(q2.y, q2.y, c.p);
+        q1.inf = mpz_sgn(q1.x) == 0 && mpz_sgn(q1.y) == 0;
+        q2.inf = mpz_sgn(q2.x) == 0 && mpz_sgn(q2.y) == 0;
+        slot_get(a, src, 3);
+        slot_get(b, src, 6);
+        if (point_mul(&c, &t1, a, &q1) && point_mul(&c, &t2, b, &q2) &&
+            point_add(&c, &res, &t1, &t2) && !res.inf) {
+            slot_put(dst, res.x);
+            slot_put(dst + CCP_ECC_Y_OFFSET, res.y);
+        }
+        point_clear(&q1);
+        point_clear(&q2);
+        point_clear(&t1);
+        point_clear(&t2);
+        point_clear(&res);
+        mpz_clear(c.p);
+        mpz_clear(c.a);
         goto out;
     }
 

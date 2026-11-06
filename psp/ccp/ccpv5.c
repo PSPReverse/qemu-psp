@@ -894,7 +894,7 @@ static bool ccp_ecc(CcpV5State *s, uint32_t id, ccp5_desc *desc)
     if (!ccp_copy_to_guest(s, dst, out, dst_mtype, CCP_ECC_SLOT_SIZE)) {
         return true;
     }
-    if (op == CCP_ECC_OP_PMUL) {
+    if (op == CCP_ECC_OP_PMUL || op == CCP_ECC_OP_PCOMB) {
         return !ccp_copy_to_guest(s, dst + CCP_ECC_Y_OFFSET,
                                   out + CCP_ECC_Y_OFFSET, dst_mtype,
                                   CCP_ECC_SLOT_SIZE);

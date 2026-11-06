@@ -22,6 +22,7 @@
 #define CCP_ECC_OP_MADD 1
 #define CCP_ECC_OP_MINV 2
 #define CCP_ECC_OP_PMUL 4
+#define CCP_ECC_OP_PCOMB 6
 
 /**
  * ccp_ecc_execute: run one ECC engine operation
@@ -29,7 +30,7 @@
  * @src: CCP_ECC_SRC_SIZE bytes, the eight input slots
  * @dst: CCP_ECC_DST_SIZE bytes, zeroed and then filled with the result:
  *       ops 0-2 use the first CCP_ECC_SLOT_SIZE bytes, PMUL puts x at 0 and
- *       y at CCP_ECC_Y_OFFSET. Undefined results (zero modulus, no inverse,
+ *       y at CCP_ECC_Y_OFFSET, as does PCOMB (A * P1 + B * P2). Undefined results (zero modulus, no inverse,
  *       point at infinity) are all zero.
  *
  * Returns false if @op is not supported, @dst is then untouched.
