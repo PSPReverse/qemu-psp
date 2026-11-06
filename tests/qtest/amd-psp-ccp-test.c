@@ -464,6 +464,25 @@ static void test_ecc(void)
     g_assert_cmpuint(ecc_run(qts, 4, s), ==, 0);
     ecc_expect(qts, 0, "00");
 
+    /* PCOMB: A * P1 + B * P2 (1 * G + 1 * G = 2G, 2 * G + 0 * G = 2G) */
+    memset(s, 0, sizeof(s));
+    ecc_slot(s[0], ECC_P);
+    ecc_slot(s[1], ECC_GX);
+    ecc_slot(s[2], ECC_GY);
+    ecc_slot(s[3], "01");
+    ecc_slot(s[4], ECC_GX);
+    ecc_slot(s[5], ECC_GY);
+    ecc_slot(s[6], "01");
+    ecc_slot(s[7], ECC_A);
+    g_assert_cmpuint(ecc_run(qts, 6, s), ==, 0);
+    ecc_expect(qts, 0, ECC_2GX);
+    ecc_expect(qts, 0x4c, ECC_2GY);
+    ecc_slot(s[3], "02");
+    ecc_slot(s[6], "00");
+    g_assert_cmpuint(ecc_run(qts, 6, s), ==, 0);
+    ecc_expect(qts, 0, ECC_2GX);
+    ecc_expect(qts, 0x4c, ECC_2GY);
+
     /* Unsupported operations fail the request */
     g_assert_cmpuint(ecc_run(qts, 3, s), !=, 0);
     qtest_quit(qts);
