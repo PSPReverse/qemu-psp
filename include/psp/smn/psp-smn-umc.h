@@ -20,6 +20,8 @@
 /* Per channel register block at SMN 0x50000 + (channel << 20): plain storage */
 #define PSP_SMN_UMC_CSR_BASE 0x50000
 #define PSP_SMN_UMC_CSR_SIZE 0x300
+/* Request/acknowledge handshake register at SMN 0x511c0 + (channel << 20) */
+#define PSP_SMN_UMC_HS_BASE 0x511c0
 
 /* APB ranges that are kept, one 32 bit value per APB address */
 #define PSP_SMN_UMC_MBOX_BASE 0xd0000
@@ -33,11 +35,13 @@ typedef struct PSPSmnUmcChannel {
     PSPSmnUmcState *parent;     /* not migrated */
     MemoryRegion iomem;
     MemoryRegion csr_iomem;
+    MemoryRegion hs_iomem;
     GHashTable *logged;         /* APB addresses already reported, not migrated */
 
     uint32_t addr;              /* APB address register */
     uint32_t data;              /* APB data register */
     uint32_t csr[PSP_SMN_UMC_CSR_SIZE / 4]; /* BaseAddr, AddrMask, ... */
+    uint32_t handshake;         /* request, bits 2:0 */
     bool acked;                 /* host acked the PMU message */
     uint32_t apb_mbox[PSP_SMN_UMC_MBOX_REGS];
     uint32_t apb_msg[PSP_SMN_UMC_MSGBLK_REGS];

@@ -243,6 +243,25 @@ static void test_csr_ready_follows_enable(void)
     qtest_quit(qts);
 }
 
+static void test_handshake(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    select_chan(qts, 0);
+    g_assert_cmphex(qtest_readl(qts, reg(0x511c0)), ==, 0);
+    qtest_writel(qts, reg(0x511c0), 1);
+    g_assert_cmphex(qtest_readl(qts, reg(0x511c0)), ==, 0x11);
+    qtest_writel(qts, reg(0x511c0), 0);
+    g_assert_cmphex(qtest_readl(qts, reg(0x511c0)), ==, 0);
+    /* Another channel is unaffected */
+    select_chan(qts, 6);
+    g_assert_cmphex(qtest_readl(qts, reg(0x511c0)), ==, 0);
+    qtest_quit(qts);
+}
+
 /* The windows do not exist on Zen2: no ready status, no data */
 static void test_zen2_absent(void)
 {
@@ -269,6 +288,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/umc/channel-isolation", test_channel_isolation);
     qtest_add_func("/amd-psp/umc/csr-readback", test_csr_readback);
     qtest_add_func("/amd-psp/umc/csr-isolation", test_csr_isolation);
+    qtest_add_func("/amd-psp/umc/handshake", test_handshake);
     qtest_add_func("/amd-psp/umc/csr-ready-follows-enable",
                    test_csr_ready_follows_enable);
     qtest_add_func("/amd-psp/umc/mailbox", test_mailbox);
