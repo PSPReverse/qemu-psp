@@ -41,6 +41,21 @@
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 
+int (*qemu_main)(void);
+
+#ifdef CONFIG_DARWIN
+static int os_darwin_cfrunloop_main(void)
+{
+    CFRunLoopRun();
+    g_assert_not_reached();
+}
+int (*qemu_main)(void) = os_darwin_cfrunloop_main;
+#endif
+
+//// --- Begin LibAFL code ---
+#ifndef AS_LIB
+//// --- End LibAFL code ---
+
 static void *qemu_default_main(void *opaque)
 {
     int status;
@@ -54,17 +69,6 @@ static void *qemu_default_main(void *opaque)
 
     exit(status);
 }
-
-int (*qemu_main)(void);
-
-#ifdef CONFIG_DARWIN
-static int os_darwin_cfrunloop_main(void)
-{
-    CFRunLoopRun();
-    g_assert_not_reached();
-}
-int (*qemu_main)(void) = os_darwin_cfrunloop_main;
-#endif
 
 int main(int argc, char **argv)
 {
@@ -94,3 +98,7 @@ int main(int argc, char **argv)
         g_assert_not_reached();
     }
 }
+
+//// --- Begin LibAFL code ---
+#endif
+//// --- End LibAFL code ---

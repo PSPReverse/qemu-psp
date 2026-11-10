@@ -28,6 +28,13 @@
 #include <linux/kvm.h>
 #include "kvm-cpus.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+#include "libafl/hooks/thread.h"
+
+//// --- End LibAFL code ---
+
 static void *kvm_vcpu_thread_fn(void *arg)
 {
     CPUState *cpu = arg;
@@ -43,6 +50,12 @@ static void *kvm_vcpu_thread_fn(void *arg)
     r = kvm_init_vcpu(cpu, &error_fatal);
     kvm_init_cpu_signals(cpu);
 
+//// --- Begin LibAFL code ---
+
+    libafl_hook_new_thread_run(cpu_env(cpu), cpu->thread_id);
+
+//// --- End LibAFL code ---
+
     /* signal CPU creation */
     cpu_thread_signal_created(cpu);
     qemu_guest_random_seed_thread_part2(cpu->random_seed);
@@ -53,7 +66,12 @@ static void *kvm_vcpu_thread_fn(void *arg)
         if (cpu_can_run(cpu)) {
             r = kvm_cpu_exec(cpu);
             if (r == EXCP_DEBUG) {
-                cpu_handle_guest_debug(cpu);
+//// --- Begin LibAFL code ---
+                // cpu_handle_guest_debug(cpu);
+				cpu->stopped = true;
+                kvm_cpu_synchronize_state(cpu);
+				libafl_qemu_trigger_breakpoint(cpu);
+//// --- End LibAFL code ---
             }
         }
     } while (!cpu->unplug || cpu_can_run(cpu));

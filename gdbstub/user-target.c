@@ -16,6 +16,11 @@
 #ifdef CONFIG_LINUX
 #include "linux-user/loader.h"
 #include "linux-user/qemu.h"
+
+//// --- Begin LibAFL code ---
+#include "libafl/gdb.h"
+//// --- End LibAFL code ---
+
 #endif
 
 /*
@@ -284,6 +289,37 @@ void gdb_handle_query_xfer_auxv(GArray *params, void *user_ctx)
     gdb_put_packet_binary(gdbserver_state.str_buf->str,
                       gdbserver_state.str_buf->len, true);
 }
+
+//// --- Begin LibAFL code ---
+
+void gdb_handle_query_rcmd(GArray *params, void *user_ctx)
+{
+    int len;
+
+    if (!params->len) {
+        gdb_put_packet("E22");
+        return;
+    }
+
+    len = strlen(gdb_get_cmd_param(params, 0)->data);
+    if (len % 2) {
+        gdb_put_packet("E01");
+        return;
+    }
+
+    g_assert(gdbserver_state.mem_buf->len == 0);
+    len = len / 2;
+    gdb_hextomem(gdbserver_state.mem_buf, gdb_get_cmd_param(params, 0)->data, len);
+
+    if (libafl_qemu_gdb_exec()) {
+        gdb_put_packet("OK");
+    } else {
+        gdb_put_packet("");
+    }
+}
+
+//// --- End LibAFL code ---
+
 #endif
 
 static const char *get_filename_param(GArray *params, int i)

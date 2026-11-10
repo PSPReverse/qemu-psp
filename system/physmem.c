@@ -1951,6 +1951,11 @@ void qemu_ram_set_idstr(RAMBlock *new_block, const char *name, DeviceState *dev)
         }
     }
     pstrcat(new_block->idstr, sizeof(new_block->idstr), name);
+//// --- Begin LibAFL code ---
+
+    new_block->idstr_hash = g_str_hash(new_block->idstr);
+
+//// --- End LibAFL code ---
 
     RCU_READ_LOCK_GUARD();
     RAMBLOCK_FOREACH(block) {
@@ -3494,6 +3499,12 @@ void cpu_physical_memory_write(hwaddr addr, const void *buf, hwaddr len)
                         MEMTXATTRS_UNSPECIFIED, buf, len);
 }
 
+//// --- Begin LibAFL code ---
+
+void syx_snapshot_dirty_list_add_hostaddr_range(void* host_addr, uint64_t len);
+
+//// --- End LibAFL code ---
+
 /* used for ROM loading : can write in RAM and ROM */
 MemTxResult address_space_write_rom(AddressSpace *as, hwaddr addr,
                                     MemTxAttrs attrs,
@@ -3511,6 +3522,11 @@ MemTxResult address_space_write_rom(AddressSpace *as, hwaddr addr,
             /* ROM/RAM case */
             void *ram_ptr = qemu_map_ram_ptr(mr->ram_block, addr1);
             memcpy(ram_ptr, buf, l);
+            //// --- Begin LibAFL code ---
+
+            syx_snapshot_dirty_list_add_hostaddr_range(ram_ptr, l);
+
+            //// --- End LibAFL code ---
             invalidate_and_set_dirty(mr, addr1, l);
         }
         len -= l;

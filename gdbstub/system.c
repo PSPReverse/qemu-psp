@@ -32,6 +32,11 @@
 #include "trace.h"
 #include "internals.h"
 
+//// --- Begin LibAFL code ---
+#include "libafl/gdb.h"
+#include "gdbstub/enums.h"
+//// --- End LibAFL code ---
+
 /* System emulation specific state */
 typedef struct {
     CharFrontend chr;
@@ -528,6 +533,16 @@ void gdb_handle_query_rcmd(GArray *params, void *ctx)
     g_assert(gdbserver_state.mem_buf->len == 0);
     len = len / 2;
     gdb_hextomem(gdbserver_state.mem_buf, gdb_get_cmd_param(params, 0)->data, len);
+
+    //// --- Begin LibAFL code ---
+
+    if (libafl_qemu_gdb_exec()) {
+        gdb_put_packet("OK");
+        return;
+    }
+
+    //// --- End LibAFL code ---
+
     g_byte_array_append(gdbserver_state.mem_buf, &zero, 1);
     qemu_chr_be_write(gdbserver_system_state.mon_chr,
                       gdbserver_state.mem_buf->data,
@@ -640,6 +655,12 @@ bool gdb_supports_guest_debug(void)
 int gdb_breakpoint_insert(CPUState *cs, int type, vaddr addr, vaddr len)
 {
     const AccelOpsClass *ops = cpus_get_accel();
+    //// --- Begin LibAFL code ---
+    // HW breakpoints are reserved for LibAFL
+    if (type == GDB_BREAKPOINT_HW) {
+        return -ENOSYS;
+    }
+    //// --- End LibAFL code ---
     if (ops->insert_breakpoint) {
         return ops->insert_breakpoint(cs, type, addr, len);
     }

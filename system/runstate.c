@@ -72,6 +72,10 @@ static RunState current_run_state = RUN_STATE_PRELAUNCH;
 static RunState vmstop_requested = RUN_STATE__MAX;
 static QemuMutex vmstop_lock;
 
+//// --- Begin LibAFL code ---
+void libafl_exit_request_internal(CPUState* cpu, uint64_t pc, ShutdownCause cause, int signal);
+//// --- End LibAFL code ---
+
 typedef struct {
     RunState from;
     RunState to;
@@ -149,7 +153,8 @@ static const RunStateTransition runstate_transitions_def[] = {
     { RUN_STATE_RUNNING, RUN_STATE_SHUTDOWN },
     { RUN_STATE_RUNNING, RUN_STATE_WATCHDOG },
     { RUN_STATE_RUNNING, RUN_STATE_GUEST_PANICKED },
-    { RUN_STATE_RUNNING, RUN_STATE_COLO},
+    { RUN_STATE_RUNNING, RUN_STATE_COLO },
+    { RUN_STATE_RUNNING, RUN_STATE_RET },
 
     { RUN_STATE_SAVE_VM, RUN_STATE_RUNNING },
     { RUN_STATE_SAVE_VM, RUN_STATE_SUSPENDED },
@@ -178,6 +183,8 @@ static const RunStateTransition runstate_transitions_def[] = {
     { RUN_STATE_GUEST_PANICKED, RUN_STATE_RUNNING },
     { RUN_STATE_GUEST_PANICKED, RUN_STATE_FINISH_MIGRATE },
     { RUN_STATE_GUEST_PANICKED, RUN_STATE_PRELAUNCH },
+
+    { RUN_STATE_RET, RUN_STATE_RUNNING },
 
     { RUN_STATE__MAX, RUN_STATE__MAX },
 };
@@ -423,6 +430,12 @@ static NotifierList shutdown_notifiers =
     NOTIFIER_LIST_INITIALIZER(shutdown_notifiers);
 static uint32_t wakeup_reason_mask = ~(1 << QEMU_WAKEUP_REASON_NONE);
 
+//// --- Begin LibAFL code ---
+#ifdef AS_LIB
+static int return_requested;
+#endif
+//// --- End LibAFL code ---
+
 ShutdownCause qemu_shutdown_requested_get(void)
 {
     return shutdown_requested;
@@ -495,6 +508,17 @@ static int qemu_powerdown_requested(void)
     powerdown_requested = 0;
     return r;
 }
+
+//// --- Begin LibAFL code ---
+#ifdef AS_LIB
+static int qemu_return_requested(void)
+{
+    int r = return_requested;
+    return_requested = 0;
+    return r;
+}
+#endif
+//// --- End LibAFL code ---
 
 static int qemu_debug_requested(void)
 {
@@ -741,6 +765,16 @@ void qemu_system_reset_request(ShutdownCause reason)
     } else {
         reset_requested = reason;
     }
+
+//// --- Begin LibAFL code ---
+    if (current_cpu) {
+        CPUClass *cc = CPU_GET_CLASS(current_cpu);
+        libafl_exit_request_internal(current_cpu, cc->get_pc(current_cpu), shutdown_requested, -1);
+    } else {
+        libafl_exit_request_internal(NULL, 0, shutdown_requested, -1);
+    }
+//// --- End LibAFL code ---
+
     cpu_stop_current();
     qemu_notify_event();
 }
@@ -822,6 +856,16 @@ void qemu_system_killed(int signal, pid_t pid)
      */
     shutdown_requested = SHUTDOWN_CAUSE_HOST_SIGNAL;
     force_shutdown = true;
+
+    //// --- Begin LibAFL code ---
+    if (current_cpu) {
+        CPUClass *cc = CPU_GET_CLASS(current_cpu);
+        libafl_exit_request_internal(current_cpu, cc->get_pc(current_cpu), shutdown_requested, signal);
+    } else {
+        libafl_exit_request_internal(NULL, 0, shutdown_requested, signal);
+    }
+    //// --- End LibAFL code ---
+
     qemu_notify_event();
 }
 
@@ -840,6 +884,16 @@ void qemu_system_shutdown_request(ShutdownCause reason)
     if (reason == SHUTDOWN_CAUSE_HOST_QMP_QUIT) {
         force_shutdown = true;
     }
+
+    //// --- Begin LibAFL code ---
+    if (current_cpu) {
+        CPUClass *cc = CPU_GET_CLASS(current_cpu);
+        libafl_exit_request_internal(current_cpu, cc->get_pc(current_cpu), shutdown_requested, -1);
+    } else {
+        libafl_exit_request_internal(NULL, 0, shutdown_requested, -1);
+    }
+    //// --- End LibAFL code ---
+
     qemu_notify_event();
 }
 
@@ -872,6 +926,16 @@ void qemu_register_shutdown_notifier(Notifier *notifier)
     notifier_list_add(&shutdown_notifiers, notifier);
 }
 
+//// --- Begin LibAFL code ---
+#ifdef AS_LIB
+void qemu_system_return_request(void)
+{
+    return_requested = 1;
+    qemu_notify_event();
+}
+#endif
+//// --- End LibAFL code ---
+
 void qemu_system_debug_request(void)
 {
     debug_requested = 1;
@@ -882,6 +946,16 @@ static bool main_loop_should_exit(int *status)
 {
     RunState r;
     ShutdownCause request;
+
+//// --- Begin LibAFL code ---
+#ifdef AS_LIB
+    if (qemu_return_requested()) {
+        // exit back to libafl qemu harness
+        vm_stop(RUN_STATE_RET);
+        return true;
+    }
+#endif
+//// --- End LibAFL code ---
 
     if (qemu_debug_requested()) {
         vm_stop(RUN_STATE_DEBUG);

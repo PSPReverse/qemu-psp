@@ -229,41 +229,13 @@ const VMStateInfo vmstate_info_timer = {
 };
 
 
-typedef struct CompatEntry {
-    char idstr[256];
-    int instance_id;
-} CompatEntry;
+//// --- Begin LibAFL code ---
 
-typedef struct SaveStateEntry {
-    QTAILQ_ENTRY(SaveStateEntry) entry;
-    char idstr[256];
-    uint32_t instance_id;
-    int alias_id;
-    int version_id;
-    /* version id read from the stream */
-    int load_version_id;
-    int section_id;
-    /* section id read from the stream */
-    int load_section_id;
-    const SaveVMHandlers *ops;
-    const VMStateDescription *vmsd;
-    void *opaque;
-    CompatEntry *compat;
-} SaveStateEntry;
+// definitions of CompatEntry SaveStateEntry and SaveState were here
 
-typedef struct SaveState {
-    QTAILQ_HEAD(, SaveStateEntry) handlers;
-    SaveStateEntry *handler_pri_head[MIG_PRI_MAX + 1];
-    int global_section_id;
-    uint32_t len;
-    const char *name;
-    uint32_t target_page_bits;
-    uint32_t caps_count;
-    MigrationCapability *capabilities;
-    QemuUUID uuid;
-} SaveState;
-
-static SaveState savevm_state = {
+/* static */
+//// --- End LibAFL code ---
+SaveState savevm_state = {
     .handlers = QTAILQ_HEAD_INITIALIZER(savevm_state.handlers),
     .handler_pri_head = { [0 ... MIG_PRI_MAX] = NULL },
     .global_section_id = 0,
@@ -1026,7 +998,14 @@ static void save_section_footer(QEMUFile *f, SaveStateEntry *se)
     }
 }
 
-static int vmstate_save(QEMUFile *f, SaveStateEntry *se, JSONWriter *vmdesc,
+//// --- Begin LibAFL code ---
+
+int vmstate_save(QEMUFile *f, SaveStateEntry *se, JSONWriter *vmdesc,
+                        Error **errp);
+
+//// --- End LibAFL code ---
+
+/* static */ int vmstate_save(QEMUFile *f, SaveStateEntry *se, JSONWriter *vmdesc,
                         Error **errp)
 {
     int ret;
@@ -1876,7 +1855,11 @@ cleanup:
 }
 
 /* Is a save state entry iterable (e.g. RAM)? */
-static bool qemu_savevm_se_iterable(SaveStateEntry *se)
+
+//// --- Begin LibAFL code ---
+/* static */
+//// --- End LibAFL code ---
+bool qemu_savevm_se_iterable(SaveStateEntry *se)
 {
     return se->ops && se->ops->save_setup;
 }
