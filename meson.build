@@ -1,6 +1,6 @@
 project('qemu', ['c'], meson_version: '>=1.5.0',
         default_options: ['warning_level=1', 'c_std=gnu11', 'cpp_std=gnu++23', 'b_colorout=auto',
-                          'b_staticpic=false', 'stdsplit=false', 'optimization=2', 'b_pie=true'] +
+                          'b_staticpic=true', 'stdsplit=false', 'optimization=2', 'b_pie=true'] +
 
                           # build.rust_std breaks with older meson, but Rust does not
                           # support old meson anyway
@@ -3774,6 +3774,13 @@ else
   subdir('hw/core')
 endif
 
+#### --- Begin LibAFL code ---
+
+### LibAFL extras
+subdir('libafl')
+
+#### --- End LibAFL code ---
+
 if enable_modules
   libmodulecommon = static_library('module-common', files('module-common.c') + genh, pic: true, c_args: '-DBUILD_DSO')
   modulecommon = declare_dependency(objects: libmodulecommon.extract_all_objects(recursive: false), compile_args: '-DBUILD_DSO')
@@ -3782,6 +3789,7 @@ endif
 qom_ss = qom_ss.apply({})
 libqom = static_library('qom', qom_ss.sources() + genh,
                         dependencies: [qom_ss.dependencies()],
+                        pic: 'AS_SHARED_LIB' in config_host,
                         build_by_default: false)
 qom = declare_dependency(objects: libqom.extract_all_objects(recursive: false),
                          dependencies: qom_ss.dependencies())
@@ -3800,7 +3808,8 @@ util_ss = util_ss.apply({})
 libqemuutil = static_library('qemuutil',
                              build_by_default: false,
                              sources: util_ss.sources() + stub_ss.sources() + genh,
-                             dependencies: [util_ss.dependencies(), libm, threads, glib, socket, malloc, rt, pixman, opengl])
+                             dependencies: [util_ss.dependencies(), libm, threads, glib, socket, malloc, rt, pixman, opengl],
+                             pic: 'AS_SHARED_LIB' in config_host)
 qemuutil = declare_dependency(link_with: libqemuutil,
                               sources: genh + version_res,
                               dependencies: [event_loop_base])
@@ -3867,7 +3876,8 @@ if get_option('b_lto')
     pagevary_flags += '-fno-sanitize=cfi-icall'
   endif
   pagevary = static_library('page-vary-common', sources: pagevary + genh,
-                            c_args: pagevary_flags)
+                            c_args: pagevary_flags,
+                            pic: 'AS_SHARED_LIB' in config_host)
   pagevary = declare_dependency(link_with: pagevary)
 endif
 common_ss.add(pagevary)
@@ -3900,8 +3910,14 @@ subdir('bsd-user')
 subdir('linux-user')
 
 # needed for fuzzing binaries
-subdir('tests/qtest/libqos')
-subdir('tests/qtest/fuzz')
+#### --- Begin LibAFL code ---
+if get_option('tests')
+#### --- End LibAFL code ---
+  subdir('tests/qtest/libqos')
+  subdir('tests/qtest/fuzz')
+#### --- Begin LibAFL code ---
+endif
+#### --- End LibAFL code ---
 
 ##############################################
 # Internal static_libraries and dependencies #
@@ -4013,7 +4029,7 @@ if enable_modules
                                   command: [modinfo_generate, '--devices', config_devices_mak, '@INPUT@'],
                                   capture: true)
 
-      modinfo_lib = static_library('modinfo-' + target + '.c', modinfo_src)
+      modinfo_lib = static_library('modinfo-' + target + '.c', modinfo_src, pic: 'AS_SHARED_LIB' in config_host)
       modinfo_dep = declare_dependency(link_with: modinfo_lib)
 
       if not hw_arch.has_key(arch)
@@ -4043,7 +4059,8 @@ qemu_syms = custom_target('qemu.syms', output: 'qemu.syms',
 authz_ss = authz_ss.apply({})
 libauthz = static_library('authz', authz_ss.sources() + genh,
                           dependencies: [authz_ss.dependencies()],
-                          build_by_default: false)
+                          build_by_default: false,
+                          pic: 'AS_SHARED_LIB' in config_host)
 
 authz = declare_dependency(objects: libauthz.extract_all_objects(recursive: false),
                            dependencies: [authz_ss.dependencies(), qom])
@@ -4051,7 +4068,8 @@ authz = declare_dependency(objects: libauthz.extract_all_objects(recursive: fals
 crypto_ss = crypto_ss.apply({})
 libcrypto = static_library('crypto', crypto_ss.sources() + genh,
                            dependencies: [crypto_ss.dependencies()],
-                           build_by_default: false)
+                           build_by_default: false,
+                           pic: 'AS_SHARED_LIB' in config_host)
 
 crypto = declare_dependency(objects: libcrypto.extract_all_objects(recursive: false),
                             dependencies: [crypto_ss.dependencies(), authz, qom])
@@ -4060,13 +4078,15 @@ io_ss = io_ss.apply({})
 libio = static_library('io', io_ss.sources() + genh,
                        dependencies: [io_ss.dependencies()],
                        link_with: libqemuutil,
-                       build_by_default: false)
+                       build_by_default: false,
+                       pic: 'AS_SHARED_LIB' in config_host)
 
 io = declare_dependency(objects: libio.extract_all_objects(recursive: false),
                         dependencies: [io_ss.dependencies(), crypto, qom])
 
 libmigration = static_library('migration', sources: migration_files + genh,
-                              build_by_default: false)
+                              build_by_default: false,
+                              pic: 'AS_SHARED_LIB' in config_host)
 migration = declare_dependency(objects: libmigration.extract_all_objects(recursive: false),
                                dependencies: [qom, io])
 system_ss.add(migration)
@@ -4074,6 +4094,7 @@ system_ss.add(migration)
 block_ss = block_ss.apply({})
 libblock = static_library('block', block_ss.sources() + genh,
                           dependencies: block_ss.dependencies(),
+                          pic: 'AS_SHARED_LIB' in config_host,
                           build_by_default: false)
 
 block = declare_dependency(objects: libblock.extract_all_objects(recursive: false),
@@ -4082,7 +4103,8 @@ block = declare_dependency(objects: libblock.extract_all_objects(recursive: fals
 blockdev_ss = blockdev_ss.apply({})
 libblockdev = static_library('blockdev', blockdev_ss.sources() + genh,
                              dependencies: blockdev_ss.dependencies(),
-                             build_by_default: false)
+                             build_by_default: false,
+                             pic: 'AS_SHARED_LIB' in config_host)
 
 blockdev = declare_dependency(objects: libblockdev.extract_all_objects(recursive: false),
                               dependencies: [blockdev_ss.dependencies(), block, event_loop_base])
@@ -4090,21 +4112,24 @@ blockdev = declare_dependency(objects: libblockdev.extract_all_objects(recursive
 qmp_ss = qmp_ss.apply({})
 libqmp = static_library('qmp', qmp_ss.sources() + genh,
                         dependencies: qmp_ss.dependencies(),
-                        build_by_default: false)
+                        build_by_default: false,
+                        pic: 'AS_SHARED_LIB' in config_host)
 
 qmp = declare_dependency(objects: libqmp.extract_all_objects(recursive: false),
                          dependencies: qmp_ss.dependencies())
 
 libchardev = static_library('chardev', chardev_ss.sources() + genh,
                             dependencies: chardev_ss.dependencies(),
-                            build_by_default: false)
+                            build_by_default: false,
+                            pic: 'AS_SHARED_LIB' in config_host)
 
 chardev = declare_dependency(objects: libchardev.extract_all_objects(recursive: false),
                              dependencies: [chardev_ss.dependencies(), io])
 
 hwcore_ss = hwcore_ss.apply({})
 libhwcore = static_library('hwcore', sources: hwcore_ss.sources() + genh,
-                           build_by_default: false)
+                           build_by_default: false,
+                           pic: 'AS_SHARED_LIB' in config_host)
 hwcore = declare_dependency(objects: libhwcore.extract_all_objects(recursive: false))
 common_ss.add(hwcore)
 
@@ -4145,7 +4170,8 @@ common_all = static_library('common',
                             build_by_default: false,
                             sources: common_ss.all_sources() + genh,
                             implicit_include_directories: false,
-                            dependencies: common_ss.all_dependencies())
+                            dependencies: common_ss.all_dependencies(),
+                            pic: 'AS_SHARED_LIB' in config_host)
 
 # construct common libraries per base architecture
 target_common_arch_libs = {}
@@ -4406,7 +4432,8 @@ foreach target : target_dirs
                  objects: objects,
                  include_directories: target_inc,
                  c_args: c_args,
-                 build_by_default: false)
+                 build_by_default: false,
+                 pic: 'AS_SHARED_LIB' in config_host)
 
   if target.endswith('-softmmu')
     execs = [{
@@ -4446,6 +4473,9 @@ foreach target : target_dirs
       exe_name += '-unsigned'
     endif
 
+#### --- Begin LibAFL code ---
+  if 'AS_SHARED_LIB' not in config_host and 'AS_STATIC_LIB' not in config_host
+#### --- End LibAFL code ---
     emulator = executable(exe_name, exe['sources'],
                install: true,
                c_args: c_args,
@@ -4454,7 +4484,25 @@ foreach target : target_dirs
                link_depends: [block_syms, qemu_syms],
                link_args: link_args,
                win_subsystem: exe['win_subsystem'])
-
+#### --- Begin LibAFL code ---
+  else
+    if 'AS_SHARED_LIB' in config_host
+      emulator = shared_library(exe_name, exe['sources'],
+               install: true,
+               c_args: c_args,
+               dependencies: arch_deps + exe['dependencies'],
+               objects: lib.extract_all_objects(recursive: true),
+               link_depends: [block_syms, qemu_syms],
+               link_args: link_args)
+    endif
+    if 'AS_STATIC_LIB' in config_host
+      emulator = static_library(exe_name, exe['sources'],
+               c_args: c_args,
+               dependencies: arch_deps + exe['dependencies'],
+               objects: lib.extract_all_objects(recursive: true))
+    endif
+  endif
+#### --- End LibAFL code ---
     if host_os == 'darwin'
       icon = 'pc-bios/qemu.rsrc'
       build_input = [emulator, files(icon)]
@@ -4604,7 +4652,9 @@ subdir('docs')
 subdir('pyvenv')
 # Tests are disabled on emscripten because they rely on host features that aren't
 # supported by emscripten (e.g. fork and unix socket).
-if host_os != 'emscripten'
+#### --- Begin LibAFL code ---
+if get_option('tests') and host_os != 'emscripten'
+#### --- End LibAFL code ---
   subdir('tests')
 endif
 if gtk.found()
@@ -4703,6 +4753,9 @@ if enable_modules
   summary_info += {'alternative module path': get_option('module_upgrades')}
 endif
 summary_info += {'fuzzing support':   get_option('fuzzing')}
+#### --- Begin LibAFL code ---
+summary_info += {'Build tests':   get_option('tests')}
+#### --- End LibAFL code ---
 if have_system
   summary_info += {'Audio drivers':     ' '.join(audio_drivers_selected)}
 endif
