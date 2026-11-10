@@ -28,6 +28,8 @@
 #include "hw/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/cutils.h"
+#include "qemu/host-utils.h"
+#include "qemu/units.h"
 #include "qemu/log.h"
 #include "system/system.h"
 #include "trace.h"
@@ -298,6 +300,31 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->nv), 1));
     }
 
+    if (s->spi_flash) {
+        /*
+         * The flash decodes at the top of the 4 GiB space: 16 MiB at
+         * 0xff000000, 32 MiB at 0xfe000000. The size is that of the file.
+         */
+        int64_t size = get_image_size(s->spi_flash, errp);
+
+        if (size < 0) {
+            return;
+        }
+        if (size == 0 || size > 64 * MiB || !is_power_of_2(size)) {
+            error_setg(errp, "property 'spi_flash' must be a power-of-two "
+                       "sized file of at most 64 MiB");
+            return;
+        }
+        memory_region_init_rom(&s->spi_flash_mr, OBJECT(dev), "spi-flash",
+                               size, &error_fatal);
+        if (load_image_mr(s->spi_flash, &s->spi_flash_mr) < 0) {
+            error_setg(errp, "could not load SPI flash '%s'", s->spi_flash);
+            return;
+        }
+        memory_region_add_subregion_overlap(&s->mr, 4 * GiB - size,
+                                            &s->spi_flash_mr, 1);
+    }
+
     /* Connect the misc device to the x86 address space */
     qdev_prop_set_uint32(DEVICE(&s->pci_config_space), "psp_generation",
                          s->generation);
@@ -326,6 +353,7 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
 static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86State, generation,
                        PSP_GENERATION_MAX),
+    DEFINE_PROP_STRING("spi_flash", PSPX86State, spi_flash),
     DEFINE_PROP_UINT64("regular_dram_size", PSPX86State, regular_dram_size, 0),
 };
 

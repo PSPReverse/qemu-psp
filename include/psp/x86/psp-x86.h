@@ -65,6 +65,10 @@ typedef struct PSPX86State {
     MemoryRegion regular_dram_low;
     MemoryRegion regular_dram_high;
 
+    /* SPI flash image, mapped read-only so that it ends at 4 GiB */
+    char *spi_flash;
+    MemoryRegion spi_flash_mr;
+
     /* Size of regular_dram in bytes; every snapshot copies the whole block */
     uint64_t regular_dram_size;
 
