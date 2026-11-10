@@ -883,6 +883,40 @@ static void test_window_ccp(void)
     }
 }
 
+/*
+ * An SPI flash image ends at 4 GiB and is read-only. A 64 KiB image sits at
+ * 0xffff0000; slot 0 based at 0xfc000000 reaches it at offset 0x3ff0000.
+ */
+static void test_spi_flash(void)
+{
+    g_autofree char *path = NULL;
+    uint8_t img[0x10000] = { 0 };
+    QTestState *qts;
+    int fd = g_file_open_tmp("psp-spi-XXXXXX", &path, NULL);
+
+    g_assert_cmpint(fd, >=, 0);
+    img[0] = 0x24;
+    img[0xffff] = 0x5a;
+    g_assert_cmpint(write(fd, img, sizeof(img)), ==, sizeof(img));
+    close(fd);
+
+    qts = psp_startf(PSP_ZEN2, "-global driver=amd_psp.x86,property=spi_flash,"
+                     "value=%s", path);
+    if (!qts) {
+        unlink(path);
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, FCH_UART_SLOT_BASE);
+    g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x3ff0000), ==, 0x24);
+    g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x3ffffff), ==, 0x5a);
+    qtest_writeb(qts, X86_WINDOW0 + 0x3ff0000, 0x99);
+    g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x3ff0000), ==, 0x24);
+    /* Below the image nothing decodes */
+    g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x3fef000), ==, 0);
+    qtest_quit(qts);
+    unlink(path);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -909,6 +943,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/x86/fch-uart", test_fch_uart);
     qtest_add_func("/amd-psp/x86/fch-uart-no-chardev",
                    test_fch_uart_no_chardev);
+    qtest_add_func("/amd-psp/x86/spi-flash", test_spi_flash);
     qtest_add_func("/amd-psp/x86/observer-exec", test_observer_exec);
 
     return psp_test_run();
