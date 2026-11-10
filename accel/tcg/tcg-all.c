@@ -65,6 +65,13 @@ DECLARE_INSTANCE_CHECKER(TCGState, TCG_STATE,
 #ifndef CONFIG_USER_ONLY
 bool qemu_tcg_mttcg_enabled(void)
 {
+    //// --- Begin LibAFL code ---
+
+    // Only the RR ops works with libafl_qemu, so avoid MTTCG by default
+    return false;
+
+    //// --- End LibAFL code ---
+
     TCGState *s = TCG_STATE(current_accel());
     return s->mttcg_enabled == ON_OFF_AUTO_ON;
 }

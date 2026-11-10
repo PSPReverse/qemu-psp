@@ -4953,12 +4953,29 @@ TRANS_FEAT(CPYFE, aa64_mops, do_CPY, a, true, gen_helper_cpyfe)
 
 typedef void ArithTwoOp(TCGv_i64, TCGv_i64, TCGv_i64);
 
+//// --- Begin LibAFL code ---
+
+void libafl_gen_cmp(target_ulong pc, TCGv op0, TCGv op1, MemOp ot);
+
+//// --- End LibAFL code ---
+
 static bool gen_rri(DisasContext *s, arg_rri_sf *a,
                     bool rd_sp, bool rn_sp, ArithTwoOp *fn)
 {
     TCGv_i64 tcg_rn = rn_sp ? cpu_reg_sp(s, a->rn) : cpu_reg(s, a->rn);
     TCGv_i64 tcg_rd = rd_sp ? cpu_reg_sp(s, a->rd) : cpu_reg(s, a->rd);
     TCGv_i64 tcg_imm = tcg_constant_i64(a->imm);
+
+//// --- Begin LibAFL code ---
+
+    if (a->rd == 31 && (
+        fn == tcg_gen_sub_i64 ||
+        fn == gen_sub64_CC ||
+        fn == gen_sub32_CC)) { // cmp xX, imm
+      libafl_gen_cmp(s->pc_curr, tcg_rn, tcg_imm, a->sf ? MO_64 : MO_32);
+    }
+
+//// --- End LibAFL code ---
 
     fn(tcg_rd, tcg_rn, tcg_imm);
     if (!a->sf) {
@@ -8902,6 +8919,13 @@ static bool do_addsub_ext(DisasContext *s, arg_addsub_ext *a,
     tcg_rm = read_cpu_reg(s, a->rm, a->sf);
     ext_and_shift_reg(tcg_rm, tcg_rm, a->st, a->sa);
 
+//// --- Begin LibAFL code ---
+
+    if (a->rd == 31 && sub_op) // cmp xX, xY
+      libafl_gen_cmp(s->pc_curr, tcg_rn, tcg_rm, a->sf ? MO_64 : MO_32);
+
+//// --- End LibAFL code ---
+
     tcg_result = tcg_temp_new_i64();
     if (!setflags) {
         if (sub_op) {
@@ -8944,6 +8968,13 @@ static bool do_addsub_reg(DisasContext *s, arg_addsub_shift *a,
     tcg_rm = read_cpu_reg(s, a->rm, a->sf);
 
     shift_reg_imm(tcg_rm, tcg_rm, a->sf, a->st, a->sa);
+
+//// --- Begin LibAFL code ---
+
+    if (a->rd == 31 && sub_op) // cmp xX, xY
+      libafl_gen_cmp(s->pc_curr, tcg_rn, tcg_rm, a->sf ? MO_64 : MO_32);
+
+//// --- End LibAFL code ---
 
     tcg_result = tcg_temp_new_i64();
     if (!setflags) {
@@ -9133,6 +9164,12 @@ static bool trans_CCMP(DisasContext *s, arg_CCMP *a)
         tcg_y = cpu_reg(s, a->y);
     }
     tcg_rn = cpu_reg(s, a->rn);
+
+//// --- Begin LibAFL code ---
+
+    libafl_gen_cmp(s->pc_curr, tcg_rn, tcg_y, a->sf ? MO_64 : MO_32);
+
+//// --- End LibAFL code ---
 
     /* Set the flags for the new comparison.  */
     if (a->op) {

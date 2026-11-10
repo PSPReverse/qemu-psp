@@ -38,6 +38,13 @@
 #include "tcg/perf.h"
 #include "tcg/insn-start-words.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/hooks/tcg/block.h"
+#include "libafl/hooks/tcg/edge.h"
+
+//// --- End LibAFL code ---
+
 TBContext tb_ctx;
 
 /*
@@ -96,8 +103,12 @@ static int64_t decode_sleb128(const uint8_t **pp)
    line.  The seed for the first line is { tb->pc, 0..., tb->tc.ptr }.
    That is, the first column is seeded with the guest pc, the last column
    with the host pc, and the middle columns with zeros.  */
-
-static int encode_search(TranslationBlock *tb, uint8_t *block)
+//// --- Begin LibAFL code ---
+/*
+static
+*/
+//// --- End LibAFL code ---
+int encode_search(TranslationBlock *tb, uint8_t *block)
 {
     uint8_t *highwater = tcg_ctx->code_gen_highwater;
     uint64_t *insn_data = tcg_ctx->gen_insn_data;
@@ -248,6 +259,13 @@ static int setjmp_gen_code(CPUArchState *env, TranslationBlock *tb,
 
     CPUState *cs = env_cpu(env);
     tcg_ctx->cpu = cs;
+
+    //// --- Begin LibAFL code ---
+
+    libafl_qemu_hook_block_pre_run(pc);
+
+    //// --- End LibAFL code ---
+
     cs->cc->tcg_ops->translate_code(cs, tb, max_insns, pc, host_pc);
 
     assert(tb->size != 0);
@@ -303,9 +321,12 @@ TranslationBlock *tb_gen_code(CPUState *cpu, TCGTBCPUState s)
 
     gen_code_buf = tcg_ctx->code_gen_ptr;
     tb->tc.ptr = tcg_splitwx_to_rx(gen_code_buf);
-    if (!(s.cflags & CF_PCREL)) {
+//// --- Begin LibAFL code ---
+    // Always include pc for edge hooks
+    //if (!(s.cflags & CF_PCREL)) {
         tb->pc = s.pc;
-    }
+    //}
+//// --- End LibAFL code ---
     tb->cs_base = s.cs_base;
     tb->flags = s.flags;
     tb->cflags = s.cflags;
@@ -396,6 +417,12 @@ TranslationBlock *tb_gen_code(CPUState *cpu, TCGTBCPUState s)
         goto buffer_overflow;
     }
     tb->tc.size = gen_code_size;
+
+//// --- Begin LibAFL code ---
+
+    libafl_qemu_hook_block_post_run(tb, s.pc);
+
+//// --- End LibAFL code ---
 
     /*
      * For CF_PCREL, attribute all executions of the generated code

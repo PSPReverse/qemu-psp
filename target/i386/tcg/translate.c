@@ -39,6 +39,13 @@
 #include "exec/helper-info.c.inc"
 #undef  HELPER_H
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+#include "libafl/hooks/tcg/cmp.h"
+
+//// --- End LibAFL code ---
+
 /* Fixes for Windows namespace pollution.  */
 #undef IN
 #undef OUT
@@ -1254,6 +1261,13 @@ static void gen_cmps(DisasContext *s, MemOp ot, TCGv dshift)
     gen_op_ld_v(s, ot, s->T0, s->A0);
     tcg_gen_mov_tl(cpu_cc_src, s->T1);
     tcg_gen_mov_tl(s->cc_srcT, s->T0);
+
+//// --- Begin LibAFL code ---
+
+        libafl_gen_cmp(s->pc, s->T0, s->T1, ot);
+
+//// --- End LibAFL code ---
+
     tcg_gen_sub_tl(cpu_cc_dst, s->T0, s->T1);
     set_cc_op(s, CC_OP_SUBB + ot);
 
@@ -2835,6 +2849,23 @@ static void gen_multi0F(DisasContext *s, X86DecodedInsn *decode)
              */
             gen_op_st_v(s, CODE64(s) + MO_32, s->T0, s->A0);
             break;
+
+//// --- Begin LibAFL code ---
+        case 0xc1: /* vmcall */
+            // move pc to T0
+            tcg_gen_movi_tl(s->T0, s->pc - s->cs_base);
+
+            // gen jump to next insn
+            gen_op_jmp_v(s, s->T0);
+            gen_bnd_jmp(s);
+            s->base.is_jmp = DISAS_JUMP;
+
+            // gen helper to signal to get out
+            TCGv_i64 new_pc = tcg_temp_new_i64();
+            tcg_gen_extu_tl_i64(new_pc, s->T0);
+            gen_helper_libafl_qemu_handle_custom_insn(tcg_env, new_pc, tcg_constant_i32(LIBAFL_CUSTOM_INSN_NYX));
+            break;
+//// --- End LibAFL code ---
 
         case 0xc8: /* monitor */
             if (!(s->cpuid_ext_features & CPUID_EXT_MONITOR) || CPL(s) != 0) {

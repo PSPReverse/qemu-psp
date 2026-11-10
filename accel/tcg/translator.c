@@ -21,6 +21,17 @@
 #include "disas/disas.h"
 #include "tb-internal.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+#include "libafl/hook.h"
+
+#include "libafl/hooks/tcg/instruction.h"
+#include "libafl/hooks/tcg/backdoor.h"
+
+//// --- End LibAFL code ---
+
+
 static void set_can_do_io(DisasContextBase *db, bool val)
 {
     QEMU_BUILD_BUG_ON(sizeof_field(CPUState, neg.can_do_io) != 1);
@@ -167,6 +178,51 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
             plugin_gen_insn_start(cpu, db);
         }
 
+        //// --- Begin LibAFL code ---
+
+        libafl_qemu_hook_instruction_run(db->pc_next);
+
+        libafl_gen_cur_pc = db->pc_next;
+        libafl_qemu_breakpoint_run(libafl_gen_cur_pc);
+
+        int saved_record_start = db->record_start;
+        int saved_record_len = db->record_len;
+        bool backdoor_triggered = false;
+
+        // 0x0f, 0x3a, 0xf2, 0x44
+        uint8_t backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next);
+        if (backdoor == 0x0f) {
+            backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next +1);
+            if (backdoor == 0x3a) {
+                backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next +2);
+                if (backdoor == 0xf2) {
+                    backdoor = translator_ldub(cpu_env(cpu), db, db->pc_next +3);
+                    if (backdoor == 0x44) {
+                        libafl_qemu_hook_backdoor_run(db->pc_next);
+
+                        db->pc_next += 4;
+                        backdoor_triggered = true;
+                        goto post_translate_insn;
+                    } else if (backdoor == 0x66) {
+                        // First update pc_next to restart at next instruction
+                        db->pc_next += 4;
+                        backdoor_triggered = true;
+
+                        TCGv_i64 tmp0 = tcg_constant_i64(db->pc_next);
+                        gen_helper_libafl_qemu_handle_custom_insn(tcg_env, tmp0, tcg_constant_i32(LIBAFL_CUSTOM_INSN_LIBAFL));
+                    }
+                }
+            }
+        }
+
+        if (!backdoor_triggered) {
+            // backdoor not triggered, restore record as it was before
+            db->record_start = saved_record_start;
+            db->record_len = saved_record_len;
+        }
+
+        //// --- End LibAFL code ---
+
         /*
          * Disassemble one instruction.  The translate_insn hook should
          * update db->pc_next and db->is_jmp to indicate what should be
@@ -175,6 +231,9 @@ void translator_loop(CPUState *cpu, TranslationBlock *tb, int *max_insns,
          */
         ops->translate_insn(db, cpu);
 
+//// --- Begin LibAFL code ---
+post_translate_insn:
+//// --- End LibAFL code ---
         /*
          * We can't instrument after instructions that change control
          * flow although this only really affects post-load operations.

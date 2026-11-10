@@ -92,6 +92,13 @@ QEMU_BUILD_BUG_ON(sizeof(vaddr) > sizeof(run_on_cpu_data));
 
 #define ALL_MMUIDX_BITS ((1 << NB_MMU_MODES) - 1)
 
+//// --- Begin LibAFL code ---
+
+// void syx_snapshot_dirty_list_add(hwaddr paddr);
+void syx_snapshot_dirty_list_add_hostaddr(void* host_addr);
+
+//// --- End LibAFL code ---
+
 static inline size_t tlb_n_entries(CPUTLBDescFast *fast)
 {
     return (fast->mask >> CPU_TLB_ENTRY_BITS) + 1;
@@ -1408,6 +1415,13 @@ static int probe_access_internal(CPUState *cpu, vaddr addr,
 
     /* Everything else is RAM. */
     *phost = (void *)((uintptr_t)addr + entry->addend);
+//// --- Begin LibAFL code ---
+
+    if (access_type == MMU_DATA_STORE) {
+        syx_snapshot_dirty_list_add_hostaddr(*phost);
+    }
+
+//// --- End LibAFL code ---
     return flags;
 }
 
@@ -1756,6 +1770,16 @@ static bool mmu_lookup(CPUState *cpu, vaddr addr, MemOpIdx oi,
         if (unlikely(flags & TLB_BSWAP)) {
             l->memop ^= MO_BSWAP;
         }
+
+        //// --- Begin LibAFL code ---
+
+        // TODO: Does not work?
+        // if (type == MMU_DATA_STORE) {
+            syx_snapshot_dirty_list_add_hostaddr(l->page[0].haddr);
+        // }
+
+        //// --- End LibAFL code ---
+
     } else {
         /* Finish compute of page crossing. */
         vaddr addr1 = last & TARGET_PAGE_MASK;
@@ -1780,6 +1804,15 @@ static bool mmu_lookup(CPUState *cpu, vaddr addr, MemOpIdx oi,
             mmu_watch_or_dirty(cpu, &l->page[0], type, ra);
             mmu_watch_or_dirty(cpu, &l->page[1], type, ra);
         }
+
+        //// --- Begin LibAFL code ---
+
+        // if (type == MMU_DATA_STORE) {
+            syx_snapshot_dirty_list_add_hostaddr(l->page[0].haddr);
+            syx_snapshot_dirty_list_add_hostaddr(l->page[1].haddr);
+        // }
+
+        //// --- End LibAFL code ---
 
         /*
          * Since target/sparc is the only user of TLB_BSWAP, and all
@@ -1878,6 +1911,12 @@ static void *atomic_mmu_lookup(CPUState *cpu, vaddr addr, MemOpIdx oi,
     }
 
     hostaddr = (void *)((uintptr_t)addr + tlbe->addend);
+
+    //// --- Begin LibAFL code ---
+
+    syx_snapshot_dirty_list_add_hostaddr(hostaddr);
+
+    //// --- End LibAFL code ---
 
     if (unlikely(tlb_addr & TLB_NOTDIRTY)) {
         notdirty_write(cpu, addr, size, full, retaddr);

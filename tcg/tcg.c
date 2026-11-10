@@ -62,6 +62,10 @@
 #include "user/guest-base.h"
 #endif
 
+//// --- Begin LibAFL code ---
+#include "libafl/tcg.h"
+//// --- End LibAFL code ---
+
 /* Forward declarations for functions declared in tcg-target.c.inc and
    used here. */
 static void tcg_target_init(TCGContext *s);
@@ -2499,7 +2503,10 @@ bool tcg_op_deposit_valid(TCGType type, unsigned ofs, unsigned len)
 
 static TCGOp *tcg_op_alloc(TCGOpcode opc, unsigned nargs);
 
-static void tcg_gen_callN(void *func, TCGHelperInfo *info,
+//// --- Begin LibAFL code ---
+/* static */
+//// --- End LibAFL code ---
+void tcg_gen_callN(void *func, TCGHelperInfo *info,
                           TCGTemp *ret, TCGTemp **args)
 {
     TCGv_i64 extend_free[MAX_CALL_IARGS];

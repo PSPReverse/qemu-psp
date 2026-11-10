@@ -47,6 +47,16 @@
 #include "tb-internal.h"
 #include "internal-common.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/defs.h"
+#include "libafl/exit.h"
+#include "libafl/tcg.h"
+#include "libafl/hooks/tcg/edge.h"
+
+//// --- End LibAFL code ---
+
+
 /* -icount align implementation. */
 
 typedef struct SyncClocks {
@@ -686,6 +696,16 @@ static inline void cpu_handle_debug_exception(CPUState *cpu)
 
 static inline bool cpu_handle_exception(CPUState *cpu, int *ret)
 {
+//// --- Begin LibAFL code ---
+    if (cpu->exception_index == EXCP_LIBAFL_EXIT) {
+        *ret = cpu->exception_index;
+        cpu->exception_index = -1;
+
+        libafl_sync_exit_cpu();
+        return true;
+    }
+//// --- End LibAFL code ---
+
     if (cpu->exception_index < 0) {
 #ifndef CONFIG_USER_ONLY
         if (replay_has_exception()
@@ -991,12 +1011,42 @@ cpu_exec_loop(CPUState *cpu, SyncClocks *sc)
                 last_tb = NULL;
             }
 #endif
+
+            //// --- Begin LibAFL code ---
+
+            bool libafl_edge_generated = false;
+            TranslationBlock *edge;
+
             /* See if we can patch the calling TB. */
             if (last_tb) {
-                tb_add_jump(last_tb, tb_exit, tb);
+                // tb_add_jump(last_tb, tb_exit, tb);
+
+                if (last_tb->jmp_reset_offset[1] != TB_JMP_OFFSET_INVALID) {
+                    mmap_lock();
+                    edge = libafl_gen_edge(cpu, last_tb->pc, s.pc, tb_exit, s);
+                    mmap_unlock();
+
+                    if (edge) {
+                        tb_add_jump(last_tb, tb_exit, edge);
+                        tb_add_jump(edge, 0, tb);
+                        libafl_edge_generated = true;
+                    } else {
+                        tb_add_jump(last_tb, tb_exit, tb);
+                    }
+                } else {
+                    tb_add_jump(last_tb, tb_exit, tb);
+                }
             }
 
-            cpu_loop_exec_tb(cpu, tb, s.pc, &last_tb, &tb_exit);
+            if (libafl_edge_generated) {
+                // execute the edge to make sure to log it the first execution
+                // the edge will then jump to the translated block
+                cpu_loop_exec_tb(cpu, edge, s.pc, &last_tb, &tb_exit);
+            } else {
+                cpu_loop_exec_tb(cpu, tb, s.pc, &last_tb, &tb_exit);
+            }
+
+            //// --- End LibAFL code ---
 
             /* Try to align the host and virtual clocks
                if the guest is in advance */

@@ -36,6 +36,13 @@
 #include "tcg-accel-ops.h"
 #include "tcg-accel-ops-mttcg.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/defs.h"
+
+//// --- End LibAFL code ---
+
+
 typedef struct MttcgForceRcuNotifier {
     Notifier notifier;
     CPUState *cpu;
@@ -103,6 +110,11 @@ static void *mttcg_cpu_thread_fn(void *arg)
                  * reset by another thread by the time we arrive here.
                  */
                 break;
+//// --- Begin LibAFL code ---
+            case EXCP_LIBAFL_EXIT:
+                cpu->stopped = true;
+                break;
+//// --- End LibAFL code ---
             case EXCP_ATOMIC:
                 bql_unlock();
                 cpu_exec_step_atomic(cpu);

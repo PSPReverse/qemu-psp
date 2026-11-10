@@ -37,6 +37,12 @@
 #include "tcg-accel-ops-rr.h"
 #include "tcg-accel-ops-icount.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/defs.h"
+
+//// --- End LibAFL code ---
+
 /* Kick all RR vCPUs */
 void rr_kick_vcpu_thread(CPUState *unused)
 {
@@ -297,6 +303,12 @@ static void *rr_cpu_thread_fn(void *arg)
                     bql_lock();
                     break;
                 }
+//// --- Begin LibAFL code ---
+                else if (r == EXCP_LIBAFL_EXIT) {
+                    cpu->stopped = true;
+                    break;
+                }
+//// --- End LibAFL code ---
             } else if (cpu->stop) {
                 if (cpu->unplug) {
                     cpu = CPU_NEXT(cpu);
