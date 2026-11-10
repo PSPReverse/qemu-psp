@@ -58,6 +58,11 @@
 #include "tcg/perf.h"
 #include "exec/page-vary.h"
 
+//// --- End LibAFL code ---
+#include "libafl/cpu.h"
+#include "libafl/user.h"
+//// --- Begin LibAFL code ---
+
 #ifdef CONFIG_SEMIHOSTING
 #include "semihosting/semihost.h"
 #endif
@@ -647,6 +652,18 @@ static int parse_args(int argc, char **argv)
             r++;
         }
 
+//// --- Begin LibAFL code ---
+        if (!strncmp(r, "libafl", 6)) {
+            if (optind >= argc) {
+                (void) fprintf(stderr,
+                    "qemu: missing argument for option '%s'\n", r);
+                exit(EXIT_FAILURE);
+            }
+            optind++;
+            continue;
+        }
+//// --- End LibAFL code ---
+
         for (arginfo = arg_table; arginfo->handle_opt != NULL; arginfo++) {
             if (!strcmp(r, arginfo->argv)) {
                 if (arginfo->has_arg) {
@@ -676,15 +693,31 @@ static int parse_args(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    exec_path = argv[optind];
+    //exec_path = argv[optind];
+    //// --- Begin LibAFL code ---
+    exec_path = strdup(argv[optind]);
+    //// --- End LibAFL code ---
 
     return optind;
 }
 
+//// --- Begin LibAFL code ---
+struct linux_binprm bprm;
+
+#ifdef AS_LIB
+int _libafl_qemu_user_init(int argc, char **argv, char **envp)
+#else
+//// --- End LibAFL code ---
 int main(int argc, char **argv, char **envp)
+//// --- Begin LibAFL code ---
+#endif
+//// --- End LibAFL code ---
 {
-    struct image_info info1, *info = &info1;
-    struct linux_binprm bprm;
+    //struct image_info info1, *info = &info1;
+    //// --- Begin LibAFL code ---
+    struct image_info *info = libafl_get_image_info();
+    //// --- End LibAFL code ---
+    // struct linux_binprm bprm;
     TaskState *ts;
     CPUArchState *env;
     CPUState *cpu;
@@ -1036,7 +1069,18 @@ int main(int argc, char **argv, char **envp)
     qemu_semihosting_guestfd_init();
 #endif
 
-    cpu_loop(env);
+    // cpu_loop(env);
+
+    //// --- Begin LibAFL code ---
+
+    libafl_set_qemu_env(env);
+
+#ifndef AS_LIB
+    return libafl_qemu_main();
+#endif
+
+    //// --- End LibAFL code ---
+
     /* never exits */
     return 0;
 }

@@ -147,6 +147,11 @@
 #include "fd-trans.h"
 #include "user/cpu_loop.h"
 
+//// --- Begin LibAFL code ---
+#include "libafl/hooks/syscall.h"
+#include "libafl/hooks/thread.h"
+//// --- End LibAFL code ---
+
 #if defined(__powerpc__)
 /*
  * On PowerPC termios2 is lacking and termios along with ioctls w/o 2
@@ -851,7 +856,10 @@ static inline int host_to_target_sock_type(int host_type)
     return target_type;
 }
 
-static abi_ulong target_brk, initial_target_brk;
+//// --- Begin LibAFL code ---
+/* static */
+//// --- End LibAFL code ---
+abi_ulong target_brk, initial_target_brk;
 
 void target_set_brk(abi_ulong new_brk)
 {
@@ -1038,7 +1046,7 @@ static inline rlim_t target_to_host_rlim(abi_ulong target_rlim)
 {
     abi_ulong target_rlim_swap;
     rlim_t result;
-    
+
     target_rlim_swap = tswapal(target_rlim);
     if (target_rlim_swap == TARGET_RLIM_INFINITY)
         return RLIM_INFINITY;
@@ -1046,7 +1054,7 @@ static inline rlim_t target_to_host_rlim(abi_ulong target_rlim)
     result = target_rlim_swap;
     if (target_rlim_swap != (rlim_t)result)
         return RLIM_INFINITY;
-    
+
     return result;
 }
 #endif
@@ -1056,13 +1064,13 @@ static inline abi_ulong host_to_target_rlim(rlim_t rlim)
 {
     abi_ulong target_rlim_swap;
     abi_ulong result;
-    
+
     if (rlim == RLIM_INFINITY || rlim != (abi_long)rlim)
         target_rlim_swap = TARGET_RLIM_INFINITY;
     else
         target_rlim_swap = rlim;
     result = tswapal(target_rlim_swap);
-    
+
     return result;
 }
 #endif
@@ -1777,9 +1785,9 @@ static inline abi_long target_to_host_cmsg(struct msghdr *msgh,
     abi_ulong target_cmsg_addr;
     struct target_cmsghdr *target_cmsg, *target_cmsg_start;
     socklen_t space = 0;
-    
+
     msg_controllen = tswapal(target_msgh->msg_controllen);
-    if (msg_controllen < sizeof (struct target_cmsghdr)) 
+    if (msg_controllen < sizeof (struct target_cmsghdr))
         goto the_end;
     target_cmsg_addr = tswapal(target_msgh->msg_control);
     target_cmsg = lock_user(VERIFY_READ, target_cmsg_addr, msg_controllen, 1);
@@ -1873,7 +1881,7 @@ static inline abi_long host_to_target_cmsg(struct target_msghdr *target_msgh,
     socklen_t space = 0;
 
     msg_controllen = tswapal(target_msgh->msg_controllen);
-    if (msg_controllen < sizeof (struct target_cmsghdr)) 
+    if (msg_controllen < sizeof (struct target_cmsghdr))
         goto the_end;
     target_cmsg_addr = tswapal(target_msgh->msg_control);
     target_cmsg = lock_user(VERIFY_WRITE, target_cmsg_addr, msg_controllen, 0);
@@ -6340,7 +6348,7 @@ abi_long do_set_thread_area(CPUX86State *env, abi_ulong ptr)
     }
     unlock_user_struct(target_ldt_info, ptr, 1);
 
-    if (ldt_info.entry_number < TARGET_GDT_ENTRY_TLS_MIN || 
+    if (ldt_info.entry_number < TARGET_GDT_ENTRY_TLS_MIN ||
         ldt_info.entry_number > TARGET_GDT_ENTRY_TLS_MAX)
            return -TARGET_EINVAL;
     seg_32bit = ldt_info.flags & 1;
@@ -6418,7 +6426,7 @@ static abi_long do_get_thread_area(CPUX86State *env, abi_ulong ptr)
     lp = (uint32_t *)(gdt_table + idx);
     entry_1 = tswap32(lp[0]);
     entry_2 = tswap32(lp[1]);
-    
+
     read_exec_only = ((entry_2 >> 9) & 1) ^ 1;
     contents = (entry_2 >> 10) & 3;
     seg_not_present = ((entry_2 >> 15) & 1) ^ 1;
@@ -6434,8 +6442,8 @@ static abi_long do_get_thread_area(CPUX86State *env, abi_ulong ptr)
         (read_exec_only << 3) | (limit_in_pages << 4) |
         (seg_not_present << 5) | (useable << 6) | (lm << 7);
     limit = (entry_1 & 0xffff) | (entry_2  & 0xf0000);
-    base_addr = (entry_1 >> 16) | 
-        (entry_2 & 0xff000000) | 
+    base_addr = (entry_1 >> 16) |
+        (entry_2 & 0xff000000) |
         ((entry_2 & 0xff) << 16);
     target_ldt_info->base_addr = tswapal(base_addr);
     target_ldt_info->limit = tswap32(limit);
@@ -6883,7 +6891,16 @@ static void *clone_func(void *arg)
     /* Wait until the parent has finished initializing the tls state.  */
     pthread_mutex_lock(&clone_lock);
     pthread_mutex_unlock(&clone_lock);
-    cpu_loop(env);
+
+    //// --- Begin LibAFL code ---
+
+    if (libafl_hook_new_thread_run(env, info->tid)) {
+        cpu_loop(env);
+    }
+
+    //// --- End LibAFL code ---
+
+    // cpu_loop(env);
     /* never exits */
     return NULL;
 }
@@ -12503,7 +12520,7 @@ static abi_long do_syscall1(CPUArchState *cpu_env, int num, abi_long arg1,
         return get_errno(fchown(arg1, low2highuid(arg2), low2highgid(arg3)));
 #if defined(TARGET_NR_fchownat)
     case TARGET_NR_fchownat:
-        if (!(p = lock_user_string(arg2))) 
+        if (!(p = lock_user_string(arg2)))
             return -TARGET_EFAULT;
         ret = get_errno(fchownat(arg1, p, low2highuid(arg3),
                                  low2highgid(arg4), arg5));
@@ -14388,6 +14405,62 @@ static bool sys_dispatch(CPUState *cpu, TaskState *ts)
     return true;
 }
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/user.h"
+
+IntervalTreeNode * libafl_maps_first(IntervalTreeRoot * map_info) {
+    return interval_tree_iter_first(map_info, 0, -1);
+}
+
+IntervalTreeNode * libafl_maps_next(IntervalTreeNode *pageflags_maps_node, IntervalTreeRoot *proc_maps_root, struct libafl_mapinfo* ret) {
+    ret->is_valid = false;
+
+    if (!pageflags_maps_node || !ret) {
+        return NULL;
+    }
+
+    MapInfo *e;
+    IntervalTreeNode *proc_map_interval_node;
+
+    if (h2g_valid(pageflags_maps_node->start)) {
+        unsigned long min = pageflags_maps_node->start;
+        unsigned long max = pageflags_maps_node->last + 1;
+        int flags = page_get_flags(h2g(min));
+
+        max = h2g_valid(max - 1) ?
+            max : (uintptr_t) g2h_untagged(guest_addr_max) + 1;
+
+        // I guess this is useless? we are walking the entire pageflags_root tree, so we should always have a valid node
+        if (!page_check_range(h2g(min), max - min, flags)) {
+            return libafl_maps_next(interval_tree_iter_next(pageflags_maps_node, 0, -1), proc_maps_root, ret);
+        }
+
+        // Should we check for NULL? Not sure, but if an inteval is in pageflags, then it should be in proc_maps too
+        proc_map_interval_node = interval_tree_iter_first(proc_maps_root, min, min);
+        e = container_of(proc_map_interval_node, MapInfo, itree);
+
+        int libafl_flags = 0;
+        if (flags & PAGE_READ) libafl_flags |= PROT_READ;
+        if (flags & PAGE_WRITE_ORG) libafl_flags |= PROT_WRITE;
+        if (flags & PAGE_EXEC) libafl_flags |= PROT_EXEC;
+
+        ret->is_valid = true;
+        ret->start = (uint64_t) h2g_nocheck(min);
+        ret->end = (uint64_t) max;
+        ret->offset = (uint64_t) e->offset;
+        ret->path = e->path;
+        ret->flags = libafl_flags;
+        ret->is_priv = e->is_priv;
+
+        return interval_tree_iter_next(pageflags_maps_node, 0, -1);
+    } else {
+        return libafl_maps_next(interval_tree_iter_next(pageflags_maps_node, 0, -1), proc_maps_root, ret);
+    }
+}
+
+//// --- End LibAFL code ---
+
 static void record_syscall_start(CPUState *cpu, int num,
                                  abi_long arg1, abi_long arg2,
                                  abi_long arg3, abi_long arg4,
@@ -14469,11 +14542,25 @@ abi_long do_syscall(CPUArchState *cpu_env, int num, abi_long arg1,
         print_syscall(cpu_env, num, arg1, arg2, arg3, arg4, arg5, arg6);
     }
 
+    //// --- Begin LibAFL code ---
+
     if (!send_through_syscall_filters(cpu, num, arg1, arg2, arg3, arg4, arg5,
                                       arg6, arg7, arg8, &ret)) {
-        ret = do_syscall1(cpu_env, num, arg1, arg2, arg3, arg4,
-                          arg5, arg6, arg7, arg8);
+        bool skip_syscall = libafl_hook_syscall_pre_run(cpu_env, &num, &arg1, &arg2, &arg3, &arg4, &arg5, &arg6, &arg7, &arg8, &ret);
+        if (skip_syscall) goto after_syscall;
     }
+
+    //// --- End LibAFL code ---
+
+    ret = do_syscall1(cpu_env, num, arg1, arg2, arg3, arg4,
+                      arg5, arg6, arg7, arg8);
+
+    //// --- Begin LibAFL code ---
+
+after_syscall:;
+    libafl_hook_syscall_post_run(num, arg1, arg2, arg3, arg4,
+                      arg5, arg6, arg7, arg8, &ret);
+    //// --- End LibAFL code ---
 
     if (unlikely(qemu_loglevel_mask(LOG_STRACE))) {
         print_syscall_ret(cpu_env, num, ret, arg1, arg2,

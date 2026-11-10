@@ -26,6 +26,12 @@
 #include "internal.h"
 #include "fpu_helper.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+
+//// --- End LibAFL code ---
+
 # ifdef TARGET_ABI_MIPSO32
 #  define MIPS_SYSCALL_NUMBER_UNUSED -1
 static const int8_t mips_syscall_args[] = {
@@ -70,13 +76,34 @@ void cpu_loop(CPUMIPSState *env)
     unsigned int syscall_num;
 # endif
 
+//// --- Begin LibAFL code ---
+
+    libafl_exit_signal_vm_start();
+
+//// --- End LibAFL code ---
+
     for(;;) {
+        
+//// --- Begin LibAFL code ---
+
+        if (libafl_exit_asap()) return;
+
+//// --- End LibAFL code ---
+
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
         cpu_exec_end(cs);
         qemu_process_cpu_events(cs);
 
         switch(trapnr) {
+
+//// --- Begin LibAFL code ---
+
+        case EXCP_LIBAFL_EXIT:
+            return;
+
+//// --- End LibAFL code ---
+
         case EXCP_SYSCALL:
             env->active_tc.PC += 4;
 # ifdef TARGET_ABI_MIPSO32

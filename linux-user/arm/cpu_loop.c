@@ -29,6 +29,12 @@
 #include "user/page-protection.h"
 #include "target/arm/syndrome.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+
+//// --- End LibAFL code ---
+
 #define get_user_code_u32(x, gaddr, env)                \
     ({ abi_long __r = get_user_u32((x), (gaddr));       \
         if (!__r && bswap_code(arm_sctlr_b(env))) {     \
@@ -274,13 +280,28 @@ void cpu_loop(CPUARMState *env)
     unsigned int n, insn;
     abi_ulong ret;
 
+//// --- Begin LibAFL code ---
+    libafl_exit_signal_vm_start();
+//// --- End LibAFL code ---
+
     for(;;) {
+
+//// --- Begin LibAFL code ---
+        if (libafl_exit_asap()) return;
+//// --- End LibAFL code ---
+
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
         cpu_exec_end(cs);
         qemu_process_cpu_events(cs);
 
         switch(trapnr) {
+
+//// --- Begin LibAFL code ---
+        case EXCP_LIBAFL_EXIT:
+            return;
+//// --- End LibAFL code ---
+
         case EXCP_UDEF:
         case EXCP_NOCP:
         case EXCP_INVSTATE:

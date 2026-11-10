@@ -24,6 +24,12 @@
 #include "user/cpu_loop.h"
 #include "signal-common.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+
+//// --- End LibAFL code ---
+
 static inline uint64_t cpu_ppc_get_tb(CPUPPCState *env)
 {
     return cpu_get_host_ticks();
@@ -71,8 +77,16 @@ void cpu_loop(CPUPPCState *env)
     int trapnr, si_signo, si_code;
     target_ulong ret;
 
+//// --- Begin LibAFL code ---
+    libafl_exit_signal_vm_start();
+//// --- End LibAFL code ---
+
     for(;;) {
         bool arch_interrupt;
+
+//// --- Begin LibAFL code ---
+        if (libafl_exit_asap()) return;
+//// --- End LibAFL code ---
 
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
@@ -81,6 +95,12 @@ void cpu_loop(CPUPPCState *env)
 
         arch_interrupt = true;
         switch (trapnr) {
+
+//// --- Begin LibAFL code ---
+        case EXCP_LIBAFL_EXIT:
+            return;
+//// --- End LibAFL code ---
+
         case POWERPC_EXCP_NONE:
             /* Just go on */
             break;

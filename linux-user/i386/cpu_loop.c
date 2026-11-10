@@ -25,6 +25,10 @@
 #include "signal-common.h"
 #include "user-mmap.h"
 
+//// --- Begin LibAFL code ---
+#include "libafl/exit.h"
+//// --- End LibAFL code ---
+
 /***********************************************************/
 /* CPUX86 core interface */
 
@@ -212,13 +216,34 @@ void cpu_loop(CPUX86State *env)
     int trapnr;
     abi_ulong ret;
 
+//// --- Begin LibAFL code ---
+
+    libafl_exit_signal_vm_start();
+
+//// --- End LibAFL code ---
+
     for(;;) {
+
+//// --- Begin LibAFL code ---
+
+        if (libafl_exit_asap()) return;
+
+//// --- End LibAFL code ---
+
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
         cpu_exec_end(cs);
         qemu_process_cpu_events(cs);
 
         switch(trapnr) {
+
+//// --- Begin LibAFL code ---
+
+        case EXCP_LIBAFL_EXIT:
+            return;
+
+//// --- End LibAFL code ---
+
         case 0x80:
 #ifndef TARGET_X86_64
         case EXCP_SYSCALL:

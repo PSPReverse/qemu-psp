@@ -27,6 +27,12 @@
 #include "target/arm/syndrome.h"
 #include "target/arm/cpu-features.h"
 
+//// --- Begin LibAFL code ---
+
+#include "libafl/exit.h"
+
+//// --- End LibAFL code ---
+
 /* Use the exception syndrome to map a cpu exception to a signal. */
 static void signal_for_exception(CPUARMState *env, vaddr addr)
 {
@@ -160,13 +166,27 @@ void cpu_loop(CPUARMState *env)
     int trapnr;
     abi_long ret;
 
+//// --- Begin LibAFL code ---
+    libafl_exit_signal_vm_start();
+//// --- End LibAFL code ---
+
     for (;;) {
+//// --- Begin LibAFL code ---
+        if (libafl_exit_asap()) return;
+//// --- End LibAFL code ---
+
         cpu_exec_start(cs);
         trapnr = cpu_exec(cs);
         cpu_exec_end(cs);
         qemu_process_cpu_events(cs);
 
         switch (trapnr) {
+
+//// --- Begin LibAFL code ---
+        case EXCP_LIBAFL_EXIT:
+            return;
+//// --- End LibAFL code ---
+
         case EXCP_SWI:
             /* On syscall, PSTATE.ZA is preserved, PSTATE.SM is cleared. */
             aarch64_set_svcr(env, 0, R_SVCR_SM_MASK);
