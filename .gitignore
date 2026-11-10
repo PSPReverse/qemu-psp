@@ -20,3 +20,8 @@ GTAGS
 *.swp
 *.patch
 *.gcov
+
+# --- Begin LibAFL code ---
+/.idea
+/compile_commands.json
+# --- End LibAFL code ---
