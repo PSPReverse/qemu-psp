@@ -8,6 +8,7 @@
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
+#include "qemu/log.h"
 #include "trace.h"
 
 #include "psp/x86/x86-misc.h"
@@ -127,10 +128,18 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
                                 &val)) {
         trace_psp_x86_misc_read_unimplemented(addr, info.region_name,
                                               info.offset);
+        if (s->log_access) {
+            qemu_log_mask(LOG_UNIMP, "psp-x86-misc read 0x%" HWADDR_PRIx
+                          " = 0x0 size %u (unimplemented)\n", addr, size);
+        }
         return 0;
     }
 
     trace_psp_x86_misc_read(addr, val, info.region_name, info.offset);
+    if (s->log_access) {
+        qemu_log_mask(LOG_UNIMP, "psp-x86-misc read 0x%" HWADDR_PRIx
+                      " = 0x%" PRIx64 " size %u\n", addr, val, size);
+    }
     return val;
 }
 
@@ -140,6 +149,10 @@ static void psp_x86_misc_write(void* opaque, hwaddr addr, uint64_t value,
     PSPX86MiscState* s = PSP_X86_MISC(opaque);
     LoggingInfo info = get_logging_info_for_addr(addr);
 
+    if (s->log_access) {
+        qemu_log_mask(LOG_UNIMP, "psp-x86-misc write 0x%" HWADDR_PRIx
+                      " = 0x%" PRIx64 " size %u\n", addr, value, size);
+    }
     /* Port 0x61 placeholder: bits 0-1 stored, see psp_x86_misc_read */
     if (addr == 0xfffdfc000061) {
         s->port61_ctl = value & 0x3;
@@ -202,6 +215,7 @@ static void psp_x86_misc_reset_hold(Object* obj, ResetType type)
 static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MiscState, generation,
                        PSP_GENERATION_MAX),
+    DEFINE_PROP_BOOL("log_access", PSPX86MiscState, log_access, false),
 };
 
 static void psp_x86_misc_class_init(ObjectClass* oc, const void* data)

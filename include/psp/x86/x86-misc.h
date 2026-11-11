@@ -21,6 +21,8 @@ typedef struct PSPX86MiscState {
     /* <public> */
     MemoryRegion iomem;
     PspGeneration generation;
+    /* Log every access with qemu_log_mask(LOG_UNIMP), for builds without tracing */
+    bool log_access;
     /* I/O port 0x61 placeholder state, see psp_x86_misc_read/write */
     uint8_t port61_ctl;
     bool port61_refresh;
