@@ -713,6 +713,35 @@ static bool ccp_aes(CcpV5State *s, uint32_t id, ccp5_desc *desc)
                           func.aes.type);
         }
         break;
+    case CCP_AES_MODE_CTR:
+        /*
+         * The counter block is the LSB context slot and is written back
+         * advanced. Byte order and the counter width (func.aes.size) are
+         * inferred: the block is used as stored and counts over all 128 bits.
+         */
+        if ((func.aes.type != CCP_AES_TYPE_128 &&
+             func.aes.type != CCP_AES_TYPE_256) ||
+            CCP5_CMD_LSB_ID(desc) >= CCP_LSB_COUNT) {
+            qemu_log_mask(LOG_UNIMP,
+                          "CCP Error: Unsupported AES CTR type %d context %u\n",
+                          func.aes.type, CCP5_CMD_LSB_ID(desc));
+            failed = true;
+            break;
+        }
+        {
+            bool aes256 = func.aes.type == CCP_AES_TYPE_256;
+            uint8_t *ctr = s->lsb.u.slots[CCP5_CMD_LSB_ID(desc)].data;
+
+            if (!ccp_copy_to_host(s, key_local, key_addr, key_mtype,
+                                  aes256 ? 32 : 16) ||
+                !ccp_copy_to_host(s, src_buf, src_addr, src_mtype, len)) {
+                failed = true;
+                break;
+            }
+            ccp_aes_ctr(dst_buf, src_buf, len, key_local, aes256, ctr);
+            failed = !ccp_copy_to_guest(s, dst_addr, dst_buf, dst_mtype, len);
+        }
+        break;
     default:
         qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented AES MODE %d\n",
                       func.aes.mode);
