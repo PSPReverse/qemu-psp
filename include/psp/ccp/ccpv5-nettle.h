@@ -23,6 +23,7 @@
 #define AMD_CCP_V5_NETTLE_H
 #include <glib.h>
 #include <nettle/aes.h>
+#include <nettle/ctr.h>
 #include <nettle/rsa.h>
 #include <nettle/sha2.h>
 
@@ -75,6 +76,28 @@ static inline void ccp_aes256ecb(uint8_t * dst, const uint8_t * src, size_t leng
         aes256_encrypt(&ctx, length, dst, src);
     else
         aes256_decrypt(&ctx, length, dst, src);
+}
+
+/*
+ * CTR mode, encryption and decryption are the same. ctr holds the counter
+ * block and is advanced past the blocks used, big endian over all 16 bytes.
+ */
+static inline void ccp_aes_ctr(uint8_t *dst, const uint8_t *src, size_t length,
+                               const uint8_t *key, bool aes256, uint8_t *ctr)
+{
+    if (aes256) {
+        struct aes256_ctx ctx;
+
+        aes256_set_encrypt_key(&ctx, key);
+        ctr_crypt(&ctx, (nettle_cipher_func *)aes256_encrypt, AES_BLOCK_SIZE,
+                  ctr, length, dst, src);
+    } else {
+        struct aes128_ctx ctx;
+
+        aes128_set_encrypt_key(&ctx, key);
+        ctr_crypt(&ctx, (nettle_cipher_func *)aes128_encrypt, AES_BLOCK_SIZE,
+                  ctr, length, dst, src);
+    }
 }
 
 static inline void ccp_init_sha256_ctx(CcpV5ShaCtx* ctx)

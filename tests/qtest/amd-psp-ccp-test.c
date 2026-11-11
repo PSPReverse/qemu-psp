@@ -488,6 +488,95 @@ static void test_ecc(void)
     qtest_quit(qts);
 }
 
+/*
+ * AES-128 CTR, the NIST SP 800-38A F.5.1 vector: the counter block is the LSB
+ * slot named by the descriptor and comes back advanced by the blocks used.
+ */
+static uint32_t ccp_aes_ctr_run(QTestState *qts, unsigned lsb, uint32_t src,
+                                uint32_t dst, uint32_t key, uint32_t len)
+{
+    /* engine 0 (AES), function: encrypt | mode CTR << 8 | type 128 << 13 */
+    uint32_t func = (1u << 7) | (4u << 8);
+    uint32_t w[8] = {
+        CCP_FUNC(func),
+        len,
+        src,
+        (CCP_MEMTYPE_LOCAL << 16) | (lsb << 18),
+        dst,
+        CCP_MEMTYPE_LOCAL << 16,
+        key,
+        CCP_MEMTYPE_LOCAL << 16,
+    };
+
+    for (int i = 0; i < ARRAY_SIZE(w); i++) {
+        qtest_writel(qts, SRAM_DESC + 4 * i, w[i]);
+    }
+    qtest_writel(qts, CCP_Q0 + CCP_Q_TAIL, SRAM_DESC);
+    qtest_writel(qts, CCP_Q0 + CCP_Q_HEAD, SRAM_DESC + CCP_DESC_SIZE);
+    qtest_writel(qts, CCP_Q0 + CCP_Q_CTRL, CCP_Q_RUN);
+    qtest_readl(qts, CCP_Q0 + CCP_Q_CTRL);
+    return qtest_readl(qts, CCP_Q0 + CCP_Q_STATUS);
+}
+
+static void test_aes_ctr(void)
+{
+    static const uint8_t key[16] = {
+        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+        0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
+    static const uint8_t ctr[16] = {
+        0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
+        0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff };
+    static const uint8_t plain[32] = {
+        0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
+        0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+        0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c,
+        0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51 };
+    static const uint8_t cipher[32] = {
+        0x87, 0x4d, 0x61, 0x91, 0xb6, 0x20, 0xe3, 0x26,
+        0x1b, 0xef, 0x68, 0x64, 0x99, 0x0d, 0xb6, 0xce,
+        0x98, 0x06, 0xf6, 0x6b, 0x79, 0x70, 0xfd, 0xff,
+        0x86, 0x17, 0x18, 0x7b, 0xb9, 0xff, 0xfd, 0xff };
+    QTestState *qts = psp_start(PSP_ZEN2);
+    uint8_t got[32], next[16];
+
+    if (!qts) {
+        return;
+    }
+    qtest_memwrite(qts, SRAM_SRC, plain, sizeof(plain));
+    qtest_memwrite(qts, SRAM_SRC + 0x100, key, sizeof(key));
+    qtest_memwrite(qts, SRAM_SRC + 0x200, ctr, sizeof(ctr));
+    /* Counter block into LSB slot 4 */
+    {
+        PspCcpDesc d = {
+            .engine = CCP_ENGINE_PASSTHRU, .len = 16,
+            .src = SRAM_SRC + 0x200, .src_mem = CCP_MEMTYPE_LOCAL,
+            .dst = 4 * 32, .dst_mem = CCP_MEMTYPE_SB,
+        };
+
+        g_assert_cmpuint(psp_ccp_run(qts, &d), ==, 0);
+    }
+    g_assert_cmpuint(ccp_aes_ctr_run(qts, 4, SRAM_SRC, SRAM_DST,
+                                     SRAM_SRC + 0x100, 32), ==, 0);
+    qtest_memread(qts, SRAM_DST, got, sizeof(got));
+    g_assert_cmpmem(got, sizeof(got), cipher, sizeof(cipher));
+
+    /* The counter moved on by two blocks: ...fcfdfeff + 2 */
+    {
+        PspCcpDesc d = {
+            .engine = CCP_ENGINE_PASSTHRU, .len = 16,
+            .src = 4 * 32, .src_mem = CCP_MEMTYPE_SB,
+            .dst = SRAM_DST + 0x100, .dst_mem = CCP_MEMTYPE_LOCAL,
+        };
+
+        g_assert_cmpuint(psp_ccp_run(qts, &d), ==, 0);
+        qtest_memread(qts, SRAM_DST + 0x100, next, sizeof(next));
+        g_assert_cmphex(next[15], ==, 0x01);
+        g_assert_cmphex(next[14], ==, 0xff);
+        g_assert_cmphex(next[13], ==, 0xfd);
+    }
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -496,6 +585,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/ccp/queue-scratch", test_queue_scratch);
     qtest_add_func("/amd-psp/ccp/passthrough", test_passthrough);
     qtest_add_func("/amd-psp/ccp/passthrough-lsb", test_passthrough_lsb);
+    qtest_add_func("/amd-psp/ccp/aes-ctr", test_aes_ctr);
     qtest_add_func("/amd-psp/ccp/sha256", test_sha256);
     qtest_add_func("/amd-psp/ccp/sha256-split", test_sha256_split);
     qtest_add_func("/amd-psp/ccp/sha256-init-restarts",
