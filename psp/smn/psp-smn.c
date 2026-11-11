@@ -247,6 +247,7 @@ static void psp_smn_init(Object* obj)
 
     /* Base address of the SMN containers in the SMN address space */
 
+    object_initialize_child(obj, "smn_spi", &s->psp_smn_spi, TYPE_PSP_SMN_SPI);
     object_initialize_child(obj, "smn_misc", &s->psp_smn_misc,
                             TYPE_PSP_SMN_MISC);
     /* Only Zen3 has the SMBus controller, the SMU mailbox, the DF indirect
@@ -332,6 +333,12 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
     PSPSmnFlashState* flash = &s->psp_smn_flash;
     memory_region_add_subregion_overlap(&s->psp_smn_space, c->flash,
                                         &flash->psp_smn_flash, 0);
+
+    s->psp_smn_spi.flash = &flash->psp_smn_flash;
+    CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_spi), errp);
+    memory_region_add_subregion_overlap(
+        &s->psp_smn_space, PSP_SMN_SPI_BASE,
+        sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_spi), 0), 0);
 
     /* The Zen3 off-chip BL reads the flash through SMN 0x47000000, the on-chip
      * BL through 0x44000000: expose the same image at both. */

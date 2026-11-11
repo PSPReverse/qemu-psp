@@ -29,6 +29,7 @@
 #include "psp/smn/psp-smn-mp5.h"
 #include "psp/smn/psp-smn-dxio-pcs.h"
 #include "psp/smn/psp-smn-smbus.h"
+#include "psp/smn/psp-smn-spi.h"
 #include "psp/smn/psp-smn-smu.h"
 #include "psp/smn/psp-smn-umc.h"
 
@@ -100,6 +101,9 @@ typedef struct PSPSmnState {
 
     /* The SMN attached flash */
     PSPSmnFlashState psp_smn_flash;
+
+    /* SPI controller in front of the flash */
+    PSPSmnSpiState psp_smn_spi;
 
     /* RAM windows of the SMN address space, see psp/regs */
     MemoryRegion psp_smn_ram[PSP_SMN_MAX_RAM_WINDOWS];
