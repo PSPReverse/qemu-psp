@@ -132,6 +132,8 @@ typedef struct PSPX86MapperState {
     PSPX86State x86_memory;
 
     bool use_access_observer;
+    /* Log every slot register write with qemu_log_mask(LOG_UNIMP) */
+    bool log_access;
 
     /* The Generation of PSP we are emulating*/
     PspGeneration generation;

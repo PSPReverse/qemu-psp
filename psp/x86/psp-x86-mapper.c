@@ -62,6 +62,10 @@ static void internal_state_write(PSPX86MapperState* s, uint32_t slot_id,
     PSPX86Slot* slot = &s->psp_x86_slots[slot_id];
     slot->ctrl_regs[reg_id] = val;
 
+    if (s->log_access) {
+        qemu_log_mask(LOG_UNIMP, "psp-x86-mapper slot %u reg %u = 0x%08x\n",
+                      slot_id, reg_id, val);
+    }
     if (reg_id == X86BASE) {
         psp_x86_map_slot(s, slot_id);
     }
@@ -381,6 +385,7 @@ static const Property properties[] = {
        emulation worse */
     DEFINE_PROP_BOOL("use_access_observer", PSPX86MapperState,
                      use_access_observer, false),
+    DEFINE_PROP_BOOL("log_access", PSPX86MapperState, log_access, false),
 };
 
 static void mapper_class_init(ObjectClass* oc, const void* data)
