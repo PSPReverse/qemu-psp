@@ -38,6 +38,8 @@ typedef struct PSPMiscState {
     char* ident;
 
     /* Which Generation is being emulated*/
+    /* Log every access with qemu_log_mask(LOG_UNIMP), for builds without tracing */
+    bool log_access;
     PspGeneration generation;
 
     /* Storage of the "rw" entries of psp/regs, see psp_regs_find() */
