@@ -28,6 +28,7 @@
 #include "hw/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
+#include "qemu/log.h"
 #include "trace.h"
 
 /* TODO make values offset based only starting from mmio base */
@@ -58,6 +59,10 @@ static void psp_misc_write(void* opaque, hwaddr offset, uint64_t value,
     hwaddr phys_abs = misc->iomem.addr + offset;
     PspRegHit hit;
 
+    if (misc->log_access) {
+        qemu_log_mask(LOG_UNIMP, "psp-misc write 0x%" HWADDR_PRIx
+                      " = 0x%" PRIx64 " size %u\n", phys_abs, value, size);
+    }
     if (psp_misc_find(misc, phys_abs, &hit) && hit.rw_slot >= 0) {
         uint32_t* slot = &misc->rw[hit.rw_slot];
         unsigned shift = (phys_abs & 3) * 8;
@@ -112,6 +117,10 @@ static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
         trace_psp_misc_read(offset, value, size);
     } else {
         trace_psp_misc_read_unimplemented(offset, size);
+    }
+    if (misc->log_access) {
+        qemu_log_mask(LOG_UNIMP, "psp-misc read 0x%" HWADDR_PRIx
+                      " = 0x%" PRIx64 " size %u\n", phys_abs, value, size);
     }
 
     return value;
@@ -177,6 +186,7 @@ static const VMStateDescription psp_misc_vmstate = {
 static const Property properties[] = {
     DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
     DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
+    DEFINE_PROP_BOOL("log_access", PSPMiscState, log_access, false),
     DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation,
                        PSP_GENERATION_MAX),
 };
