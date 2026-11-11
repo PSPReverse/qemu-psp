@@ -19,6 +19,8 @@
 #define MSG_QUERY_NUMBER_OF_DF_PSTATES 0x07
 #define MSG_QUERY_MEM_FREQ_OF_DF_PSTATE 0x08
 #define MSG_GET_STARTUP_DF_PSTATE 0x1d
+#define MSG_QUERY_CCD_MASK 0x10
+#define MSG_QUERY_CCX_MASK 0x12
 
 static QTestState *start(const char *extra)
 {
@@ -125,6 +127,34 @@ static void test_unknown_message(void)
     qtest_quit(qts);
 }
 
+/* One CCD by default; the CCX map answers per CCD index */
+static void test_core_maps(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_CCD_MASK, 0), ==, 0x1);
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_CCX_MASK, 0), ==, 0x1);
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_CCX_MASK, 1), ==, 0);
+    qtest_quit(qts);
+}
+
+static void test_core_maps_property(void)
+{
+    QTestState *qts = start("-global driver=amd_psp.smn.smu,"
+                            "property=ccd-mask,value=0x5");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_CCD_MASK, 0), ==, 0x5);
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_CCX_MASK, 2), ==, 0x1);
+    g_assert_cmphex(smu_msg(qts, MSG_QUERY_CCX_MASK, 1), ==, 0);
+    qtest_quit(qts);
+}
+
 /* Zen2 has the same mailbox: idle response 1, any message answers 1 */
 static void test_zen2_present(void)
 {
@@ -154,6 +184,8 @@ int main(int argc, char **argv)
                    test_mem_freq_property);
     qtest_add_func("/amd-psp/smu/startup-pstate", test_startup_pstate);
     qtest_add_func("/amd-psp/smu/unknown-message", test_unknown_message);
+    qtest_add_func("/amd-psp/smu/core-maps", test_core_maps);
+    qtest_add_func("/amd-psp/smu/core-maps-property", test_core_maps_property);
     qtest_add_func("/amd-psp/smu/zen2-present", test_zen2_present);
 
     return psp_test_run();
