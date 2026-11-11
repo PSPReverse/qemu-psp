@@ -213,6 +213,33 @@ static void test_timer2_has_no_interrupt(void)
     qtest_quit(qts);
 }
 
+/* system_tick_step moves the 64-bit system counter on every read */
+static void test_system_tick_step(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN2, "-global driver=amd_psp.timer,"
+                                 "property=system_tick_step,value=1000");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmpuint(qtest_readl(qts, 0x032001f0), ==, 1000);
+    g_assert_cmpuint(qtest_readl(qts, 0x032001f0), ==, 2000);
+    g_assert_cmpuint(qtest_readl(qts, 0x032001f4), ==, 0);
+    qtest_quit(qts);
+}
+
+/* Off by default the counter reads 0 */
+static void test_system_tick_off(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN2);
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmpuint(qtest_readl(qts, 0x032001f0), ==, 0);
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -225,6 +252,8 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/timer/expiry-stop", test_expiry_stop);
     qtest_add_func("/amd-psp/timer/expiry-minimum-delay",
                    test_expiry_minimum_delay);
+    qtest_add_func("/amd-psp/timer/system-tick-step", test_system_tick_step);
+    qtest_add_func("/amd-psp/timer/system-tick-off", test_system_tick_off);
     qtest_add_func("/amd-psp/timer/expiry-off-by-default",
                    test_expiry_off_by_default);
     qtest_add_func("/amd-psp/timer/timer2-has-no-interrupt",

@@ -55,6 +55,13 @@ typedef struct PSPTimerState {
      * rate (Hz) instead of counting +1 per read; 0 = off.
      */
     uint32_t counter_hz;
+    /*
+     * Opt-in, for counter_hz == 0: every read of the 64-bit system counter
+     * (PSP-misc 0x032001f0/f4) advances it by this many ticks, so delay
+     * loops finish without depending on any clock; 0 = counter reads 0.
+     */
+    uint32_t system_tick_step;
+    uint64_t system_ticks;
     /* Virtual time at which psp_timer_count was last written (derived mode) */
     int64_t counter_anchor_ns;
     /* Virtual time elapsed since the anchor; only filled while saving */
