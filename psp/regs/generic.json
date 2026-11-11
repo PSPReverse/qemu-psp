@@ -360,6 +360,13 @@
         "note": "The on chip bootloader waits for bit 0 to go 1"
       },
       {
+        "offset": "0x9023c",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage. The Zen2 kernel's svc 0x73 returns (this word & 0x03ffffff) + 0x04000000, the PSP address in x86 window slot 0 where the driver reads its flash map table; the boot chain is expected to program it with the offset of the SPI flash in the slot's 64 MiB block. Unmodelled it read 0 and the write was dropped."
+      },
+      {
         "offset": "0x1003034",
         "value": "0x1e112",
         "source": "unknown",
