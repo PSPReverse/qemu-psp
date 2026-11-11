@@ -32,6 +32,14 @@
 #define MSG_QUERY_NUMBER_OF_DF_PSTATES 0x07
 #define MSG_QUERY_MEM_FREQ_OF_DF_PSTATE 0x08
 #define MSG_GET_STARTUP_DF_PSTATE 0x1d
+/*
+ * The ABL builds its logical core map from these two (inferred from the
+ * consumer code, psp-etl 12703): 0x10 returns the present CCD bitmap, 0x12
+ * with a CCD index returns that CCD's CCX enable bitmap (one CCX per CCD).
+ * An empty map makes the ABL's CPU optimize stage prepare no core at all.
+ */
+#define MSG_QUERY_CCD_MASK 0x10
+#define MSG_QUERY_CCX_MASK 0x12
 
 #define DF_PSTATES_MAX 4
 
@@ -52,6 +60,12 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
         data = s->mem_clk_mhz;
         break;
     case MSG_GET_STARTUP_DF_PSTATE:
+        break;
+    case MSG_QUERY_CCD_MASK:
+        data = s->ccd_mask & 0xff;
+        break;
+    case MSG_QUERY_CCX_MASK:
+        data = s->regs[REG_ARG] < 8 && ((s->ccd_mask >> s->regs[REG_ARG]) & 1);
         break;
     default:
         qemu_log_mask(LOG_UNIMP, "psp-smn-smu: unknown message 0x%x "
@@ -139,6 +153,7 @@ static const VMStateDescription psp_smu_vmstate = {
 static const Property psp_smu_properties[] = {
     DEFINE_PROP_UINT32("df-pstates", PSPSmnSmuState, df_pstates, 1),
     DEFINE_PROP_UINT32("mem-clk-mhz", PSPSmnSmuState, mem_clk_mhz, 1200),
+    DEFINE_PROP_UINT32("ccd-mask", PSPSmnSmuState, ccd_mask, 0x1),
 };
 
 static void psp_smu_class_init(ObjectClass* oc, const void* data)

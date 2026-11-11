@@ -24,6 +24,7 @@ typedef struct PSPSmnSmuState {
     /* Properties */
     uint32_t df_pstates;    /* answer to QueryNumberOfDfPstates, 1..4 */
     uint32_t mem_clk_mhz;   /* answer to QueryMemFreqOfDfPstate */
+    uint32_t ccd_mask;      /* bit n: CCD n present, default CCD 0 */
 
     /* State */
     uint32_t regs[PSP_SMN_SMU_REGS];
