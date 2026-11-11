@@ -72,6 +72,7 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
     s->psp_timer_period = 0;
     memset(s->psp_timer_misc, 0, sizeof(s->psp_timer_misc));
     memset(s->psp_timer_placeholder, 0, sizeof(s->psp_timer_placeholder));
+    s->system_ticks = 0;
     s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
     s->counter_offset_ns = 0;
     timer_del(&s->expiry_timer);
@@ -134,14 +135,21 @@ int32_t aspfuzz_timer_advance(uint64_t ns)
 /*
  * The 64-bit counter read by PSP-misc at 0x032001f0 (low word) and 0x032001f4
  * (high word). Same source as the +0x20 counter for timer1, unwrapped. Returns
- * 0 if timer1 is not realized or counter_hz is 0. Called from the BQL.
+ * 0 if timer1 is not realized, else with counter_hz == 0 a count that moves
+ * by system_tick_step per call (0: stays 0). Called from the BQL.
  */
 uint64_t psp_timer_system_ticks(void)
 {
-    if (aspfuzz_timer_state == NULL || aspfuzz_timer_state->counter_hz == 0) {
+    PSPTimerState *s = aspfuzz_timer_state;
+
+    if (s == NULL) {
         return 0;
     }
-    return psp_timer_derived_ticks(aspfuzz_timer_state);
+    if (s->counter_hz == 0) {
+        s->system_ticks += s->system_tick_step;
+        return s->system_ticks;
+    }
+    return psp_timer_derived_ticks(s);
 }
 
 static void psp_timer_realize(DeviceState *dev, Error **errp)
@@ -191,7 +199,7 @@ static int psp_timer_post_load(void *opaque, int version_id)
 
 static const VMStateDescription psp_timer_vmstate = {
     .name = TYPE_PSP_TIMER,
-    .version_id = 2,
+    .version_id = 3,
     .minimum_version_id = 2,
     .pre_save = psp_timer_pre_save,
     .post_load = psp_timer_post_load,
@@ -203,6 +211,7 @@ static const VMStateDescription psp_timer_vmstate = {
         VMSTATE_UINT32_ARRAY(psp_timer_placeholder, PSPTimerState, 3),
         VMSTATE_INT64(counter_elapsed_ns, PSPTimerState),
         VMSTATE_UINT64(counter_offset_ns, PSPTimerState),
+        VMSTATE_UINT64_V(system_ticks, PSPTimerState, 3),
         VMSTATE_END_OF_LIST()
     }
 };
@@ -349,6 +358,7 @@ static void psp_timer_init(Object* obj)
 static const Property psp_timer_properties[] = {
     DEFINE_PROP_INT32("expiry_irq_id", PSPTimerState, expiry_irq_id, -1),
     DEFINE_PROP_UINT32("counter_hz", PSPTimerState, counter_hz, 0),
+    DEFINE_PROP_UINT32("system_tick_step", PSPTimerState, system_tick_step, 0),
 };
 
 static void psp_timer_class_init(ObjectClass* oc, const void* data)
