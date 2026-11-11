@@ -15,6 +15,8 @@
 /* SMN addresses of the address and data registers */
 #define PSP_SMN_DF_FICAA 0x1d050
 #define PSP_SMN_DF_FICAD 0x1d080
+/* Direct SMN alias of the DF function 1 register 0x3f8 (flush control) */
+#define PSP_SMN_DF_F1X3F8 0x1c7f8
 /* Registers written by the guest that the store can hold */
 #define PSP_SMN_DF_FICA_ENTRIES 256
 
@@ -27,11 +29,12 @@ typedef struct PSPSmnDfFicaState {
     /* <private> */
     SysBusDevice parent;
     /* <public> */
-    MemoryRegion iomem[2];      /* FICAA, FICAD */
+    MemoryRegion iomem[3];      /* FICAA, FICAD, F1x3F8 */
 
     /* State */
     uint32_t ficaa;
     uint32_t count;
+    uint32_t f1x3f8;
     /* Property */
     uint32_t hole_base_default;
     PSPSmnDfFicaEntry entries[PSP_SMN_DF_FICA_ENTRIES];

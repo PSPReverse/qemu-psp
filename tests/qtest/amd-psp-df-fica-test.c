@@ -131,6 +131,21 @@ static void test_zen2_absent(void)
     qtest_quit(qts);
 }
 
+/* F1x3F8: bit 1 is a self-clearing trigger, the other bits are storage */
+static void test_f1x3f8(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+
+    if (!qts) {
+        return;
+    }
+    qtest_writew(qts, SMN_CTRL, 0);
+    g_assert_cmphex(qtest_readl(qts, SMN_WINDOW0 + 0x1c7f8), ==, 0);
+    qtest_writel(qts, SMN_WINDOW0 + 0x1c7f8, 0x10002);
+    g_assert_cmphex(qtest_readl(qts, SMN_WINDOW0 + 0x1c7f8), ==, 0x10000);
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -145,6 +160,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/df-fica/hole-base-default-off",
                    test_hole_base_default_off);
     qtest_add_func("/amd-psp/df-fica/zen2-absent", test_zen2_absent);
+    qtest_add_func("/amd-psp/df-fica/f1x3f8", test_f1x3f8);
 
     return psp_test_run();
 }
