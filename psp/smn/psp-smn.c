@@ -255,6 +255,8 @@ static void psp_smn_init(Object* obj)
     if (PSP_SMN_GET_CLASS(obj)->gen == ZEN3) {
         object_initialize_child(obj, "smn_smbus", &s->psp_smn_smbus,
                                 TYPE_PSP_SMN_SMBUS);
+        object_initialize_child(obj, "smn_sevkey", &s->psp_smn_sevkey,
+                                TYPE_PSP_SMN_SEVKEY);
         object_initialize_child(obj, "smn_dxio_pcs", &s->psp_smn_dxio_pcs,
                                 TYPE_PSP_SMN_DXIO_PCS);
         object_initialize_child(obj, "smn_df_fica", &s->psp_smn_df_fica,
@@ -361,6 +363,22 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_SMBUS_BASE,
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_smbus), 0), 0);
+        CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_sevkey),
+                       errp);
+        for (int ccx = 0; ccx < PSP_SMN_SEVKEY_CCXS; ccx++) {
+            static const hwaddr offs[PSP_SMN_SEVKEY_REGIONS] = {
+                0xa00, 0x11ac
+            };
+
+            for (int r = 0; r < PSP_SMN_SEVKEY_REGIONS; r++) {
+                memory_region_add_subregion_overlap(
+                    &s->psp_smn_space,
+                    PSP_SMN_SEVKEY_CCX_BASE(ccx) + offs[r],
+                    sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_sevkey),
+                                           ccx * PSP_SMN_SEVKEY_REGIONS + r),
+                    0);
+            }
+        }
         CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_df_fica),
                        errp);
         memory_region_add_subregion_overlap(

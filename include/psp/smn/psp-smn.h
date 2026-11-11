@@ -28,6 +28,7 @@
 #include "psp/smn/psp-smn-misc.h"
 #include "psp/smn/psp-smn-mp5.h"
 #include "psp/smn/psp-smn-dxio-pcs.h"
+#include "psp/smn/psp-smn-sevkey.h"
 #include "psp/smn/psp-smn-smbus.h"
 #include "psp/smn/psp-smn-spi.h"
 #include "psp/smn/psp-smn-smu.h"
@@ -81,6 +82,9 @@ typedef struct PSPSmnState {
      * guest has programmed a slot, the power-on offset before that.
      */
     hwaddr psp_smn_alias[PSP_SMN_SLOT_COUNT];
+
+    /* Zen3 SEV key-slot ports of the CCX windows */
+    PSPSmnSevkeyState psp_smn_sevkey;
 
     /* Zen3 SMBus controller with the DIMM SPD EEPROMs */
     PSPSmnSmbusState psp_smn_smbus;
