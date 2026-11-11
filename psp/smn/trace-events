@@ -45,3 +45,7 @@ psp_smn_umc_apb(unsigned chan, bool write, uint32_t apb, uint32_t val) "chan=%u 
 psp_smn_spi_read(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%"PRIx64
 psp_smn_spi_write(uint64_t off, uint64_t val) "offset=0x%"PRIx64" value=0x%"PRIx64
 psp_smn_spi_command(uint8_t op, unsigned ntx, unsigned nrx) "opcode=0x%02x tx=%u rx=%u"
+
+# psp-smn-sevkey.c
+psp_smn_sevkey_read(unsigned ccx, uint32_t index, uint32_t val) "ccx=%u index=0x%"PRIx32" value=0x%"PRIx32
+psp_smn_sevkey_write(unsigned ccx, uint32_t index, uint64_t val) "ccx=%u index=0x%"PRIx32" value=0x%"PRIx64
