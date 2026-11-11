@@ -250,7 +250,7 @@ static void psp_smn_init(Object* obj)
     object_initialize_child(obj, "smn_spi", &s->psp_smn_spi, TYPE_PSP_SMN_SPI);
     object_initialize_child(obj, "smn_misc", &s->psp_smn_misc,
                             TYPE_PSP_SMN_MISC);
-    /* Only Zen3 has the SMBus controller, the SMU mailbox, the DF indirect
+    /* Only Zen3 has the SMBus controller, the DF indirect
      * access, the UMC APB windows and the DXIO PCS registers */
     if (PSP_SMN_GET_CLASS(obj)->gen == ZEN3) {
         object_initialize_child(obj, "smn_smbus", &s->psp_smn_smbus,
@@ -259,13 +259,13 @@ static void psp_smn_init(Object* obj)
                                 TYPE_PSP_SMN_DXIO_PCS);
         object_initialize_child(obj, "smn_df_fica", &s->psp_smn_df_fica,
                                 TYPE_PSP_SMN_DF_FICA);
-        object_initialize_child(obj, "smn_smu", &s->psp_smn_smu,
-                                TYPE_PSP_SMN_SMU);
         object_initialize_child(obj, "smn_mp5", &s->psp_smn_mp5,
                                 TYPE_PSP_SMN_MP5);
         object_initialize_child(obj, "smn_umc", &s->psp_smn_umc,
                                 TYPE_PSP_SMN_UMC);
     }
+    object_initialize_child(obj, "smn_smu", &s->psp_smn_smu,
+                            TYPE_PSP_SMN_SMU);
     object_initialize_child(obj, "smn_flash", &s->psp_smn_flash,
                             TYPE_PSP_SMN_FLASH);
 }
@@ -350,6 +350,11 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
                                             &s->psp_smn_flash_alias, 0);
     }
 
+    CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smu), errp);
+    memory_region_add_subregion_overlap(
+        &s->psp_smn_space, PSP_SMN_SMU_BASE,
+        sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_smu), 0), 0);
+
     if (c->gen == ZEN3) {
         CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smbus),
                        errp);
@@ -364,10 +369,6 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_DF_FICAD,
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_df_fica), 1), 0);
-        CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_smu), errp);
-        memory_region_add_subregion_overlap(
-            &s->psp_smn_space, PSP_SMN_SMU_BASE,
-            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_smu), 0), 0);
         CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_mp5), errp);
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_MP5_BASE,
