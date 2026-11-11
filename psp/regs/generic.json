@@ -79,14 +79,56 @@
         "note": "Zen 2"
       },
       {
+        "offset": "0x5d06c",
+        "value": "0x0",
+        "source": "unknown",
+        "note": "Zen2 driver fuse-burn path (message 0x1034): bits 0-2 must be clear"
+      },
+      {
         "offset": "0x5d0cc",
         "value": "0x20",
         "source": "unknown"
       },
       {
         "offset": "0x5e000",
-        "value": "0x1",
-        "source": "unknown"
+        "value": "0x5",
+        "source": "unknown",
+        "note": "Status word of the 0x18 byte block the Zen2 driver maps with svc 0x7d (SMN 0x5e000): its fuse-burn path (message 0x1034) fails with 0x80000503 unless bit 2 is set"
+      },
+      {
+        "offset": "0x5e004",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block with the status word at 0x5e000"
+      },
+      {
+        "offset": "0x5e008",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block with the status word at 0x5e000"
+      },
+      {
+        "offset": "0x5e00c",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block with the status word at 0x5e000"
+      },
+      {
+        "offset": "0x5e010",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block with the status word at 0x5e000"
+      },
+      {
+        "offset": "0x5e014",
+        "value": "0x0",
+        "source": "unknown",
+        "rw": true,
+        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block with the status word at 0x5e000"
       },
       {
         "offset": "0x5fb10",
@@ -306,12 +348,6 @@
         "note": "Read by the on chip bootloader and acted upon. TODO verify"
       },
       {
-        "offset": "0x5d06c",
-        "value": "0x0",
-        "source": "unknown",
-        "note": "Zen2 driver fuse-burn path (message 0x1034): bits 0-2 must be clear"
-      },
-      {
         "offset": "0x5d0cc",
         "value": "0x20",
         "source": "unknown",
@@ -319,44 +355,9 @@
       },
       {
         "offset": "0x5e000",
-        "value": "0x5",
+        "value": "0x1",
         "source": "unknown",
-        "note": "The on chip bootloader waits for bit 0 to go 1. The Zen2 driver fuse-burn path (message 0x1034) also wants bit 2, otherwise it fails with 0x80000503"
-      },
-      {
-        "offset": "0x5e004",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block the Zen2 driver maps with the status word at 0x5e000"
-      },
-      {
-        "offset": "0x5e008",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block the Zen2 driver maps with the status word at 0x5e000"
-      },
-      {
-        "offset": "0x5e00c",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block the Zen2 driver maps with the status word at 0x5e000"
-      },
-      {
-        "offset": "0x5e010",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block the Zen2 driver maps with the status word at 0x5e000"
-      },
-      {
-        "offset": "0x5e014",
-        "value": "0x0",
-        "source": "unknown",
-        "rw": true,
-        "note": "Placeholder, not hardware behaviour: read/write-back storage for the rest of the 0x18 byte block the Zen2 driver maps with the status word at 0x5e000"
+        "note": "The on chip bootloader waits for bit 0 to go 1"
       },
       {
         "offset": "0x1003034",
