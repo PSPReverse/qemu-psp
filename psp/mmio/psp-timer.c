@@ -85,7 +85,7 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
 static uint64_t psp_timer_derived_ticks(PSPTimerState *s)
 {
     int64_t now = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
-    /* The anchor can be ahead of the clock after a restore; do not wrap */
+    /* Never wrap if the anchor is ahead of the clock */
     uint64_t elapsed = MAX(now - s->counter_anchor_ns, 0);
 
     return s->psp_timer_count +
@@ -159,6 +159,20 @@ static void psp_timer_unrealize(DeviceState *dev)
 }
 
 /*
+ * The virtual clock is not part of the saved state, so the anchor, an
+ * absolute time, means nothing after a restore. Save the time elapsed since
+ * it and rebase it on the clock of the restoring side.
+ */
+static int psp_timer_pre_save(void *opaque)
+{
+    PSPTimerState *s = PSP_TIMER(opaque);
+
+    s->counter_elapsed_ns = MAX(qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) -
+                                s->counter_anchor_ns, 0);
+    return 0;
+}
+
+/*
  * Only the opt-in expiry timer is re-armed. The new deadline is one period
  * from the restore point, not from the instant the state was saved, so the
  * expiry phase is not preserved across a snapshot.
@@ -167,6 +181,8 @@ static int psp_timer_post_load(void *opaque, int version_id)
 {
     PSPTimerState *s = PSP_TIMER(opaque);
 
+    s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL) -
+                           s->counter_elapsed_ns;
     if (s->expiry_irq_id >= 0) {
         psp_timer_arm(s);
     }
@@ -175,8 +191,9 @@ static int psp_timer_post_load(void *opaque, int version_id)
 
 static const VMStateDescription psp_timer_vmstate = {
     .name = TYPE_PSP_TIMER,
-    .version_id = 1,
-    .minimum_version_id = 1,
+    .version_id = 2,
+    .minimum_version_id = 2,
+    .pre_save = psp_timer_pre_save,
     .post_load = psp_timer_post_load,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(psp_timer_control, PSPTimerState),
@@ -184,7 +201,7 @@ static const VMStateDescription psp_timer_vmstate = {
         VMSTATE_UINT32(psp_timer_period, PSPTimerState),
         VMSTATE_UINT32_ARRAY(psp_timer_misc, PSPTimerState, 4),
         VMSTATE_UINT32_ARRAY(psp_timer_placeholder, PSPTimerState, 3),
-        VMSTATE_INT64(counter_anchor_ns, PSPTimerState),
+        VMSTATE_INT64(counter_elapsed_ns, PSPTimerState),
         VMSTATE_UINT64(counter_offset_ns, PSPTimerState),
         VMSTATE_END_OF_LIST()
     }

@@ -57,6 +57,8 @@ typedef struct PSPTimerState {
     uint32_t counter_hz;
     /* Virtual time at which psp_timer_count was last written (derived mode) */
     int64_t counter_anchor_ns;
+    /* Virtual time elapsed since the anchor; only filled while saving */
+    int64_t counter_elapsed_ns;
     /*
      * Extra virtual time (ns) added to the derived counter by
      * aspfuzz_timer_advance(); zeroed on reset

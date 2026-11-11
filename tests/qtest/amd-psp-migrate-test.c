@@ -107,6 +107,30 @@ static void test_timer(void)
     qtest_quit(dst);
 }
 
+#define HZ_ARGS "-global driver=amd_psp.timer,property=counter_hz," \
+                "value=100000000"
+
+/* The derived counter keeps its elapsed time across a restore */
+static void test_timer_counter_hz(void)
+{
+    QTestState *src = psp_startf(PSP_ZEN2, HZ_ARGS), *dst;
+
+    if (!src) {
+        return;
+    }
+    qtest_writel(src, TIMER1 + TIMER_COUNT, 1000);
+    qtest_clock_step(src, 1000000);                     /* 1 ms */
+    g_assert_cmpuint(qtest_readl(src, TIMER1 + TIMER_COUNT), ==, 1000 + 100000);
+    dst = psp_migrate_clone(src, PSP_ZEN2, HZ_ARGS);
+    qtest_quit(src);
+
+    g_assert_cmpuint(qtest_readl(dst, TIMER1 + TIMER_COUNT), ==, 1000 + 100000);
+    qtest_clock_step(dst, 100);
+    g_assert_cmpuint(qtest_readl(dst, TIMER1 + TIMER_COUNT), ==,
+                     1000 + 100000 + 10);
+    qtest_quit(dst);
+}
+
 /* Queue registers, the interrupt latch, the LSB, the zlib counter, the TRNG */
 static void test_ccp(void)
 {
@@ -182,6 +206,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/migrate/mailbox", test_mailbox);
     qtest_add_func("/amd-psp/migrate/ic", test_ic);
     qtest_add_func("/amd-psp/migrate/timer", test_timer);
+    qtest_add_func("/amd-psp/migrate/timer-counter-hz", test_timer_counter_hz);
     qtest_add_func("/amd-psp/migrate/ccp", test_ccp);
     qtest_add_func("/amd-psp/migrate/x86-mapper", test_x86_mapper);
 
