@@ -387,6 +387,9 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_DF_FICAD,
             sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_df_fica), 1), 0);
+        memory_region_add_subregion_overlap(
+            &s->psp_smn_space, PSP_SMN_DF_F1X3F8,
+            sysbus_mmio_get_region(SYS_BUS_DEVICE(&s->psp_smn_df_fica), 2), 0);
         CALL_AND_CHECK(sysbus_realize, SYS_BUS_DEVICE(&s->psp_smn_mp5), errp);
         memory_region_add_subregion_overlap(
             &s->psp_smn_space, PSP_SMN_MP5_BASE,

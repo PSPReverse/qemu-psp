@@ -90,6 +90,39 @@ static void df_ficad_write(void* opaque, hwaddr offset, uint64_t value,
     e->value = value;
 }
 
+/*
+ * DF F1x3F8, polled by the SEV applet around cache flushes: software sets
+ * bit 1 to start the flush and waits for it to read back clear, and checks a
+ * bit it wrote (bit 16) reads back. Bit 1 is a self-clearing trigger, the
+ * rest is storage. Inferred from the applet's use, not from documentation.
+ */
+#define F1X3F8_TRIGGER 0x2
+
+static uint64_t df_f1x3f8_read(void* opaque, hwaddr offset, unsigned size)
+{
+    PSPSmnDfFicaState* s = opaque;
+
+    return s->f1x3f8 & ~F1X3F8_TRIGGER;
+}
+
+static void df_f1x3f8_write(void* opaque, hwaddr offset, uint64_t value,
+                            unsigned size)
+{
+    PSPSmnDfFicaState* s = opaque;
+
+    s->f1x3f8 = value;
+}
+
+static const MemoryRegionOps df_f1x3f8_ops = {
+    .read = df_f1x3f8_read,
+    .write = df_f1x3f8_write,
+    .endianness = DEVICE_LITTLE_ENDIAN,
+    .valid.min_access_size = 4,
+    .valid.max_access_size = 4,
+    .impl.min_access_size = 4,
+    .impl.max_access_size = 4,
+};
+
 static const MemoryRegionOps df_ficaa_ops = {
     .read = df_ficaa_read,
     .write = df_ficaa_write,
@@ -120,6 +153,9 @@ static void df_fica_realize(DeviceState* dev, Error** errp)
     memory_region_init_io(&s->iomem[1], OBJECT(dev), &df_ficad_ops, s,
                           "psp-smn-df-ficad", 4);
     sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem[1]);
+    memory_region_init_io(&s->iomem[2], OBJECT(dev), &df_f1x3f8_ops, s,
+                          "psp-smn-df-f1x3f8", 4);
+    sysbus_init_mmio(SYS_BUS_DEVICE(dev), &s->iomem[2]);
 }
 
 static void df_fica_reset_hold(Object* obj, ResetType type)
@@ -128,6 +164,7 @@ static void df_fica_reset_hold(Object* obj, ResetType type)
 
     s->ficaa = 0;
     s->count = 0;
+    s->f1x3f8 = 0;
     memset(s->entries, 0, sizeof(s->entries));
 }
 
@@ -144,10 +181,11 @@ static const VMStateDescription vmstate_df_fica_entry = {
 
 static const VMStateDescription df_fica_vmstate = {
     .name = "psp-smn-df-fica",
-    .version_id = 1,
+    .version_id = 2,
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
         VMSTATE_UINT32(ficaa, PSPSmnDfFicaState),
+        VMSTATE_UINT32_V(f1x3f8, PSPSmnDfFicaState, 2),
         VMSTATE_UINT32(count, PSPSmnDfFicaState),
         VMSTATE_STRUCT_ARRAY(entries, PSPSmnDfFicaState,
                              PSP_SMN_DF_FICA_ENTRIES, 1,
