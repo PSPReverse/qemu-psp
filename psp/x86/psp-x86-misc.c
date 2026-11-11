@@ -97,6 +97,45 @@ LoggingInfo get_logging_info_for_addr(hwaddr addr)
     return (LoggingInfo){"unknown", addr};
 }
 
+/*
+ * Status bytes of the 0xfffd_xxxx_xxxx core register aliases (one byte per
+ * register bit): +0x7f94 is the per-core "ready" byte the SEV INIT hardware
+ * check wants set for every core the BL lists as present, +0x7f90 and +0x7f91
+ * are the two bytes of the per-CCX cache flush status the SEV DF_FLUSH
+ * command wants set (either flush mode passes with both). All three read 1,
+ * every other byte of these registers reads 0. Inferred from the applet's
+ * checks, not from documentation; the aperture is matched by its low 15 bits
+ * only, so every core and CCX answers the same.
+ */
+static bool zen3_core_alias_byte(hwaddr addr, uint8_t *byte)
+{
+    switch (addr & 0x7fff) {
+    case 0x7f90:
+    case 0x7f91:
+    case 0x7f94:
+        *byte = 1;
+        return true;
+    default:
+        return false;
+    }
+}
+
+static bool zen3_core_alias_read(hwaddr addr, unsigned size, uint64_t *val)
+{
+    bool hit = false;
+
+    *val = 0;
+    for (unsigned i = 0; i < size; i++) {
+        uint8_t b;
+
+        if (zen3_core_alias_byte(addr + i, &b)) {
+            *val |= (uint64_t)b << (8 * i);
+            hit = true;
+        }
+    }
+    return hit;
+}
+
 static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
 {
     PSPX86MiscState *s = PSP_X86_MISC(opaque);
@@ -115,15 +154,10 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
          */
         val = (s->port61_ctl & 0x3) | (s->port61_refresh ? 0x10 : 0);
         s->port61_refresh = !s->port61_refresh;
-    } else if (s->generation == ZEN3 && (addr >> 24) == 0xfffdf7 &&
-               (addr & 0x7fff) == 0x7f94) {
-        /*
-         * Per-core status byte of the 0xfffdf7xxxxxx core register alias
-         * (one byte per register bit, byte +4 is bit 0). The SEV INIT
-         * hardware check wants it set for every core the BL lists as
-         * present. Inferred from that check; every core reads as ready.
-         */
-        val = 1;
+    } else if (s->generation == ZEN3 && (addr >> 32) == 0xfffd &&
+               (addr >> 24) != 0xfffdfc &&
+               zen3_core_alias_read(addr, size, &val)) {
+        /* Per-core and per-CCX status bytes, see zen3_core_alias_byte() */
     } else if (!psp_regs_lookup(s->generation, PSP_REG_SPACE_X86_MISC, addr,
                                 &val)) {
         trace_psp_x86_misc_read_unimplemented(addr, info.region_name,
