@@ -125,8 +125,8 @@ static void test_unknown_message(void)
     qtest_quit(qts);
 }
 
-/* The mailbox does not exist on Zen2: the argument does not turn into data */
-static void test_zen2_absent(void)
+/* Zen2 has the same mailbox: idle response 1, any message answers 1 */
+static void test_zen2_present(void)
 {
     QTestState *qts = psp_start(PSP_ZEN2);
 
@@ -134,9 +134,10 @@ static void test_zen2_absent(void)
         return;
     }
     qtest_writew(qts, SMN_CTRL, SMU_SMN_SLOT);
-    qtest_writel(qts, SMU_ARG, 0x1234);
-    qtest_writel(qts, SMU_MSG, MSG_QUERY_NUMBER_OF_DF_PSTATES);
-    g_assert_cmphex(qtest_readl(qts, SMU_ARG), ==, 0);
+    g_assert_cmphex(qtest_readl(qts, SMU_RESP), ==, 1);
+    qtest_writel(qts, SMU_RESP, 0);
+    qtest_writel(qts, SMU_MSG, 0x19);
+    g_assert_cmphex(qtest_readl(qts, SMU_RESP), ==, 1);
     qtest_quit(qts);
 }
 
@@ -153,7 +154,7 @@ int main(int argc, char **argv)
                    test_mem_freq_property);
     qtest_add_func("/amd-psp/smu/startup-pstate", test_startup_pstate);
     qtest_add_func("/amd-psp/smu/unknown-message", test_unknown_message);
-    qtest_add_func("/amd-psp/smu/zen2-absent", test_zen2_absent);
+    qtest_add_func("/amd-psp/smu/zen2-present", test_zen2_present);
 
     return psp_test_run();
 }
