@@ -16,7 +16,7 @@
 #ifndef AMD_PSP_SMN_MISC_H
 #define AMD_PSP_SMN_MISC_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 #include "psp/psp-regs.h"

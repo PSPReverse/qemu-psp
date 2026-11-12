@@ -6,7 +6,7 @@
 #ifndef AMD_PSP_SMN_MP5_H
 #define AMD_PSP_SMN_MP5_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 #include "qemu/timer.h"
 
 #define TYPE_PSP_SMN_MP5 "amd_psp.smn.mp5"

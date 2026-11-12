@@ -20,8 +20,8 @@
 
 #include "psp/smn/psp-smn-flash.h"
 
-#include "hw/loader.h"
-#include "hw/qdev-properties.h"
+#include "hw/core/loader.h"
+#include "hw/core/qdev-properties.h"
 #include "qemu/log.h"
 
 /* static const MemoryRegionOps smn_flash_ops = { */

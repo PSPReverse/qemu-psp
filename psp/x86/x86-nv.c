@@ -31,8 +31,8 @@
 
 #include "psp/x86/x86-nv.h"
 
-#include "hw/qdev-properties.h"
-#include "hw/resettable.h"
+#include "hw/core/qdev-properties.h"
+#include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 #include "qemu/bswap.h"
 #include "qapi/error.h"

@@ -7,7 +7,7 @@
 #define AMD_PSP_SMN_SPI_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_SPI "amd_psp.smn.spi"
 #define PSP_SMN_SPI(obj) OBJECT_CHECK(PSPSmnSpiState, (obj), TYPE_PSP_SMN_SPI)

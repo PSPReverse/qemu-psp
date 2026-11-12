@@ -7,7 +7,7 @@
 #define PSP_X86_WIDE_GENERIC_PORT_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 

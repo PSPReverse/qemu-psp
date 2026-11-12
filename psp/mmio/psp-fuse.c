@@ -10,8 +10,8 @@
 
 #include "psp/mmio/psp-fuse.h"
 
-#include "hw/qdev-properties.h"
-#include "hw/sysbus.h"
+#include "hw/core/qdev-properties.h"
+#include "hw/core/sysbus.h"
 #include "qapi/error.h"
 #include "qemu/log.h"
 #include "trace.h"

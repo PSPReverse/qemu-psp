@@ -20,7 +20,7 @@
 #define AMD_PSP_TIMER_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 #include "qemu/timer.h"
 
 #define TYPE_PSP_TIMER "amd_psp.timer"

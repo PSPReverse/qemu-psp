@@ -22,10 +22,10 @@
 #include "psp/x86/psp-x86.h"
 
 #include "system/address-spaces.h"
-#include "hw/boards.h"
+#include "hw/core/boards.h"
 #include "hw/char/serial-mm.h"
-#include "hw/loader.h"
-#include "hw/qdev-properties.h"
+#include "hw/core/loader.h"
+#include "hw/core/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/cutils.h"
 #include "qemu/host-utils.h"

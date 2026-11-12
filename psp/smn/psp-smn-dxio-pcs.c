@@ -14,7 +14,7 @@
 
 #include "psp/smn/psp-smn-dxio-pcs.h"
 
-#include "hw/resettable.h"
+#include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 #include "qemu/log.h"
 #include "trace.h"

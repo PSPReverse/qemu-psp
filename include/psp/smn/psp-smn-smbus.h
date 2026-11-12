@@ -6,7 +6,7 @@
 #ifndef AMD_PSP_SMN_SMBUS_H
 #define AMD_PSP_SMN_SMBUS_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_SMBUS "amd_psp.smn.smbus"
 #define PSP_SMN_SMBUS(obj)                                                     \

@@ -20,9 +20,9 @@
 
 #include "psp/mmio/mailbox.h"
 
-#include "hw/irq.h"
-#include "hw/qdev-properties.h"
-#include "hw/resettable.h"
+#include "hw/core/irq.h"
+#include "hw/core/qdev-properties.h"
+#include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/bitops.h"

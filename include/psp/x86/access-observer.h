@@ -6,8 +6,9 @@
 #ifndef PSP_X86_ACCESS_OBSERVER_H
 #define PSP_X86_ACCESS_OBSERVER_H
 
+#include "exec/vaddr.h"
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 #include "psp/x86/psp-x86.h"

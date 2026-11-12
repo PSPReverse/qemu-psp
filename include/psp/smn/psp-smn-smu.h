@@ -6,7 +6,7 @@
 #ifndef AMD_PSP_SMN_SMU_H
 #define AMD_PSP_SMN_SMU_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_SMU "amd_psp.smn.smu"
 #define PSP_SMN_SMU(obj) OBJECT_CHECK(PSPSmnSmuState, (obj), TYPE_PSP_SMN_SMU)

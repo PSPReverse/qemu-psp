@@ -7,7 +7,7 @@
 #include "psp/x86/access-observer.h"
 
 #include "exec/cpu-defs.h" // Defined target_ulong for exit and cpu
-#include "hw/qdev-properties.h"
+#include "hw/core/qdev-properties.h"
 #include "libafl/cpu.h"
 #include "libafl/exit.h"
 #include "qapi/error.h"

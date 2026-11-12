@@ -21,7 +21,7 @@
 #define AMD_PSP_OSMEM_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_OSMEM "amd_psp.osmem"
 #define PSP_OSMEM(obj) OBJECT_CHECK(PSPOSMemState, (obj), TYPE_PSP_OSMEM)

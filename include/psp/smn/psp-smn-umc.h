@@ -7,7 +7,7 @@
 #ifndef AMD_PSP_SMN_UMC_H
 #define AMD_PSP_SMN_UMC_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_UMC "amd_psp.smn.umc-apb"
 #define PSP_SMN_UMC(obj) OBJECT_CHECK(PSPSmnUmcState, (obj), TYPE_PSP_SMN_UMC)

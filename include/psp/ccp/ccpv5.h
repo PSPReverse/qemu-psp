@@ -19,8 +19,8 @@
 #ifndef AMD_CCP_V5_H
 #define AMD_CCP_V5_H
 #include "system/memory.h"
-#include "hw/sysbus.h"
-#include "hw/irq.h"
+#include "hw/core/sysbus.h"
+#include "hw/core/irq.h"
 #include "qemu/timer.h"
 
 #include "psp/ccp/ccpv5-nettle.h"

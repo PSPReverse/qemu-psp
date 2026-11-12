@@ -7,7 +7,7 @@
 #define PSP_X86_CONFIG_SPACE_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 

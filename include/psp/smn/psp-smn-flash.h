@@ -20,7 +20,7 @@
 #define AMD_PSP_SMN_FLASH_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 /* TODO: Configurable size based on image */
 #define PSP_SMN_FLASH_SIZE_16 16 * 1024 * 1024

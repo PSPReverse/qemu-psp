@@ -21,7 +21,7 @@
 
 #include "hw/arm/boot.h"
 #include "hw/misc/unimp.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 #include "target/arm/cpu.h"
 
 #include "psp/ccp/ccpv5.h"

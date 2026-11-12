@@ -6,7 +6,7 @@
 #ifndef AMD_PSP_SMN_DF_FICA_H
 #define AMD_PSP_SMN_DF_FICA_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_DF_FICA "amd_psp.smn.df-fica"
 #define PSP_SMN_DF_FICA(obj) \

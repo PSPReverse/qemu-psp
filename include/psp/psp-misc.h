@@ -19,7 +19,7 @@
 #ifndef AMD_PSP_MISC_H
 #define AMD_PSP_MISC_H
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 #include "psp/psp-regs.h"

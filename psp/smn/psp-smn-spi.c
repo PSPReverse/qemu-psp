@@ -13,7 +13,7 @@
 #include "qemu/osdep.h"
 #include "qemu/log.h"
 
-#include "hw/resettable.h"
+#include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 #include "trace.h"
 

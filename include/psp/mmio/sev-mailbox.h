@@ -6,7 +6,7 @@
 #ifndef PSP_MMIO_SEV_MAILBOX_H
 #define PSP_MMIO_SEV_MAILBOX_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_SEV_MAILBOX "amd_psp.sev-mailbox"
 #define SEV_MAILBOX(obj) OBJECT_CHECK(SevMailboxState, (obj), \

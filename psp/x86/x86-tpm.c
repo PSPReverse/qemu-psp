@@ -15,8 +15,8 @@
 
 #include "psp/x86/x86-tpm.h"
 
-#include "hw/qdev-properties.h"
-#include "hw/resettable.h"
+#include "hw/core/qdev-properties.h"
+#include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 
 #define TPM_SIZE 0x5000

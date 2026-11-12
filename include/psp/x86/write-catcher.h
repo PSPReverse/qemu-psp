@@ -8,7 +8,7 @@
 #define PSP_X86_WRITE_CATCHER_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 #include "psp/x86/psp-x86.h"

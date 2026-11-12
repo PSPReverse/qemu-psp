@@ -24,8 +24,9 @@
 
 #include "psp/ccp/ccpv5.h"
 
-#include "hw/qdev-properties.h"
-#include "hw/resettable.h"
+#include "exec/cpu-common.h"
+#include "hw/core/qdev-properties.h"
+#include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
 #include "qemu/bitops.h"

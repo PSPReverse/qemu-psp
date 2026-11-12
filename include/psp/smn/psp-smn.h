@@ -20,7 +20,7 @@
 #define AMD_PSP_SMN_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/psp-window.h"
 #include "psp/smn/psp-smn-flash.h"

@@ -18,10 +18,10 @@
  */
 #include "qemu/osdep.h"
 
-#include "hw/boards.h"
+#include "hw/core/boards.h"
 #include "hw/arm/machines-qom.h"
-#include "hw/loader.h"
-#include "hw/qdev-properties.h"
+#include "hw/core/loader.h"
+#include "hw/core/qdev-properties.h"
 #include "qapi/error.h"
 #include "qemu/error-report.h"
 #include "qemu/units.h"

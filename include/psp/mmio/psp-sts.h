@@ -19,7 +19,7 @@
 #ifndef AMD_PSP_STS_H
 #define AMD_PSP_STS_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_STS "amd_psp.sts"
 #define PSP_STS(obj) OBJECT_CHECK(PSPStsState, (obj), TYPE_PSP_STS)

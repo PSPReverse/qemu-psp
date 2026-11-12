@@ -9,7 +9,7 @@
 #define PSP_FUSE_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_FUSE "amd_psp.fuse"
 OBJECT_DECLARE_SIMPLE_TYPE(PSPFuseState, PSP_FUSE)

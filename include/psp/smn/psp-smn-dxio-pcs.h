@@ -6,7 +6,7 @@
 #ifndef AMD_PSP_SMN_DXIO_PCS_H
 #define AMD_PSP_SMN_DXIO_PCS_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_DXIO_PCS "amd_psp.smn.dxio-pcs"
 #define PSP_SMN_DXIO_PCS(obj) \

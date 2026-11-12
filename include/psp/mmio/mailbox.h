@@ -8,7 +8,7 @@
 #ifndef PSP_MMIO_MAILBOX_H
 #define PSP_MMIO_MAILBOX_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_MAILBOX "amd_psp.mailbox"
 #define MAILBOX(obj) OBJECT_CHECK(MailboxState, (obj), TYPE_MAILBOX)

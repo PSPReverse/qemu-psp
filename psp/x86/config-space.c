@@ -6,7 +6,7 @@
 
 #include "psp/x86/config-space.h"
 
-#include "hw/qdev-properties.h"
+#include "hw/core/qdev-properties.h"
 #include "qapi/error.h"
 #include "trace.h"
 

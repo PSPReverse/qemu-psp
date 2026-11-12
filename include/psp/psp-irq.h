@@ -20,7 +20,7 @@
 #define AMD_PSP_IRQ_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 

@@ -6,7 +6,7 @@
 #ifndef AMD_PSP_SMN_SEVKEY_H
 #define AMD_PSP_SMN_SEVKEY_H
 
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_SMN_SEVKEY "amd_psp.smn.sevkey"
 #define PSP_SMN_SEVKEY(obj) \

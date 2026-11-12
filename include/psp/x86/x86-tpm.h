@@ -7,7 +7,7 @@
 #define X86_TPM_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_X86_TPM "amd_psp.x86.tpm"
 #define PSP_X86_TPM(obj) OBJECT_CHECK(PSPX86TpmState, (obj), TYPE_PSP_X86_TPM)

@@ -8,7 +8,7 @@
 #define X86_MISC_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #include "psp/generations.h"
 #define TYPE_PSP_X86_MISC "amd_psp.x86.misc"

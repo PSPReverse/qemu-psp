@@ -5,7 +5,7 @@
 
 #include "psp/x86/write-catcher.h"
 
-#include "hw/qdev-properties.h"
+#include "hw/core/qdev-properties.h"
 #include "libafl/cpu.h"
 #include "libafl/exit.h"
 #include "qapi/error.h"

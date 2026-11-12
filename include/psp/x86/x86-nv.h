@@ -7,7 +7,7 @@
 #define X86_NV_H
 
 #include "system/memory.h"
-#include "hw/sysbus.h"
+#include "hw/core/sysbus.h"
 
 #define TYPE_PSP_X86_NV "amd_psp.x86.nv"
 #define PSP_X86_NV(obj) OBJECT_CHECK(PSPX86NvState, (obj), TYPE_PSP_X86_NV)
