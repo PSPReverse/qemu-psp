@@ -472,7 +472,7 @@
         "offset": "0x30101c0",
         "value": "0x80102",
         "source": "inferred",
-        "note": "TODO this should depend on dbg flag: https://github.com/PSPReverse/PSPEmu/blob/78e4be24e882ae67867063c894fbfb2ecbe50f3f/psp-dev-mmio-unknown.c#L67"
+        "note": "Boot mode and strap word read by the Zen2 on-chip and off-chip bootloaders. Bits 17..20 select the on-chip boot mode (priority 20 > 19 > 18 > 17); 0x80102 has bit 19 = mode 2, flash boot with signature check, which is the retail value by the firmware decode. Bit 8 is polled until set, bits 16 and 21 must be 0, bit 1 is read by the off-chip bootloader. A value with none of bits 17..20 (PSPEmu non-debug 0x100) ends in a fatal post code. A secure-boot-off model would be 0x40100 or 0x40102, unmeasured. Decode-derived, not measured on hardware. Value first taken from PSPEmu psp-dev-mmio-unknown.c."
       },
       {
         "offset": "0x30109f0",
