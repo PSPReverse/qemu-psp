@@ -26,6 +26,8 @@ typedef struct PSPX86MiscState {
     /* I/O port 0x61 placeholder state, see psp_x86_misc_read/write */
     uint8_t port61_ctl;
     bool port61_refresh;
+    /* The x86 address space this catch-all sits in, set by PSPX86State */
+    AddressSpace *as;
 } PSPX86MiscState;
 
 #endif // X86_MISC_H

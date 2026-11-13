@@ -340,6 +340,7 @@ static void psp_x86_realize(DeviceState* dev, Error** errp)
     /* Connect the misc device to the x86 address space */
     qdev_prop_set_uint32(DEVICE(&s->psp_x86_misc), "psp_generation",
                          s->generation);
+    s->psp_x86_misc.as = &s->as;
     sysbus_realize(SYS_BUS_DEVICE(&s->psp_x86_misc), errp);
     if (*errp) {
         return;

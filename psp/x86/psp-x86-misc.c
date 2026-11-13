@@ -136,11 +136,48 @@ static bool zen3_core_alias_read(hwaddr addr, unsigned size, uint64_t *val)
     return hit;
 }
 
+/*
+ * Memory-encryption alias. The SEV debug decrypt and encrypt handlers keep
+ * the C-bit and the ASID in the high bits of a physical address (bits 43 to
+ * 51 here); the memory controller strips them and, for a key, en- or decrypts
+ * on the way. Nothing here is encrypted, so the alias behaves as an identity
+ * key: an access that reaches this catch-all with one of those bits set is
+ * forwarded to the same address with the bits cleared. The 0xfffd window of
+ * the FCH never has them set legitimately and is left alone.
+ */
+#define X86_ENC_ALIAS_MASK 0x000ff80000000000ULL
+
+static bool psp_x86_misc_alias(PSPX86MiscState *s, hwaddr addr, hwaddr *plain)
+{
+    if (s->as == NULL || !(addr & X86_ENC_ALIAS_MASK) ||
+        (addr >> 32) == 0xfffd) {
+        return false;
+    }
+    *plain = addr & ~X86_ENC_ALIAS_MASK;
+    return true;
+}
+
 static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
 {
     PSPX86MiscState *s = PSP_X86_MISC(opaque);
     uint64_t val;
     LoggingInfo info = get_logging_info_for_addr(addr);
+    hwaddr plain;
+
+    if (psp_x86_misc_alias(s, addr, &plain)) {
+        uint8_t buf[8] = {0};
+
+        if (address_space_read(s->as, plain, MEMTXATTRS_UNSPECIFIED, buf,
+                               size) == MEMTX_OK) {
+            val = ldq_le_p(buf) & MAKE_64BIT_MASK(0, size * 8);
+            if (s->log_access) {
+                qemu_log_mask(LOG_UNIMP, "psp-x86-misc read 0x%" HWADDR_PRIx
+                              " = 0x%" PRIx64 " size %u (alias of 0x%"
+                              HWADDR_PRIx ")\n", addr, val, size, plain);
+            }
+            return val;
+        }
+    }
 
     if (addr == 0xfffdfc000061) {
         /*
@@ -182,7 +219,22 @@ static void psp_x86_misc_write(void* opaque, hwaddr addr, uint64_t value,
 {
     PSPX86MiscState* s = PSP_X86_MISC(opaque);
     LoggingInfo info = get_logging_info_for_addr(addr);
+    hwaddr plain;
 
+    if (psp_x86_misc_alias(s, addr, &plain)) {
+        uint8_t buf[8];
+
+        stq_le_p(buf, value);
+        if (s->log_access) {
+            qemu_log_mask(LOG_UNIMP, "psp-x86-misc write 0x%" HWADDR_PRIx
+                          " = 0x%" PRIx64 " size %u (alias of 0x%"
+                          HWADDR_PRIx ")\n", addr, value, size, plain);
+        }
+        if (address_space_write(s->as, plain, MEMTXATTRS_UNSPECIFIED, buf,
+                                size) == MEMTX_OK) {
+            return;
+        }
+    }
     if (s->log_access) {
         qemu_log_mask(LOG_UNIMP, "psp-x86-misc write 0x%" HWADDR_PRIx
                       " = 0x%" PRIx64 " size %u\n", addr, value, size);

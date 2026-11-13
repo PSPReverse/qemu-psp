@@ -922,6 +922,33 @@ static void test_spi_flash(void)
     unlink(path);
 }
 
+/*
+ * Physical address bits 43..51 (SEV C-bit and ASID) of an access that reaches
+ * the x86 catch-all alias DRAM: the same bytes show with and without them
+ */
+static void test_encryption_alias(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+    /* x86 base 0x100000000000 (bit 44), 0xf80000000000 (bits 43..47) */
+    const uint32_t bases[] = { 0x1000u << 6, 0xf800u << 6 };
+
+    if (!qts) {
+        return;
+    }
+    qtest_writel(qts, X86_CTRL, 0);
+    qtest_writel(qts, X86_WINDOW0 + 0x1000, 0xcafe1234);
+    for (unsigned i = 0; i < ARRAY_SIZE(bases); i++) {
+        qtest_writel(qts, X86_CTRL, bases[i]);
+        g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x1000), ==, 0xcafe1234);
+        g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x1001), ==, 0x12);
+        qtest_writel(qts, X86_WINDOW0 + 0x2000, 0x11223344 + i);
+        qtest_writel(qts, X86_CTRL, 0);
+        g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + 0x2000), ==,
+                        0x11223344 + i);
+    }
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -950,6 +977,7 @@ int main(int argc, char **argv)
                    test_fch_uart_no_chardev);
     qtest_add_func("/amd-psp/x86/spi-flash", test_spi_flash);
     qtest_add_func("/amd-psp/x86/observer-exec", test_observer_exec);
+    qtest_add_func("/amd-psp/x86/encryption-alias", test_encryption_alias);
 
     return psp_test_run();
 }
