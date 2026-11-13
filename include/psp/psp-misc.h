@@ -27,6 +27,8 @@
 #define TYPE_PSP_MISC "amd_psp.misc"
 #define PSP_MISC(obj) OBJECT_CHECK(PSPMiscState, (obj), TYPE_PSP_MISC)
 
+#define PSP_MISC_MAX_OVERRIDES 16
+
 typedef struct PSPMiscState {
     SysBusDevice parent_obj;
     MemoryRegion iomem;
@@ -45,6 +47,11 @@ typedef struct PSPMiscState {
     /* Storage of the "rw" entries of psp/regs, see psp_regs_find() */
     uint32_t rw[PSP_REGS_MAX_RW_SLOTS];
 
+    /* "overrides" property: PSP address=value pairs that win on reads */
+    char* overrides;
+    uint32_t override_addr[PSP_MISC_MAX_OVERRIDES];
+    uint32_t override_value[PSP_MISC_MAX_OVERRIDES];
+    uint32_t n_overrides;
 } PSPMiscState;
 
 #endif

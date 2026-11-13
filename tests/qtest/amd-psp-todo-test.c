@@ -181,6 +181,23 @@ static void test_policy_at_runtime(void)
     g_assert_cmpuint(count_hits(log), ==, 2);
 }
 
+/* amd_psp.misc overrides: a read of the covering word returns the value */
+static void test_misc_overrides(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN2,
+                                 "-global driver=amd_psp.misc,"
+                                 "property=overrides,value=0x30101c0=0x100,,"
+                                 "0x3010100=0x11223344");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(qtest_readl(qts, 0x30101c0), ==, 0x100);
+    g_assert_cmphex(qtest_readl(qts, 0x3010100), ==, 0x11223344);
+    g_assert_cmphex(qtest_readb(qts, 0x3010101), ==, 0x33);
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -192,6 +209,8 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/todo/policy-no-guest-visible-effect",
                    test_policy_has_no_guest_visible_effect);
     qtest_add_func("/amd-psp/todo/policy-at-runtime", test_policy_at_runtime);
+
+    qtest_add_func("/amd-psp/todo/misc-overrides", test_misc_overrides);
 
     return psp_test_run();
 }

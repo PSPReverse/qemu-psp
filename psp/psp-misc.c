@@ -28,6 +28,7 @@
 #include "hw/core/resettable.h"
 #include "migration/vmstate.h"
 #include "qapi/error.h"
+#include "qemu/cutils.h"
 #include "qemu/log.h"
 #include "trace.h"
 
@@ -98,6 +99,17 @@ static bool psp_misc_system_ticks_word(hwaddr addr, unsigned int size,
     return true;
 }
 
+/* Index of the override covering the word of addr, or -1 */
+static int psp_misc_override(PSPMiscState* misc, hwaddr addr)
+{
+    for (uint32_t i = 0; i < misc->n_overrides; i++) {
+        if (misc->override_addr[i] == (addr & ~(hwaddr)3)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
 {
     PSPMiscState* misc = PSP_MISC(opaque);
@@ -105,7 +117,13 @@ static uint64_t psp_misc_read(void* opaque, hwaddr offset, unsigned int size)
     uint64_t value = 0;
     PspRegHit hit;
 
-    if (psp_misc_system_ticks_word(phys_abs, size, &value)) {
+    int ov = psp_misc_override(misc, phys_abs);
+
+    if (ov >= 0) {
+        value = (misc->override_value[ov] >> ((phys_abs & 3) * 8)) &
+                MAKE_64BIT_MASK(0, size * 8);
+        trace_psp_misc_read(offset, value, size);
+    } else if (psp_misc_system_ticks_word(phys_abs, size, &value)) {
         trace_psp_misc_read(offset, value, size);
     } else if (psp_misc_find(misc, phys_abs, &hit)) {
         if (hit.rw_slot >= 0) {
@@ -140,6 +158,52 @@ static void psp_misc_init(Object* obj)
     s->ident = NULL;
 }
 
+/*
+ * Parse the overrides property: comma-separated address=value pairs, numbers
+ * C-style (0x hex, leading 0 octal, else decimal), absolute PSP addresses
+ * 4-byte aligned and unique, values 32-bit.
+ */
+static bool psp_misc_parse_overrides(PSPMiscState* s, Error** errp)
+{
+    g_auto(GStrv) pairs = NULL;
+
+    s->n_overrides = 0;
+    if (s->overrides == NULL || *s->overrides == '\0') {
+        return true;
+    }
+    pairs = g_strsplit(s->overrides, ",", -1);
+    for (char** p = pairs; *p != NULL; p++) {
+        const char* end;
+        uint64_t addr, value;
+
+        if (s->n_overrides == PSP_MISC_MAX_OVERRIDES) {
+            error_setg(errp, "overrides: more than %d pairs",
+                       PSP_MISC_MAX_OVERRIDES);
+            return false;
+        }
+        if (qemu_strtou64(*p, &end, 0, &addr) < 0 || *end != '=' ||
+            qemu_strtou64(end + 1, NULL, 0, &value) < 0) {
+            error_setg(errp, "overrides: '%s' is not address=value", *p);
+            return false;
+        }
+        if (addr > UINT32_MAX || (addr & 3) || value > UINT32_MAX) {
+            error_setg(errp,
+                       "overrides: '%s' needs a 4-byte aligned 32-bit address "
+                       "and a 32-bit value", *p);
+            return false;
+        }
+        if (psp_misc_override(s, addr) >= 0) {
+            error_setg(errp, "overrides: address 0x%" PRIx64 " given twice",
+                       addr);
+            return false;
+        }
+        s->override_addr[s->n_overrides] = addr;
+        s->override_value[s->n_overrides] = value;
+        s->n_overrides++;
+    }
+    return true;
+}
+
 static void psp_misc_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
@@ -157,6 +221,10 @@ static void psp_misc_realize(DeviceState* dev, Error** errp)
     if (s->generation >= PSP_GENERATION_MAX) {
         error_setg(errp,
                    "property 'psp_misc_generation' not specified or invalid");
+        return;
+    }
+
+    if (!psp_misc_parse_overrides(s, errp)) {
         return;
     }
 
@@ -187,6 +255,7 @@ static const Property properties[] = {
     DEFINE_PROP_UINT64("psp_misc_msize", PSPMiscState, mmio_size, 0),
     DEFINE_PROP_STRING("psp_misc_ident", PSPMiscState, ident),
     DEFINE_PROP_BOOL("log_access", PSPMiscState, log_access, false),
+    DEFINE_PROP_STRING("overrides", PSPMiscState, overrides),
     DEFINE_PROP_UINT32("psp_misc_generation", PSPMiscState, generation,
                        PSP_GENERATION_MAX),
 };
