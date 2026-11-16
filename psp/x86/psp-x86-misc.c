@@ -323,8 +323,8 @@ static const Property properties[] = {
                        PSP_GENERATION_MAX),
     DEFINE_PROP_BOOL("log_access", PSPX86MiscState, log_access, false),
     /* Zen3 per-core RMP base and end registers, see zen3_core_alias_byte() */
-    DEFINE_PROP_UINT64("rmp_base", PSPX86MiscState, rmp_base, 0x100000000ULL),
-    DEFINE_PROP_UINT64("rmp_end", PSPX86MiscState, rmp_end, 0x100ffffffULL),
+    DEFINE_PROP_UINT64("rmp_base", PSPX86MiscState, rmp_base, 0x20000000ULL),
+    DEFINE_PROP_UINT64("rmp_end", PSPX86MiscState, rmp_end, 0x23ffffffULL),
 };
 
 static void psp_x86_misc_class_init(ObjectClass* oc, const void* data)
