@@ -14,8 +14,10 @@ void HELPER(libafl_qemu_handle_breakpoint)(CPUArchState* env, uint64_t pc)
 
     /* Removed since this block was translated: nothing to report */
     if (!libafl_qemu_breakpoint_armed((vaddr)pc)) {
+        libafl_log_exit_path("helper ignored (not armed)", (vaddr)pc);
         return;
     }
+    libafl_log_exit_path("helper armed hit", (vaddr)pc);
     libafl_exit_request_breakpoint(cpu, (vaddr)pc);
 }
 

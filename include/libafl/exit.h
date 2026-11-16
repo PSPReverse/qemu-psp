@@ -65,6 +65,7 @@ struct libafl_exit_reason {
 int libafl_qemu_set_breakpoint(vaddr pc);
 int libafl_qemu_remove_breakpoint(vaddr pc);
 bool libafl_qemu_breakpoint_armed(vaddr pc);
+void libafl_log_exit_path(const char* what, vaddr pc);
 void libafl_qemu_trigger_breakpoint(CPUState* cpu);
 void libafl_qemu_breakpoint_run(vaddr pc_next);
 

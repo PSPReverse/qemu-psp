@@ -195,9 +195,36 @@ void libafl_exit_signal_vm_start(void)
     expected_exit = false;
 }
 
+/*
+ * Debug aid (-d unimp): count how an exit was produced and print the count
+ * at powers of two, with the cpu singlestep state, so a flood of identical
+ * exits can be told from a helper hit and from a stale reason.
+ */
+void libafl_log_exit_path(const char* what, vaddr pc)
+{
+    static unsigned long n[3];
+    static const char* names[3] = { "helper armed hit",
+                                    "helper ignored (not armed)",
+                                    "exit reason read" };
+    int i = what[0] == 'h' ? (what[7] == 'a' ? 0 : 1) : 2;
+
+    if (!qemu_loglevel_mask(LOG_UNIMP)) {
+        return;
+    }
+    n[i]++;
+    if ((n[i] & (n[i] - 1)) == 0) {
+        CPUState* cpu = first_cpu;
+        qemu_log("libafl: %s #%lu pc=0x%" VADDR_PRIx " singlestep=%d "
+                 "expected_exit=%d kind=%d\n", names[i], n[i], pc,
+                 cpu ? (int)cpu->singlestep_enabled : -1, expected_exit,
+                 (int)last_exit_reason.kind);
+    }
+}
+
 struct libafl_exit_reason* libafl_get_exit_reason(void)
 {
     if (expected_exit) {
+        libafl_log_exit_path("exit reason read", last_exit_reason.next_pc);
         return &last_exit_reason;
     }
 
