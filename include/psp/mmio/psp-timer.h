@@ -56,6 +56,12 @@ typedef struct PSPTimerState {
      */
     uint32_t counter_hz;
     /*
+     * Guest time already elapsed at reset, in ns, for counter_hz != 0: the
+     * counter starts at counter_hz * counter_start_ns / 1e9, so a boot
+     * delay that waits for the 64-bit counter to pass a deadline can end.
+     */
+    uint64_t counter_start_ns;
+    /*
      * Opt-in, for counter_hz == 0: every read of the 64-bit system counter
      * (PSP-misc 0x032001f0/f4) advances it by this many ticks, so delay
      * loops finish without depending on any clock; 0 = counter reads 0.

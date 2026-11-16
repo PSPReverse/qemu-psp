@@ -240,6 +240,23 @@ static void test_system_tick_off(void)
     qtest_quit(qts);
 }
 
+/* counter_start_ns: the system counter starts with that much time elapsed */
+static void test_counter_start(void)
+{
+    /* 1 GHz: one tick per ns, so 8e9 ns is 0x1dcd65000 ticks, high word 1 */
+    QTestState *qts = psp_startf(PSP_ZEN2, "-global driver=amd_psp.timer,"
+                                 "property=counter_hz,value=1000000000 "
+                                 "-global driver=amd_psp.timer,"
+                                 "property=counter_start_ns,value=8000000000");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmpuint(qtest_readl(qts, 0x032001f4), ==, 1);
+    g_assert_cmpuint(qtest_readl(qts, 0x032001f0), ==, 0xdcd65000u);
+    qtest_quit(qts);
+}
+
 int main(int argc, char **argv)
 {
     psp_test_init(&argc, &argv);
@@ -253,6 +270,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/timer/expiry-minimum-delay",
                    test_expiry_minimum_delay);
     qtest_add_func("/amd-psp/timer/system-tick-step", test_system_tick_step);
+    qtest_add_func("/amd-psp/timer/counter-start", test_counter_start);
     qtest_add_func("/amd-psp/timer/system-tick-off", test_system_tick_off);
     qtest_add_func("/amd-psp/timer/expiry-off-by-default",
                    test_expiry_off_by_default);

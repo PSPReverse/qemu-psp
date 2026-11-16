@@ -74,7 +74,7 @@ static void psp_timer_reset_hold(Object *obj, ResetType type)
     memset(s->psp_timer_placeholder, 0, sizeof(s->psp_timer_placeholder));
     s->system_ticks = 0;
     s->counter_anchor_ns = qemu_clock_get_ns(QEMU_CLOCK_VIRTUAL);
-    s->counter_offset_ns = 0;
+    s->counter_offset_ns = s->counter_start_ns;
     timer_del(&s->expiry_timer);
 }
 
@@ -358,6 +358,7 @@ static void psp_timer_init(Object* obj)
 static const Property psp_timer_properties[] = {
     DEFINE_PROP_INT32("expiry_irq_id", PSPTimerState, expiry_irq_id, -1),
     DEFINE_PROP_UINT32("counter_hz", PSPTimerState, counter_hz, 0),
+    DEFINE_PROP_UINT64("counter_start_ns", PSPTimerState, counter_start_ns, 0),
     DEFINE_PROP_UINT32("system_tick_step", PSPTimerState, system_tick_step, 0),
 };
 
