@@ -37,6 +37,8 @@ typedef struct PSPSmnDfFicaState {
     uint32_t f1x3f8;
     /* Property */
     uint32_t hole_base_default;
+    uint32_t dram0_base_default;  /* F0x110 until software writes it */
+    uint32_t dram0_limit_default; /* F0x114 until software writes it */
     PSPSmnDfFicaEntry entries[PSP_SMN_DF_FICA_ENTRIES];
 } PSPSmnDfFicaState;
 

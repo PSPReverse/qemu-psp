@@ -27,6 +27,8 @@
 
 #define FICAA_KEY_MASK 0x3ffc   /* function [13:11] and register [10:2] */
 #define FICAA_KEY_HOLE_BASE 0x104       /* function 0 */
+#define FICAA_KEY_DRAM0_BASE 0x110      /* function 0, slot 0 */
+#define FICAA_KEY_DRAM0_LIMIT 0x114
 
 static PSPSmnDfFicaEntry* df_fica_find(PSPSmnDfFicaState* s, uint32_t key)
 {
@@ -64,6 +66,10 @@ static uint64_t df_ficad_read(void* opaque, hwaddr offset, unsigned size)
         val = e->value;
     } else if (key == FICAA_KEY_HOLE_BASE) {
         val = s->hole_base_default;
+    } else if (key == FICAA_KEY_DRAM0_BASE) {
+        val = s->dram0_base_default;
+    } else if (key == FICAA_KEY_DRAM0_LIMIT) {
+        val = s->dram0_limit_default;
     }
 
     trace_psp_smn_df_fica_read(s->ficaa, val);
@@ -197,6 +203,16 @@ static const VMStateDescription df_fica_vmstate = {
 static const Property df_fica_properties[] = {
     DEFINE_PROP_UINT32("hole-base-default", PSPSmnDfFicaState,
                        hole_base_default, 0xb0000001),
+    /*
+     * DRAM slot 0 base and limit registers (F0x110, F0x114) as the BL's
+     * memory map builder reads them; 0 means slot not valid (bit 0 clear),
+     * the reset behaviour. 1 and 0x7000 describe 2 GiB at 0 (psp-etl 13373,
+     * inferred encoding: limit field in 256 MiB units).
+     */
+    DEFINE_PROP_UINT32("dram0-base-default", PSPSmnDfFicaState,
+                       dram0_base_default, 0),
+    DEFINE_PROP_UINT32("dram0-limit-default", PSPSmnDfFicaState,
+                       dram0_limit_default, 0),
 };
 
 static void df_fica_class_init(ObjectClass* oc, const void* data)

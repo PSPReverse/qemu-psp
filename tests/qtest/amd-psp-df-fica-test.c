@@ -119,6 +119,39 @@ static void test_hole_base_default_off(void)
     qtest_quit(qts);
 }
 
+/* DRAM slot 0 registers read 0 by default and follow their properties */
+static void test_dram0_defaults(void)
+{
+    QTestState *qts = psp_startf(PSP_ZEN3, "-global "
+                                 "driver=amd_psp.smn.df-fica,"
+                                 "property=dram0-base-default,value=1 "
+                                 "-global driver=amd_psp.smn.df-fica,"
+                                 "property=dram0-limit-default,value=0x7000");
+
+    if (!qts) {
+        return;
+    }
+    qtest_writew(qts, SMN_CTRL, 0);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x110)), ==, 1);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x114)), ==, 0x7000);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x118)), ==, 0);
+    df_write(qts, KEY(0, 0, 0x110), 0);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x110)), ==, 0);
+    qtest_quit(qts);
+}
+
+static void test_dram0_off_by_default(void)
+{
+    QTestState *qts = start(PSP_ZEN3);
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x110)), ==, 0);
+    g_assert_cmphex(df_read(qts, KEY(0, 0, 0x114)), ==, 0);
+    qtest_quit(qts);
+}
+
 static void test_zen2_absent(void)
 {
     QTestState *qts = start(PSP_ZEN2);
@@ -155,6 +188,9 @@ int main(int argc, char **argv)
                    test_instance_ignored);
     qtest_add_func("/amd-psp/df-fica/unwritten-reads-zero",
                    test_unwritten_reads_zero);
+    qtest_add_func("/amd-psp/df-fica/dram0-defaults", test_dram0_defaults);
+    qtest_add_func("/amd-psp/df-fica/dram0-off-by-default",
+                   test_dram0_off_by_default);
     qtest_add_func("/amd-psp/df-fica/hole-base-default",
                    test_hole_base_default);
     qtest_add_func("/amd-psp/df-fica/hole-base-default-off",
