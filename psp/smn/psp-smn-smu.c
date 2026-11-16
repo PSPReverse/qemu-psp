@@ -46,10 +46,11 @@
  * the MSR id as argument (observed, aspfuzz 13173). The reply value is
  * returned in the argument register with the usual response word 1; that the
  * kernel builds its out0/out1 from these is inferred (psp-etl 13098), not
- * measured. Only SYSCFG is modelled; every other MSR reads 0.
+ * measured. Only SYSCFG and HWCR are modelled; every other MSR reads 0.
  */
 #define MSG_READ_X86_MSR 0x2b
 #define MSR_SYSCFG 0xc0010010
+#define MSR_HWCR 0xc0010015
 
 #define DF_PSTATES_MAX 4
 
@@ -80,6 +81,8 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
     case MSG_READ_X86_MSR:
         if (s->regs[REG_ARG] == MSR_SYSCFG) {
             data = s->syscfg;
+        } else if (s->regs[REG_ARG] == MSR_HWCR) {
+            data = s->hwcr;
         } else {
             qemu_log_mask(LOG_UNIMP, "psp-smn-smu: x86 MSR 0x%x read as 0\n",
                           s->regs[REG_ARG]);
@@ -173,6 +176,8 @@ static const Property psp_smu_properties[] = {
     DEFINE_PROP_UINT32("mem-clk-mhz", PSPSmnSmuState, mem_clk_mhz, 1200),
     DEFINE_PROP_UINT32("ccd-mask", PSPSmnSmuState, ccd_mask, 0x1),
     /* Low dword of x86 MSR SYSCFG: SMEE, SNPEn, VMPLEn, MTRR enables incl. bit 19 (SNP_INIT tests it, psp-etl 13282) */
+    /* Low dword of x86 MSR HWCR; SNP_INIT needs bit 0 (psp-etl 13282) */
+    DEFINE_PROP_UINT32("hwcr", PSPSmnSmuState, hwcr, 0x1),
     DEFINE_PROP_UINT32("syscfg", PSPSmnSmuState, syscfg, 0x03fc0000),
 };
 
