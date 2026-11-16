@@ -41,6 +41,16 @@
 #define MSG_QUERY_CCD_MASK 0x10
 #define MSG_QUERY_CCX_MASK 0x12
 
+/*
+ * The PSP kernel's x86 MSR read service reaches the SMU as message 0x2b with
+ * the MSR id as argument (observed, aspfuzz 13173). The reply value is
+ * returned in the argument register with the usual response word 1; that the
+ * kernel builds its out0/out1 from these is inferred (psp-etl 13098), not
+ * measured. Only SYSCFG is modelled; every other MSR reads 0.
+ */
+#define MSG_READ_X86_MSR 0x2b
+#define MSR_SYSCFG 0xc0010010
+
 #define DF_PSTATES_MAX 4
 
 static const uint32_t mem_clk_valid[] = {
@@ -66,6 +76,14 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
         break;
     case MSG_QUERY_CCX_MASK:
         data = s->regs[REG_ARG] < 8 && ((s->ccd_mask >> s->regs[REG_ARG]) & 1);
+        break;
+    case MSG_READ_X86_MSR:
+        if (s->regs[REG_ARG] == MSR_SYSCFG) {
+            data = s->syscfg;
+        } else {
+            qemu_log_mask(LOG_UNIMP, "psp-smn-smu: x86 MSR 0x%x read as 0\n",
+                          s->regs[REG_ARG]);
+        }
         break;
     default:
         qemu_log_mask(LOG_UNIMP, "psp-smn-smu: unknown message 0x%x "
@@ -154,6 +172,8 @@ static const Property psp_smu_properties[] = {
     DEFINE_PROP_UINT32("df-pstates", PSPSmnSmuState, df_pstates, 1),
     DEFINE_PROP_UINT32("mem-clk-mhz", PSPSmnSmuState, mem_clk_mhz, 1200),
     DEFINE_PROP_UINT32("ccd-mask", PSPSmnSmuState, ccd_mask, 0x1),
+    /* Low dword of x86 MSR SYSCFG: SMEE, SNPEn, VMPLEn, MTRR enables */
+    DEFINE_PROP_UINT32("syscfg", PSPSmnSmuState, syscfg, 0x03f40000),
 };
 
 static void psp_smu_class_init(ObjectClass* oc, const void* data)

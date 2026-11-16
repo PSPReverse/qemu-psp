@@ -21,6 +21,8 @@
 #define MSG_GET_STARTUP_DF_PSTATE 0x1d
 #define MSG_QUERY_CCD_MASK 0x10
 #define MSG_QUERY_CCX_MASK 0x12
+#define MSG_READ_X86_MSR 0x2b
+#define MSR_SYSCFG 0xc0010010
 
 static QTestState *start(const char *extra)
 {
@@ -155,6 +157,31 @@ static void test_core_maps_property(void)
     qtest_quit(qts);
 }
 
+/* x86 MSR read: SYSCFG has SNPEn (bit 24) set by default, others read 0 */
+static void test_msr_syscfg(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, MSR_SYSCFG), ==, 0x03f40000);
+    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, 0xc0011006), ==, 0);
+    qtest_quit(qts);
+}
+
+static void test_msr_syscfg_property(void)
+{
+    QTestState *qts = start("-global driver=amd_psp.smn.smu,"
+                            "property=syscfg,value=0x800000");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, MSR_SYSCFG), ==, 0x800000);
+    qtest_quit(qts);
+}
+
 /* Zen2 has the same mailbox: idle response 1, any message answers 1 */
 static void test_zen2_present(void)
 {
@@ -186,6 +213,9 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/smu/unknown-message", test_unknown_message);
     qtest_add_func("/amd-psp/smu/core-maps", test_core_maps);
     qtest_add_func("/amd-psp/smu/core-maps-property", test_core_maps_property);
+    qtest_add_func("/amd-psp/smu/msr-syscfg", test_msr_syscfg);
+    qtest_add_func("/amd-psp/smu/msr-syscfg-property",
+                   test_msr_syscfg_property);
     qtest_add_func("/amd-psp/smu/zen2-present", test_zen2_present);
 
     return psp_test_run();
