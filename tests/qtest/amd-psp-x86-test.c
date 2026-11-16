@@ -106,6 +106,11 @@ static void test_core_alias_ready(void)
         g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + core), ==,
                         gen ? 0x0101 : 0);
         g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + 0x1000 + 4), ==, 0);
+        /* RMP base (+0x7f80) and end (+0x7f88): 1 MiB aligned, end all ones */
+        g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + core - 0x10 + 4), ==,
+                        gen ? 1 : 0);
+        g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + core - 0x8), ==,
+                        gen ? 0x00ffffff : 0);
         qtest_quit(qts);
     }
 }

@@ -108,9 +108,26 @@ LoggingInfo get_logging_info_for_addr(hwaddr addr)
  * checks, not from documentation; the aperture is matched by its low 15 bits
  * only, so every core and CCX answers the same.
  */
-static bool zen3_core_alias_byte(hwaddr addr, uint8_t *byte)
+static bool zen3_core_alias_byte(PSPX86MiscState *s, hwaddr addr,
+                                 uint8_t *byte)
 {
-    switch (addr & 0x7fff) {
+    unsigned off = addr & 0x7fff;
+
+    /*
+     * +0x7f80: RMP base then RMP end, one u64 each, every core the same. The
+     * SNP_INIT handler wants the base 1 MiB aligned and the end ending in
+     * 0xfffff (psp-etl 13353); the values are an inferred stand-in for what
+     * the BIOS programs into the RMP base and end MSRs.
+     */
+    if (off >= 0x7f80 && off < 0x7f88) {
+        *byte = s->rmp_base >> (8 * (off - 0x7f80));
+        return true;
+    }
+    if (off >= 0x7f88 && off < 0x7f90) {
+        *byte = s->rmp_end >> (8 * (off - 0x7f88));
+        return true;
+    }
+    switch (off) {
     case 0x7f90:
     case 0x7f91:
     case 0x7f94:
@@ -122,7 +139,8 @@ static bool zen3_core_alias_byte(hwaddr addr, uint8_t *byte)
     }
 }
 
-static bool zen3_core_alias_read(hwaddr addr, unsigned size, uint64_t *val)
+static bool zen3_core_alias_read(PSPX86MiscState *s, hwaddr addr,
+                                 unsigned size, uint64_t *val)
 {
     bool hit = false;
 
@@ -130,7 +148,7 @@ static bool zen3_core_alias_read(hwaddr addr, unsigned size, uint64_t *val)
     for (unsigned i = 0; i < size; i++) {
         uint8_t b;
 
-        if (zen3_core_alias_byte(addr + i, &b)) {
+        if (zen3_core_alias_byte(s, addr + i, &b)) {
             *val |= (uint64_t)b << (8 * i);
             hit = true;
         }
@@ -195,7 +213,7 @@ static uint64_t psp_x86_misc_read(void* opaque, hwaddr addr, unsigned int size)
         s->port61_refresh = !s->port61_refresh;
     } else if (s->generation == ZEN3 && (addr >> 32) == 0xfffd &&
                (addr >> 24) != 0xfffdfc &&
-               zen3_core_alias_read(addr, size, &val)) {
+               zen3_core_alias_read(s, addr, size, &val)) {
         /* Per-core and per-CCX status bytes, see zen3_core_alias_byte() */
     } else if (!psp_regs_lookup(s->generation, PSP_REG_SPACE_X86_MISC, addr,
                                 &val)) {
@@ -304,6 +322,9 @@ static const Property properties[] = {
     DEFINE_PROP_UINT32("psp_generation", PSPX86MiscState, generation,
                        PSP_GENERATION_MAX),
     DEFINE_PROP_BOOL("log_access", PSPX86MiscState, log_access, false),
+    /* Zen3 per-core RMP base and end registers, see zen3_core_alias_byte() */
+    DEFINE_PROP_UINT64("rmp_base", PSPX86MiscState, rmp_base, 0x100000000ULL),
+    DEFINE_PROP_UINT64("rmp_end", PSPX86MiscState, rmp_end, 0x100ffffffULL),
 };
 
 static void psp_x86_misc_class_init(ObjectClass* oc, const void* data)
