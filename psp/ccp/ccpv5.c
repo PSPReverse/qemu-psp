@@ -31,6 +31,7 @@
 #include "qapi/error.h"
 #include "qemu/bitops.h"
 #include "qemu/log.h"
+#include "hw/core/cpu.h"
 #include "system/address-spaces.h"
 #include "trace.h"
 
@@ -98,6 +99,14 @@ static void ccp_reverse_buf(uint8_t* buf, size_t len)
         buf++;
         buf_top--;
     }
+}
+
+/* PC of the CPU doing the access, for telling kernel svc from BL or driver */
+static uint64_t ccp_access_pc(void)
+{
+    CPUState* cs = current_cpu;
+
+    return cs ? CPU_GET_CLASS(cs)->get_pc(cs) : 0;
 }
 
 static uint32_t ccp_queue_read(CcpV5State* s, hwaddr offset, uint32_t id)
@@ -1209,6 +1218,7 @@ static uint64_t ccp_read(void* opaque, hwaddr offset, unsigned int size)
             return ret;
         }
         ret = ccp_queue_read(s, offset & 0xfff, id);
+        trace_ccp_queue_access(0, id, offset & 0xfff, ret, ccp_access_pc());
     } else {
         ret = ccp_config_read(s, offset & 0xfff);
     }
@@ -1241,6 +1251,7 @@ static void ccp_write(void* opaque, hwaddr offset, uint64_t value,
                           id);
             return;
         }
+        trace_ccp_queue_access(1, id, offset & 0xfff, value, ccp_access_pc());
         ccp_queue_write(s, offset & 0xfff, value, id);
     } else {
         ccp_config_write(s, offset & 0xfff, value);
