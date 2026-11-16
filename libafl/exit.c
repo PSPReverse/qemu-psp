@@ -3,6 +3,7 @@
 #include "tcg/tcg.h"
 #include "tcg/tcg-op-common.h"
 #include "exec/cpu-common.h"
+#include "qemu/log.h"
 
 #include "libafl/exit.h"
 #include "libafl/defs.h"
@@ -125,6 +126,18 @@ void libafl_exit_request_breakpoint(CPUState* cpu, vaddr pc)
 {
     last_exit_reason.kind = BREAKPOINT;
     last_exit_reason.data.breakpoint.addr = pc;
+
+    /* Debug aid (-d unimp): the armed list for the first few hits only */
+    static int logged;
+    if (logged < 4 && qemu_loglevel_mask(LOG_UNIMP)) {
+        logged++;
+        qemu_log("libafl: breakpoint exit at 0x%" VADDR_PRIx ", armed:", pc);
+        for (struct libafl_breakpoint* b = libafl_qemu_breakpoints; b;
+             b = b->next) {
+            qemu_log(" 0x%" VADDR_PRIx, b->addr);
+        }
+        qemu_log("\n");
+    }
 
     prepare_qemu_exit(cpu, pc);
 }
