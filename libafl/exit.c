@@ -92,6 +92,7 @@ bool libafl_exit_asap(void) { return expected_exit; }
 
 static void prepare_qemu_exit(CPUState* cpu, vaddr next_pc)
 {
+    libafl_log_exit_path("setter prepare_qemu_exit", next_pc);
     expected_exit = true;
     last_exit_reason.cpu = cpu;
     last_exit_reason.next_pc = next_pc;
@@ -120,6 +121,7 @@ CPUState* libafl_last_exit_cpu(void)
 void libafl_exit_request_internal(CPUState* cpu, vaddr pc,
                                   ShutdownCause cause, int signal)
 {
+    libafl_log_exit_path("setter internal", pc);
     last_exit_reason.kind = INTERNAL;
     last_exit_reason.data.internal.cause = cause;
     last_exit_reason.data.internal.signal = signal;
@@ -171,6 +173,7 @@ void libafl_exit_request_crash(CPUState* cpu)
 #ifndef CONFIG_USER_ONLY
 void libafl_exit_request_timeout(void)
 {
+    libafl_log_exit_path("setter timeout", 0);
     expected_exit = true;
     last_exit_reason.kind = TIMEOUT;
     last_exit_reason.cpu = current_cpu;
@@ -202,11 +205,16 @@ void libafl_exit_signal_vm_start(void)
  */
 void libafl_log_exit_path(const char* what, vaddr pc)
 {
-    static unsigned long n[3];
-    static const char* names[3] = { "helper armed hit",
+    static unsigned long n[6];
+    static const char* names[6] = { "helper armed hit",
                                     "helper ignored (not armed)",
-                                    "exit reason read" };
-    int i = what[0] == 'h' ? (what[7] == 'a' ? 0 : 1) : 2;
+                                    "exit reason read",
+                                    "setter prepare_qemu_exit",
+                                    "setter timeout",
+                                    "setter internal" };
+    int i = what[0] == 'h' ? (what[7] == 'a' ? 0 : 1) :
+            what[0] == 's' ? (what[7] == 'p' ? 3 : (what[7] == 't' ? 4 : 5)) :
+            2;
 
     if (!qemu_loglevel_mask(LOG_UNIMP)) {
         return;
