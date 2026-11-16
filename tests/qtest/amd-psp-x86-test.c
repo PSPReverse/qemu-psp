@@ -78,7 +78,7 @@ static void test_port61(void)
 }
 
 /*
- * Zen3: bytes +0, +1 and +4 of the per-core register alias at 0xfffdf7xxxxxx
+ * Zen3: bytes +0, +1, +4 and +6 of the per-core register alias at 0xfffdf7xxxxxx
  * read 1 (every core ready, CCX flush status set), the other bytes stay
  * unmodelled (0). Zen2 has no such alias.
  */
@@ -101,6 +101,7 @@ static void test_core_alias_ready(void)
         g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core + 1), ==, gen);
         g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core + 2), ==, 0);
         g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core + 5), ==, 0);
+        g_assert_cmphex(qtest_readb(qts, X86_WINDOW0 + core + 6), ==, gen);
         /* A dword read composes the bytes: 0x7f90 holds 1, 1, 0, 0 */
         g_assert_cmphex(qtest_readl(qts, X86_WINDOW0 + core), ==,
                         gen ? 0x0101 : 0);

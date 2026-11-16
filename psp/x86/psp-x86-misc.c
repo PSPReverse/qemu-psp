@@ -100,9 +100,10 @@ LoggingInfo get_logging_info_for_addr(hwaddr addr)
 /*
  * Status bytes of the 0xfffd_xxxx_xxxx core register aliases (one byte per
  * register bit): +0x7f94 is the per-core "ready" byte the SEV INIT hardware
- * check wants set for every core the BL lists as present, +0x7f90 and +0x7f91
- * are the two bytes of the per-CCX cache flush status the SEV DF_FLUSH
- * command wants set (either flush mode passes with both). All three read 1,
+ * check wants set for every core the BL lists as present, +0x7f96 is the
+ * second per-core byte the SNP_INIT walk wants set (psp-etl 13335), +0x7f90
+ * and +0x7f91 are the two bytes of the per-CCX cache flush status the SEV DF_FLUSH
+ * command wants set (either flush mode passes with both). All four read 1,
  * every other byte of these registers reads 0. Inferred from the applet's
  * checks, not from documentation; the aperture is matched by its low 15 bits
  * only, so every core and CCX answers the same.
@@ -113,6 +114,7 @@ static bool zen3_core_alias_byte(hwaddr addr, uint8_t *byte)
     case 0x7f90:
     case 0x7f91:
     case 0x7f94:
+    case 0x7f96:
         *byte = 1;
         return true;
     default:
