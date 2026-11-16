@@ -25,6 +25,8 @@
 
 #define REG_ARG (0x00 / 4)
 #define REG_RESP (0x04 / 4)
+#define REG_MSR_LO (0x08 / 4)
+#define REG_MSR_HI (0x0c / 4)
 #define REG_MSG (0x18 / 4)
 
 #define RESP_OK 1
@@ -43,10 +45,10 @@
 
 /*
  * The PSP kernel's x86 MSR read service reaches the SMU as message 0x2b with
- * the MSR id as argument (observed, aspfuzz 13173). The reply value is
- * returned in the argument register with the usual response word 1; that the
- * kernel builds its out0/out1 from these is inferred (psp-etl 13098), not
- * measured. Only SYSCFG and HWCR are modelled; every other MSR reads 0.
+ * the MSR id as argument (observed, aspfuzz 13173). The reply is
+ * out0 = 1 in the argument register, the 64-bit MSR value in +8 (low) and
+ * +0xc (high) and the usual response word 1 (psp-etl 13325, decoded from the
+ * BL, not measured). Only SYSCFG and HWCR are modelled; every other MSR reads 0.
  */
 #define MSG_READ_X86_MSR 0x2b
 #define MSR_SYSCFG 0xc0010010
@@ -78,16 +80,24 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
     case MSG_QUERY_CCX_MASK:
         data = s->regs[REG_ARG] < 8 && ((s->ccd_mask >> s->regs[REG_ARG]) & 1);
         break;
-    case MSG_READ_X86_MSR:
-        if (s->regs[REG_ARG] == MSR_SYSCFG) {
-            data = s->syscfg;
-        } else if (s->regs[REG_ARG] == MSR_HWCR) {
-            data = s->hwcr;
+    case MSG_READ_X86_MSR: {
+        uint32_t msr = s->regs[REG_ARG], val = 0;
+
+        if (msr == MSR_SYSCFG) {
+            val = s->syscfg;
+        } else if (msr == MSR_HWCR) {
+            val = s->hwcr;
         } else {
             qemu_log_mask(LOG_UNIMP, "psp-smn-smu: x86 MSR 0x%x read as 0\n",
-                          s->regs[REG_ARG]);
+                          msr);
         }
+        /* Layout the BL reads back (psp-etl 13325): out0 in ARG, value in
+         * +8 (low) and +0xc (high) */
+        s->regs[REG_MSR_LO] = val;
+        s->regs[REG_MSR_HI] = 0;
+        data = 1;
         break;
+    }
     default:
         qemu_log_mask(LOG_UNIMP, "psp-smn-smu: unknown message 0x%x "
                       "(argument 0x%x), answering OK with 0\n",

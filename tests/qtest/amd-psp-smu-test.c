@@ -157,6 +157,14 @@ static void test_core_maps_property(void)
     qtest_quit(qts);
 }
 
+/* MSR read: out0 = 1 in ARG, value low in +8, high in +0xc */
+static uint32_t msr_read(QTestState *qts, uint32_t msr, uint32_t *hi)
+{
+    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, msr), ==, 1);
+    *hi = qtest_readl(qts, SMU_ARG + 0xc);
+    return qtest_readl(qts, SMU_ARG + 0x8);
+}
+
 /* x86 MSR read: SYSCFG has SNPEn (bit 24) set by default, others read 0 */
 static void test_msr_syscfg(void)
 {
@@ -165,9 +173,12 @@ static void test_msr_syscfg(void)
     if (!qts) {
         return;
     }
-    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, MSR_SYSCFG), ==, 0x03fc0000);
-    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, 0xc0010015), ==, 1);
-    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, 0xc0011006), ==, 0);
+    uint32_t hi;
+
+    g_assert_cmphex(msr_read(qts, MSR_SYSCFG, &hi), ==, 0x03fc0000);
+    g_assert_cmphex(hi, ==, 0);
+    g_assert_cmphex(msr_read(qts, 0xc0010015, &hi), ==, 1);
+    g_assert_cmphex(msr_read(qts, 0xc0011006, &hi), ==, 0);
     qtest_quit(qts);
 }
 
@@ -179,7 +190,9 @@ static void test_msr_syscfg_property(void)
     if (!qts) {
         return;
     }
-    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, MSR_SYSCFG), ==, 0x800000);
+    uint32_t hi;
+
+    g_assert_cmphex(msr_read(qts, MSR_SYSCFG, &hi), ==, 0x800000);
     qtest_quit(qts);
 }
 
