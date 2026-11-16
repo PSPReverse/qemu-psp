@@ -34,6 +34,21 @@ int libafl_qemu_set_breakpoint(vaddr pc)
     return 1;
 }
 
+/*
+ * A translated block keeps its breakpoint check until the queued TB flush
+ * runs, so the helper asks here whether pc is still armed.
+ */
+bool libafl_qemu_breakpoint_armed(vaddr pc)
+{
+    for (struct libafl_breakpoint* bp = libafl_qemu_breakpoints; bp;
+         bp = bp->next) {
+        if (bp->addr == pc) {
+            return true;
+        }
+    }
+    return false;
+}
+
 int libafl_qemu_remove_breakpoint(vaddr pc)
 {
     CPUState* cpu;
