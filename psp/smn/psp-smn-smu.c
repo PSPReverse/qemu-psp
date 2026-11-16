@@ -172,8 +172,8 @@ static const Property psp_smu_properties[] = {
     DEFINE_PROP_UINT32("df-pstates", PSPSmnSmuState, df_pstates, 1),
     DEFINE_PROP_UINT32("mem-clk-mhz", PSPSmnSmuState, mem_clk_mhz, 1200),
     DEFINE_PROP_UINT32("ccd-mask", PSPSmnSmuState, ccd_mask, 0x1),
-    /* Low dword of x86 MSR SYSCFG: SMEE, SNPEn, VMPLEn, MTRR enables */
-    DEFINE_PROP_UINT32("syscfg", PSPSmnSmuState, syscfg, 0x03f40000),
+    /* Low dword of x86 MSR SYSCFG: SMEE, SNPEn, VMPLEn, MTRR enables incl. bit 19 (SNP_INIT tests it, psp-etl 13282) */
+    DEFINE_PROP_UINT32("syscfg", PSPSmnSmuState, syscfg, 0x03fc0000),
 };
 
 static void psp_smu_class_init(ObjectClass* oc, const void* data)

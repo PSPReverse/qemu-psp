@@ -165,7 +165,7 @@ static void test_msr_syscfg(void)
     if (!qts) {
         return;
     }
-    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, MSR_SYSCFG), ==, 0x03f40000);
+    g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, MSR_SYSCFG), ==, 0x03fc0000);
     g_assert_cmphex(smu_msg(qts, MSG_READ_X86_MSR, 0xc0011006), ==, 0);
     qtest_quit(qts);
 }
