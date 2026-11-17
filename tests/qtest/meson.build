@@ -251,6 +251,7 @@ qtests_amd_psp = [
   'amd-psp-umc-test',
   'amd-psp-dxio-pcs-test',
   'amd-psp-mp5-test',
+  'amd-psp-ccd-pages-test',
 ]
 
 qtests_arm = \

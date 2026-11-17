@@ -334,6 +334,126 @@
         "note": "ABL type-3 index poll (+0xec): observed stuck poll, args value 2 / mask 2; the second value pair is not visible and assumed (0,0). Real semantics unconfirmed."
       },
       {
+        "offset": "0x14704018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14804018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14904018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14a04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14b04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14c04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14d04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14e04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x14f04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15004018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15104018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15204018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15304018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15404018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15504018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15604018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15704018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15804018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15904018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
+        "offset": "0x15a04018",
+        "value": "0x1",
+        "source": "code-reading",
+        "note": "Per-CCD / per-unit status word the SEV applet's SNP_INIT step 0x21 wants bit 0 set (psp-etl 13528, inferred from the checks, not measured)."
+      },
+      {
         "offset": "0x20002ff0",
         "value": "0x0",
         "source": "unknown",
@@ -524,6 +644,70 @@
     ]
   },
   "ram_windows": [
+    {
+      "offset": "0x2400000",
+      "size": "0x2000",
+      "source": "code-reading",
+      "note": "Per-CCD register page the SEV applet reads and writes (SNP_INIT steps 0x1f..0x22, psp-etl 13528): +0x18 bit 0 and +0x34 bit 31 must read set, and the range-slot words step 0x1f writes must read back unchanged in step 0x22, so the page is RAM with those two words initialised.",
+      "init": [
+        {
+          "offset": "0x18",
+          "value": "0x1"
+        },
+        {
+          "offset": "0x34",
+          "value": "0x80000000"
+        }
+      ]
+    },
+    {
+      "offset": "0x2500000",
+      "size": "0x2000",
+      "source": "code-reading",
+      "note": "Per-CCD register page the SEV applet reads and writes (SNP_INIT steps 0x1f..0x22, psp-etl 13528): +0x18 bit 0 and +0x34 bit 31 must read set, and the range-slot words step 0x1f writes must read back unchanged in step 0x22, so the page is RAM with those two words initialised.",
+      "init": [
+        {
+          "offset": "0x18",
+          "value": "0x1"
+        },
+        {
+          "offset": "0x34",
+          "value": "0x80000000"
+        }
+      ]
+    },
+    {
+      "offset": "0x2600000",
+      "size": "0x2000",
+      "source": "code-reading",
+      "note": "Per-CCD register page the SEV applet reads and writes (SNP_INIT steps 0x1f..0x22, psp-etl 13528): +0x18 bit 0 and +0x34 bit 31 must read set, and the range-slot words step 0x1f writes must read back unchanged in step 0x22, so the page is RAM with those two words initialised.",
+      "init": [
+        {
+          "offset": "0x18",
+          "value": "0x1"
+        },
+        {
+          "offset": "0x34",
+          "value": "0x80000000"
+        }
+      ]
+    },
+    {
+      "offset": "0x2700000",
+      "size": "0x2000",
+      "source": "code-reading",
+      "note": "Per-CCD register page the SEV applet reads and writes (SNP_INIT steps 0x1f..0x22, psp-etl 13528): +0x18 bit 0 and +0x34 bit 31 must read set, and the range-slot words step 0x1f writes must read back unchanged in step 0x22, so the page is RAM with those two words initialised.",
+      "init": [
+        {
+          "offset": "0x18",
+          "value": "0x1"
+        },
+        {
+          "offset": "0x34",
+          "value": "0x80000000"
+        }
+      ]
+    },
     {
       "offset": "0x30500000",
       "size": "0x100000",

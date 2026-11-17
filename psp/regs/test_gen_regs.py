@@ -228,6 +228,22 @@ class GenRegsTest(unittest.TestCase):
                 if r.startswith("ram_window\tzen3")]
         self.assertEqual(len(rows), 3)
 
+    def test_ram_window_init_words(self):
+        w = self.window("0x1000", "0x100")
+        w["init"] = [{"offset": "0x4", "value": "0x5"},
+                     {"offset": "0x8", "value": "0x80000000"}]
+        self.docs["generic"]["ram_windows"] = [w]
+        p, _ = self.run_gen()
+        self.assertEqual(p.returncode, 0, p.stderr)
+        for bad in ([{"offset": "0x2", "value": "0x1"}],
+                    [{"offset": "0x100", "value": "0x1"}],
+                    [{"offset": "0x8", "value": "0x1"},
+                     {"offset": "0x4", "value": "0x1"}],
+                    [{"offset": "0x4", "value": "0x100000000"}]):
+            w["init"] = bad
+            p, _ = self.run_gen()
+            self.assertNotEqual(p.returncode, 0, bad)
+
     def test_ram_window_errors(self):
         self.docs["generic"]["ram_windows"] = [self.window("0x1000", "0x0")]
         p, _ = self.run_gen()

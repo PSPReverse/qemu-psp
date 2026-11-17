@@ -50,7 +50,7 @@
 
 typedef uint32_t PSPSmnAddr;
 
-#define PSP_SMN_MAX_RAM_WINDOWS 4
+#define PSP_SMN_MAX_RAM_WINDOWS 8
 
 typedef struct PSPSmnState {
     SysBusDevice parent_obj;

@@ -300,6 +300,16 @@ static void psp_smn_realize_slots(PSPSmnState* s)
     }
 }
 
+/* Write the words a RAM window holds at reset (JSON "init") */
+static void psp_smn_ram_apply_init(MemoryRegion* mr, const PspRamWindow* win)
+{
+    uint8_t* ram = memory_region_get_ram_ptr(mr);
+
+    for (size_t j = 0; j < win->n_init; j++) {
+        stl_le_p(ram + win->init[j].offset, win->init[j].value);
+    }
+}
+
 static void psp_smn_realize(DeviceState* dev, Error** errp)
 {
     ERRP_GUARD();
@@ -434,6 +444,7 @@ static void psp_smn_realize(DeviceState* dev, Error** errp)
                                win[i].size, errp);
         memory_region_add_subregion_overlap(&s->psp_smn_space, win[i].offset,
                                             &s->psp_smn_ram[i], 10);
+        psp_smn_ram_apply_init(&s->psp_smn_ram[i], &win[i]);
     }
 
     /* Setup the initial SMN to PSP MemoryRegion alias. */
@@ -448,6 +459,15 @@ static void psp_smn_reset_hold(Object *obj, ResetType type)
 {
     PSPSmnState *smn = PSP_SMN(obj);
 
+    {
+        PspSmnClass* c = PSP_SMN_GET_CLASS(obj);
+        size_t nwin;
+        const PspRamWindow* win = psp_regs_ram_windows(c->gen, &nwin);
+
+        for (size_t i = 0; i < nwin; i++) {
+            psp_smn_ram_apply_init(&smn->psp_smn_ram[i], &win[i]);
+        }
+    }
     psp_window_begin_update();
     for (int i = 0; i < PSP_SMN_SLOT_COUNT; i++) {
         smn->psp_smn_slots[i] = 0;

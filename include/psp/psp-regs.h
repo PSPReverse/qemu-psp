@@ -15,9 +15,17 @@ typedef enum PspRegSpace {
     PSP_REG_SPACE_MAX,
 } PspRegSpace;
 
+/* A 32-bit word a RAM window holds at reset, offset relative to the window */
+typedef struct PspRamInit {
+    uint32_t offset;
+    uint32_t value;
+} PspRamInit;
+
 typedef struct PspRamWindow {
     uint64_t offset;
     uint64_t size;
+    const PspRamInit* init;
+    size_t n_init;
 } PspRamWindow;
 
 /** RAM windows of the SMN address space of @gen, sorted by offset. */

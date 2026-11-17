@@ -56,7 +56,7 @@ ENTRY_KEYS = {"offset", "value", "source", "note", "rw"}
 # Spaces whose device keeps storage for "rw" entries, and how many slots.
 RW_SPACES = {"smn_misc", "psp_misc"}
 MAX_RW_SLOTS = 32
-WINDOW_KEYS = {"offset", "size", "source", "note"}
+WINDOW_KEYS = {"offset", "size", "source", "note", "init"}
 SMN_SIZE = (1 << 32) - 1
 HEX_LOOSE = re.compile(r"0[xX][0-9a-fA-F]+")
 HEX_CANON = re.compile(r"0x(?:0|[1-9a-f][0-9a-f]*)")
@@ -84,6 +84,28 @@ def parse_hex(path, where, text):
     return value
 
 
+def load_window_init(path, where, size, entries):
+    """Words a RAM window holds at reset: [{"offset": HEX, "value": HEX}]."""
+    if not isinstance(entries, list):
+        fail(path, f"{where}.init must be a list")
+    result = []
+    for j, w in enumerate(entries):
+        iw = f"{where}.init[{j}]"
+        if not isinstance(w, dict) or set(w) != {"offset", "value"}:
+            fail(path, f"{iw}: needs exactly 'offset' and 'value'")
+        off = parse_hex(path, iw + ".offset", w["offset"])
+        val = parse_hex(path, iw + ".value", w["value"])
+        if off & 3 or off + 4 > size:
+            fail(path, f"{iw}: offset must be 4-byte aligned and inside the "
+                       f"window")
+        if val >= VALUE_LIMIT:
+            fail(path, f"{iw}: value does not fit in 32 bits")
+        result.append((off, val))
+    if result != sorted(result) or len({o for o, _ in result}) != len(result):
+        fail(path, f"{where}.init must be sorted by offset, no duplicates")
+    return result
+
+
 def load_windows(path, entries):
     if not isinstance(entries, list):
         fail(path, "'ram_windows' must be a list")
@@ -108,7 +130,8 @@ def load_windows(path, entries):
         if size == 0 or offset + size > SMN_SIZE:
             fail(path, f"{where}: needs 0 < size and offset + size <= "
                        f"0x{SMN_SIZE:x}")
-        result.append((offset, size, e["source"], e.get("note", "")))
+        init = load_window_init(path, where, size, e.get("init", []))
+        result.append((offset, size, e["source"], e.get("note", ""), init))
     if result != sorted(result):
         fail(path, "ram_windows must be sorted by offset")
     return result
@@ -251,7 +274,7 @@ def flatten_windows(windows, parents, paths):
             merged += windows[anc]
         merged += windows[stem]
         merged.sort()
-        for (o1, s1, _, _), (o2, _, _, _) in zip(merged, merged[1:]):
+        for (o1, s1, _, _, _), (o2, _, _, _, _) in zip(merged, merged[1:]):
             if o1 + s1 > o2:
                 fail(paths[stem], f"ram window at 0x{o1:x} (size 0x{s1:x}) "
                                   f"overlaps the one at 0x{o2:x}")
@@ -286,10 +309,24 @@ def render(flat, wins):
 
     for stem in GENERATIONS:
         if wins[stem]:
+            for n, (offset, _, _, _, init) in enumerate(wins[stem]):
+                if init:
+                    out.append(f"static const PspRamInit "
+                               f"psp_regs_ram_{stem}_init{n}[] = {{")
+                    for off, val in init:
+                        out.append(f"    {{0x{off:x}, 0x{val:x}}},")
+                    out.append("};")
+                    out.append("")
             out.append(f"static const PspRamWindow psp_regs_ram_{stem}[] = {{")
-            for offset, size, _, _ in wins[stem]:
-                out.append(f"    {{UINT64_C(0x{offset:x}), "
-                           f"UINT64_C(0x{size:x})}},")
+            for n, (offset, size, _, _, init) in enumerate(wins[stem]):
+                if init:
+                    out.append(f"    {{UINT64_C(0x{offset:x}), "
+                               f"UINT64_C(0x{size:x}), "
+                               f"psp_regs_ram_{stem}_init{n}, "
+                               f"ARRAY_SIZE(psp_regs_ram_{stem}_init{n})}},")
+                else:
+                    out.append(f"    {{UINT64_C(0x{offset:x}), "
+                               f"UINT64_C(0x{size:x}), NULL, 0}},")
             out.append("};")
             out.append("")
 
@@ -335,7 +372,7 @@ def render_tsv(flat, wins):
                 out.append(f"{space}\t{stem}\t0x{offset:x}\t0x{value:x}"
                            f"\t{src}\t{note}\t{'rw' if rw else 'ro'}")
     for stem in GENERATIONS:
-        for offset, size, src, note in wins[stem]:
+        for offset, size, src, note, _ in wins[stem]:
             note = " ".join(note.split())
             out.append(f"ram_window\t{stem}\t0x{offset:x}\t0x{size:x}"
                        f"\t{src}\t{note}\tram")
