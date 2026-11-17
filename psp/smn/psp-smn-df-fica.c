@@ -84,6 +84,11 @@ static void df_ficad_write(void* opaque, hwaddr offset, uint64_t value,
     PSPSmnDfFicaEntry* e = df_fica_find(s, key);
 
     trace_psp_smn_df_fica_write(s->ficaa, value);
+    if (s->dram_regs_readonly && (key == FICAA_KEY_HOLE_BASE ||
+                                  key == FICAA_KEY_DRAM0_BASE ||
+                                  key == FICAA_KEY_DRAM0_LIMIT)) {
+        return;
+    }
     if (!e) {
         if (s->count == PSP_SMN_DF_FICA_ENTRIES) {
             qemu_log_mask(LOG_GUEST_ERROR, "psp-smn-df-fica: register store "
@@ -209,6 +214,13 @@ static const Property df_fica_properties[] = {
      * the reset behaviour. 1 and 0x7000 describe 2 GiB at 0 (psp-etl 13373,
      * inferred encoding: limit field in 256 MiB units).
      */
+    /*
+     * Drop software writes to F0x104, F0x110 and F0x114 so the defaults
+     * above always win over what the ABL programs (it builds its own map
+     * from its memory configuration, 5.25 GiB in the Zen3 runs seen).
+     */
+    DEFINE_PROP_BOOL("dram-regs-readonly", PSPSmnDfFicaState,
+                     dram_regs_readonly, false),
     DEFINE_PROP_UINT32("dram0-base-default", PSPSmnDfFicaState,
                        dram0_base_default, 0),
     DEFINE_PROP_UINT32("dram0-limit-default", PSPSmnDfFicaState,
