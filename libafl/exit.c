@@ -3,6 +3,7 @@
 #include "tcg/tcg.h"
 #include "tcg/tcg-op-common.h"
 #include "exec/cpu-common.h"
+#include "qemu/log.h"
 
 #include "libafl/exit.h"
 #include "libafl/defs.h"
@@ -61,15 +62,37 @@ static THREAD_MODIFIER bool expected_exit = false;
 #define THUMB_MASK(cpu, value) value
 #endif
 
+/*
+ * Debug aid (-d unimp), ARM only: vCPU state around a libafl exit, to see
+ * whether a stop and resume changes it (PC, Thumb, IT-block bits, CPSR).
+ */
+static void libafl_log_cpu_state(const char* where)
+{
+#if defined(TARGET_ARM)
+    CPUState* cs = first_cpu;
+
+    if (cs && qemu_loglevel_mask(LOG_UNIMP)) {
+        CPUARMState* env = cpu_env(cs);
+
+        qemu_log("libafl: %s r15=0x%x thumb=%u condexec=0x%x cpsr=0x%x "
+                 "r0-3=%x,%x,%x,%x\n", where, env->regs[15], env->thumb,
+                 env->condexec_bits, cpsr_read(env), env->regs[0],
+                 env->regs[1], env->regs[2], env->regs[3]);
+    }
+#endif
+}
+
 // called before exiting the cpu exec with the custom exception
 void libafl_sync_exit_cpu(void)
 {
+    libafl_log_cpu_state("exit before set_pc");
     if (last_exit_reason.next_pc && last_exit_reason.cpu) {
         CPUClass* cc = CPU_GET_CLASS(last_exit_reason.cpu);
         cc->set_pc(last_exit_reason.cpu,
                    THUMB_MASK(last_exit_reason.cpu, last_exit_reason.next_pc));
     }
     last_exit_reason.next_pc = 0;
+    libafl_log_cpu_state("exit after set_pc");
 }
 
 bool libafl_exit_asap(void) { return expected_exit; }
@@ -162,6 +185,7 @@ void libafl_qemu_trigger_breakpoint(CPUState* cpu)
 
 void libafl_exit_signal_vm_start(void)
 {
+    libafl_log_cpu_state("resume (vm_start)");
     last_exit_reason.cpu = NULL;
     last_exit_reason.next_pc = 0;
     expected_exit = false;
