@@ -201,6 +201,25 @@ static void test_msr_smm(void)
     qtest_quit(qts);
 }
 
+/* TOM / TOM2 are 64-bit and read 0 unless set */
+static void test_msr_tom(void)
+{
+    QTestState *qts = start("-global driver=amd_psp.smn.smu,"
+                            "property=tom,value=0x80000000 "
+                            "-global driver=amd_psp.smn.smu,"
+                            "property=tom2,value=0x250000000");
+    uint32_t hi;
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(msr_read(qts, 0xc001001a, &hi), ==, 0x80000000);
+    g_assert_cmphex(hi, ==, 0);
+    g_assert_cmphex(msr_read(qts, 0xc001001d, &hi), ==, 0x50000000);
+    g_assert_cmphex(hi, ==, 2);
+    qtest_quit(qts);
+}
+
 static void test_msr_syscfg_property(void)
 {
     QTestState *qts = start("-global driver=amd_psp.smn.smu,"
@@ -248,6 +267,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/smu/core-maps-property", test_core_maps_property);
     qtest_add_func("/amd-psp/smu/msr-syscfg", test_msr_syscfg);
     qtest_add_func("/amd-psp/smu/msr-smm", test_msr_smm);
+    qtest_add_func("/amd-psp/smu/msr-tom", test_msr_tom);
     qtest_add_func("/amd-psp/smu/msr-syscfg-property",
                    test_msr_syscfg_property);
     qtest_add_func("/amd-psp/smu/zen2-present", test_zen2_present);

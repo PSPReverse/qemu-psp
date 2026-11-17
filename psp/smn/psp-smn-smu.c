@@ -53,6 +53,8 @@
 #define MSG_READ_X86_MSR 0x2b
 #define MSR_SYSCFG 0xc0010010
 #define MSR_HWCR 0xc0010015
+#define MSR_TOP_MEM 0xc001001a
+#define MSR_TOP_MEM2 0xc001001d
 #define MSR_SMM_ADDR 0xc0010112
 #define MSR_SMM_MASK 0xc0010113
 
@@ -90,6 +92,10 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
             val = s->syscfg;
         } else if (msr == MSR_HWCR) {
             val = s->hwcr;
+        } else if (msr == MSR_TOP_MEM) {
+            val = s->tom;
+        } else if (msr == MSR_TOP_MEM2) {
+            val = s->tom2;
         } else if (msr == MSR_SMM_ADDR) {
             val = s->smm_addr;
         } else if (msr == MSR_SMM_MASK) {
@@ -199,6 +205,14 @@ static const Property psp_smu_properties[] = {
      * SNP_INIT handler compares them with the SMM range the BL holds (psp-etl
      * 13486). Default 0, the reset behaviour.
      */
+    /*
+     * 64-bit x86 MSRs TOP_MEM (0xc001001a) and TOP_MEM2 (0xc001001d); the
+     * applet cross-checks them with the region table the BL builds from the
+     * DF registers (psp-etl 13503: TOM = hole base, TOM2 = header B when
+     * SYSCFG bit 21 is set). Default 0, the reset behaviour.
+     */
+    DEFINE_PROP_UINT64("tom", PSPSmnSmuState, tom, 0),
+    DEFINE_PROP_UINT64("tom2", PSPSmnSmuState, tom2, 0),
     DEFINE_PROP_UINT64("smm-addr", PSPSmnSmuState, smm_addr, 0),
     DEFINE_PROP_UINT64("smm-mask", PSPSmnSmuState, smm_mask, 0),
     DEFINE_PROP_UINT32("hwcr", PSPSmnSmuState, hwcr, 0x1),
