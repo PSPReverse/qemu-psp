@@ -201,6 +201,25 @@ static void test_msr_smm(void)
     qtest_quit(qts);
 }
 
+/* GetSmuVersion (message 2) follows the smu-version property */
+static void test_smu_version(void)
+{
+    QTestState *qts = start("");
+
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, 0x02, 0), ==, 0);
+    qtest_quit(qts);
+    qts = start("-global driver=amd_psp.smn.smu,"
+                "property=smu-version,value=0x2d6200");
+    if (!qts) {
+        return;
+    }
+    g_assert_cmphex(smu_msg(qts, 0x02, 0), ==, 0x2d6200);
+    qtest_quit(qts);
+}
+
 /* TOM / TOM2 are 64-bit and read 0 unless set */
 static void test_msr_tom(void)
 {
@@ -268,6 +287,7 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/smu/msr-syscfg", test_msr_syscfg);
     qtest_add_func("/amd-psp/smu/msr-smm", test_msr_smm);
     qtest_add_func("/amd-psp/smu/msr-tom", test_msr_tom);
+    qtest_add_func("/amd-psp/smu/smu-version", test_smu_version);
     qtest_add_func("/amd-psp/smu/msr-syscfg-property",
                    test_msr_syscfg_property);
     qtest_add_func("/amd-psp/smu/zen2-present", test_zen2_present);

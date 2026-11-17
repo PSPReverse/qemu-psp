@@ -31,6 +31,8 @@
 
 #define RESP_OK 1
 
+/* The BL asks for the SMU firmware version once at init (psp-etl 13509) */
+#define MSG_GET_SMU_VERSION 0x02
 #define MSG_QUERY_NUMBER_OF_DF_PSTATES 0x07
 #define MSG_QUERY_MEM_FREQ_OF_DF_PSTATE 0x08
 #define MSG_GET_STARTUP_DF_PSTATE 0x1d
@@ -69,6 +71,9 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
     uint32_t data = 0;
 
     switch (msg) {
+    case MSG_GET_SMU_VERSION:
+        data = s->smu_version;
+        break;
     case MSG_QUERY_NUMBER_OF_DF_PSTATES:
         data = s->df_pstates;
         break;
@@ -211,6 +216,12 @@ static const Property psp_smu_properties[] = {
      * DF registers (psp-etl 13503: TOM = hole base, TOM2 = header B when
      * SYSCFG bit 21 is set). Default 0, the reset behaviour.
      */
+    /*
+     * Answer to GetSmuVersion (message 2). The SEV applet wants at least
+     * 0x2d5800 (psp-etl 13509); 0 is the reset behaviour, 0x2d6200 is a
+     * value that satisfies it.
+     */
+    DEFINE_PROP_UINT32("smu-version", PSPSmnSmuState, smu_version, 0),
     DEFINE_PROP_UINT64("tom", PSPSmnSmuState, tom, 0),
     DEFINE_PROP_UINT64("tom2", PSPSmnSmuState, tom2, 0),
     DEFINE_PROP_UINT64("smm-addr", PSPSmnSmuState, smm_addr, 0),
