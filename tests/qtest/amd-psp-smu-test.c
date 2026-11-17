@@ -209,14 +209,14 @@ static void test_smu_version(void)
     if (!qts) {
         return;
     }
-    g_assert_cmphex(smu_msg(qts, 0x02, 0), ==, 0);
+    g_assert_cmphex(smu_msg(qts, 0x02, 0), ==, 0x2d6200);
     qtest_quit(qts);
     qts = start("-global driver=amd_psp.smn.smu,"
-                "property=smu-version,value=0x2d6200");
+                "property=smu-version,value=0");
     if (!qts) {
         return;
     }
-    g_assert_cmphex(smu_msg(qts, 0x02, 0), ==, 0x2d6200);
+    g_assert_cmphex(smu_msg(qts, 0x02, 0), ==, 0);
     qtest_quit(qts);
 }
 

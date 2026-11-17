@@ -218,10 +218,10 @@ static const Property psp_smu_properties[] = {
      */
     /*
      * Answer to GetSmuVersion (message 2). The SEV applet wants at least
-     * 0x2d5800 (psp-etl 13509); 0 is the reset behaviour, 0x2d6200 is a
-     * value that satisfies it.
+     * 0x2d5800 (psp-etl 13509); 0x2d6200 satisfies it. Boot traces are
+     * identical with it apart from this value (qemu-tools 13519).
      */
-    DEFINE_PROP_UINT32("smu-version", PSPSmnSmuState, smu_version, 0),
+    DEFINE_PROP_UINT32("smu-version", PSPSmnSmuState, smu_version, 0x2d6200),
     DEFINE_PROP_UINT64("tom", PSPSmnSmuState, tom, 0),
     DEFINE_PROP_UINT64("tom2", PSPSmnSmuState, tom2, 0),
     DEFINE_PROP_UINT64("smm-addr", PSPSmnSmuState, smm_addr, 0),
