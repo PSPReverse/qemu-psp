@@ -53,6 +53,8 @@
 #define MSG_READ_X86_MSR 0x2b
 #define MSR_SYSCFG 0xc0010010
 #define MSR_HWCR 0xc0010015
+#define MSR_SMM_ADDR 0xc0010112
+#define MSR_SMM_MASK 0xc0010113
 
 #define DF_PSTATES_MAX 4
 
@@ -81,12 +83,17 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
         data = s->regs[REG_ARG] < 8 && ((s->ccd_mask >> s->regs[REG_ARG]) & 1);
         break;
     case MSG_READ_X86_MSR: {
-        uint32_t msr = s->regs[REG_ARG], val = 0;
+        uint32_t msr = s->regs[REG_ARG];
+        uint64_t val = 0;
 
         if (msr == MSR_SYSCFG) {
             val = s->syscfg;
         } else if (msr == MSR_HWCR) {
             val = s->hwcr;
+        } else if (msr == MSR_SMM_ADDR) {
+            val = s->smm_addr;
+        } else if (msr == MSR_SMM_MASK) {
+            val = s->smm_mask;
         } else {
             qemu_log_mask(LOG_UNIMP, "psp-smn-smu: x86 MSR 0x%x read as 0\n",
                           msr);
@@ -94,7 +101,7 @@ static void psp_smu_message(PSPSmnSmuState* s, uint32_t msg)
         /* Layout the BL reads back (psp-etl 13325): out0 in ARG, value in
          * +8 (low) and +0xc (high) */
         s->regs[REG_MSR_LO] = val;
-        s->regs[REG_MSR_HI] = 0;
+        s->regs[REG_MSR_HI] = val >> 32;
         data = 1;
         break;
     }
@@ -187,6 +194,13 @@ static const Property psp_smu_properties[] = {
     DEFINE_PROP_UINT32("ccd-mask", PSPSmnSmuState, ccd_mask, 0x1),
     /* Low dword of x86 MSR SYSCFG: SMEE, SNPEn, VMPLEn, MTRR enables incl. bit 19 (SNP_INIT tests it, psp-etl 13282) */
     /* Low dword of x86 MSR HWCR; SNP_INIT needs bit 0 (psp-etl 13282) */
+    /*
+     * 64-bit x86 MSRs SMM_ADDR (0xc0010112) and SMM_MASK (0xc0010113); the
+     * SNP_INIT handler compares them with the SMM range the BL holds (psp-etl
+     * 13486). Default 0, the reset behaviour.
+     */
+    DEFINE_PROP_UINT64("smm-addr", PSPSmnSmuState, smm_addr, 0),
+    DEFINE_PROP_UINT64("smm-mask", PSPSmnSmuState, smm_mask, 0),
     DEFINE_PROP_UINT32("hwcr", PSPSmnSmuState, hwcr, 0x1),
     DEFINE_PROP_UINT32("syscfg", PSPSmnSmuState, syscfg, 0x03fc0000),
 };
