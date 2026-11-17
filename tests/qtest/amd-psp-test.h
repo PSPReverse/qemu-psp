@@ -119,6 +119,7 @@ typedef struct PspCcpDesc {
     uint32_t dst;           /* SHA: length low */
     unsigned dst_mem;
     unsigned lsb;           /* LSB context slot */
+    bool fixed_src;         /* dword 3 bit 31: repeat the source unit */
 } PspCcpDesc;
 
 static char *psp_flash_path;
@@ -244,7 +245,8 @@ static inline uint32_t psp_ccp_run(QTestState *qts, const PspCcpDesc *d)
         (d->engine << 20) | d->flags,
         d->len,
         d->src,
-        (d->src_mem << 16) | (d->lsb << 18),
+        (d->src_mem << 16) | (d->lsb << 18) |
+            (d->fixed_src ? 0x80000000u : 0),
         d->dst,
         d->dst_mem << 16,
     };

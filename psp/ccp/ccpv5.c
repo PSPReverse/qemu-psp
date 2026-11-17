@@ -203,6 +203,58 @@ static void* get_raw_ptr(CcpV5State* s, hwaddr addr, hwaddr* len,
     }
     return ptr;
 }
+/*
+ * Passthrough with the fixed-source bit: the source is one unit that is
+ * repeated over the whole destination. The unit is taken as the first four
+ * source bytes; only the all-zero case (a memset) has been seen from the
+ * firmware (psp-etl 13518), other patterns are served the same way but
+ * flagged. Inferred, not documented.
+ */
+static void perform_ccp_passthrough_fixed(CcpV5State* s, hwaddr dst,
+                                          hwaddr src, uint32_t len,
+                                          ccp_memtype dst_type,
+                                          ccp_memtype src_type)
+{
+    hwaddr unit_len = 4;
+    void* hsrc = get_raw_ptr(s, src, &unit_len, src_type, false);
+    uint8_t unit[4] = { 0 };
+    uint32_t done = 0;
+
+    if (hsrc == NULL || unit_len < 4) {
+        if (hsrc != NULL && src_type == CCP_MEMTYPE_LOCAL) {
+            cpu_physical_memory_unmap(hsrc, unit_len, false, 0);
+        }
+        return;
+    }
+    memcpy(unit, hsrc, 4);
+    if (src_type == CCP_MEMTYPE_LOCAL) {
+        cpu_physical_memory_unmap(hsrc, unit_len, false, 4);
+    }
+    if (unit[0] | unit[1] | unit[2] | unit[3]) {
+        qemu_log_mask(LOG_UNIMP, "CCP: fixed-source passthrough with a "
+                      "non-zero unit, repeating the first 4 bytes\n");
+    }
+    while (done < len) {
+        hwaddr dest_len = len - done;
+        void* hdst = get_raw_ptr(s, dst + done, &dest_len, dst_type, true);
+
+        if (hdst == NULL) {
+            return;
+        }
+        if (!(unit[0] | unit[1] | unit[2] | unit[3])) {
+            memset(hdst, 0, dest_len);
+        } else {
+            for (hwaddr i = 0; i < dest_len; i++) {
+                ((uint8_t*)hdst)[i] = unit[(done + i) & 3];
+            }
+        }
+        if (dst_type == CCP_MEMTYPE_LOCAL) {
+            cpu_physical_memory_unmap(hdst, dest_len, true, dest_len);
+        }
+        done += dest_len;
+    }
+}
+
 static void perform_ccp_passthrough(CcpV5State* s, uint32_t id, hwaddr dst,
                                     hwaddr src, uint32_t len,
                                     ccp_memtype dst_type, ccp_memtype src_type,
@@ -292,6 +344,16 @@ static void decode_ccp_passthrough(CcpV5State* s, uint32_t id, ccp5_desc* desc)
     char const* const src_type_name = ccp_memtype_str(src_type);
     char const* const dst_type_name = ccp_memtype_str(dst_type);
     trace_ccp_passthrough(src_type_name, src, dst_type_name, dst, cbytes);
+    if (CCP5_CMD_FIX_SRC(desc)) {
+        if (src_type == CCP_MEMTYPE_SYSTEM || dst_type == CCP_MEMTYPE_SYSTEM) {
+            qemu_log_mask(LOG_UNIMP, "CCP Error: Unimplemented memtype "
+                          "CCP_MEMTYPE_SYSTEM\n");
+            return;
+        }
+        perform_ccp_passthrough_fixed(s, dst, src, cbytes, dst_type,
+                                      src_type);
+        return;
+    }
     perform_ccp_passthrough(s, id, dst, src, cbytes, dst_type, src_type, bwise,
                             bswap);
 }

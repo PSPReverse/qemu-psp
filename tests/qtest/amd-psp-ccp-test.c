@@ -96,6 +96,35 @@ static void test_passthrough(void)
     qtest_quit(qts);
 }
 
+/* Fixed-source passthrough: a zero unit clears the destination, any length */
+static void test_passthrough_fixed_zero(void)
+{
+    QTestState *qts = psp_start(PSP_ZEN3);
+    uint8_t buf[0x300], out[0x300];
+    PspCcpDesc d = {
+        .engine = CCP_ENGINE_PASSTHRU, .len = 0x2f0, .fixed_src = true,
+        .src = SRAM_SRC, .src_mem = CCP_MEMTYPE_LOCAL,
+        .dst = SRAM_DST, .dst_mem = CCP_MEMTYPE_LOCAL,
+    };
+
+    if (!qts) {
+        return;
+    }
+    memset(buf, 0xa5, sizeof(buf));
+    qtest_memwrite(qts, SRAM_DST, buf, sizeof(buf));
+    memset(buf, 0, 4);
+    qtest_memwrite(qts, SRAM_SRC, buf, 4);
+    g_assert_cmpuint(psp_ccp_run(qts, &d), ==, 0);
+    qtest_memread(qts, SRAM_DST, out, sizeof(out));
+    for (int i = 0; i < 0x2f0; i++) {
+        g_assert_cmphex(out[i], ==, 0);
+    }
+    for (int i = 0x2f0; i < 0x300; i++) {
+        g_assert_cmphex(out[i], ==, 0xa5);
+    }
+    qtest_quit(qts);
+}
+
 /* Through the LSB: a plain copy keeps the bytes, the 256-bit swap reverses */
 static void test_passthrough_lsb(void)
 {
@@ -584,6 +613,8 @@ int main(int argc, char **argv)
     qtest_add_func("/amd-psp/ccp/queue-registers", test_queue_registers);
     qtest_add_func("/amd-psp/ccp/queue-scratch", test_queue_scratch);
     qtest_add_func("/amd-psp/ccp/passthrough", test_passthrough);
+    qtest_add_func("/amd-psp/ccp/passthrough-fixed-zero",
+                   test_passthrough_fixed_zero);
     qtest_add_func("/amd-psp/ccp/passthrough-lsb", test_passthrough_lsb);
     qtest_add_func("/amd-psp/ccp/aes-ctr", test_aes_ctr);
     qtest_add_func("/amd-psp/ccp/sha256", test_sha256);
